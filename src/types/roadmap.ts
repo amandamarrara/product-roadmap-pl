@@ -21,7 +21,7 @@ export interface SubDelivery {
   description: string;
   startDate: Date;
   endDate: Date;
-  responsible: TeamMember;
+  responsible: string;
   completed: boolean;
   progress: number;
 }
@@ -32,10 +32,11 @@ export interface Delivery {
   description: string;
   startDate: Date;
   endDate: Date;
-  team: Team;
+  team: string;
   complexity: Complexity;
   priority: Priority;
-  responsible: TeamMember;
+  responsible: string;
+  deliveryColor?: string;
   subDeliveries: SubDelivery[];
   progress: number;
   status: 'not-started' | 'in-progress' | 'completed' | 'blocked';
@@ -45,6 +46,7 @@ export interface Roadmap {
   id: string;
   title: string;
   description: string;
+  subtitle?: string;
   deliveries: Delivery[];
   createdAt: Date;
   updatedAt: Date;

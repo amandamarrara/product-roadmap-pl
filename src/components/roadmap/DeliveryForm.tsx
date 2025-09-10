@@ -8,48 +8,91 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Badge } from "@/components/ui/badge";
-import { CalendarIcon, Plus, X } from "lucide-react";
+import { CalendarIcon, Plus, X, Trash2 } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
-import type { Delivery, Priority, Complexity, Team, TeamMember } from "@/types/roadmap";
+import type { Delivery, Priority, Complexity, SubDelivery } from "@/types/roadmap";
 
 interface DeliveryFormProps {
   delivery?: Delivery;
-  teams: Team[];
   onSave: (delivery: Omit<Delivery, 'id'>) => void;
   onCancel: () => void;
 }
 
-export function DeliveryForm({ delivery, teams, onSave, onCancel }: DeliveryFormProps) {
+export function DeliveryForm({ delivery, onSave, onCancel }: DeliveryFormProps) {
   const [title, setTitle] = useState(delivery?.title || '');
   const [description, setDescription] = useState(delivery?.description || '');
   const [startDate, setStartDate] = useState<Date | undefined>(delivery?.startDate);
   const [endDate, setEndDate] = useState<Date | undefined>(delivery?.endDate);
-  const [selectedTeam, setSelectedTeam] = useState<Team | undefined>(delivery?.team);
+  const [team, setTeam] = useState(delivery?.team || '');
   const [complexity, setComplexity] = useState<Complexity>(delivery?.complexity || 'medium');
   const [priority, setPriority] = useState<Priority>(delivery?.priority || 'medium');
-  const [responsible, setResponsible] = useState<TeamMember | undefined>(delivery?.responsible);
+  const [responsible, setResponsible] = useState(delivery?.responsible || '');
+  const [deliveryColor, setDeliveryColor] = useState(delivery?.deliveryColor || generateColorFromString(delivery?.title || ''));
+  const [subDeliveries, setSubDeliveries] = useState<Omit<SubDelivery, 'id'>[]>(
+    delivery?.subDeliveries?.map(sub => ({ ...sub, id: undefined })) || []
+  );
+
+  function generateColorFromString(str: string): string {
+    const colors = [
+      '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', 
+      '#06b6d4', '#f97316', '#84cc16', '#ec4899', '#6366f1'
+    ];
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+      hash = str.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    return colors[Math.abs(hash) % colors.length];
+  }
+
+  const addSubDelivery = () => {
+    setSubDeliveries(prev => [...prev, {
+      title: '',
+      description: '',
+      startDate: startDate || new Date(),
+      endDate: endDate || new Date(),
+      responsible: '',
+      completed: false,
+      progress: 0
+    }]);
+  };
+
+  const updateSubDelivery = (index: number, field: keyof Omit<SubDelivery, 'id'>, value: any) => {
+    setSubDeliveries(prev => prev.map((sub, i) => 
+      i === index ? { ...sub, [field]: value } : sub
+    ));
+  };
+
+  const removeSubDelivery = (index: number) => {
+    setSubDeliveries(prev => prev.filter((_, i) => i !== index));
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title || !startDate || !endDate || !selectedTeam || !responsible) return;
+    if (!title || !startDate || !endDate || !team || !responsible) return;
+
+    const validSubDeliveries = subDeliveries
+      .filter(sub => sub.title.trim() && sub.responsible.trim())
+      .map(sub => ({
+        ...sub,
+        id: Date.now().toString() + Math.random().toString(36).substr(2, 9)
+      }));
 
     onSave({
       title,
       description,
       startDate,
       endDate,
-      team: selectedTeam,
+      team,
       complexity,
       priority,
       responsible,
-      subDeliveries: delivery?.subDeliveries || [],
+      deliveryColor,
+      subDeliveries: validSubDeliveries,
       progress: delivery?.progress || 0,
       status: delivery?.status || 'not-started'
     });
   };
-
-  const availableMembers = selectedTeam?.members || [];
 
   const getPriorityColor = (priority: Priority) => {
     switch (priority) {
@@ -87,7 +130,10 @@ export function DeliveryForm({ delivery, teams, onSave, onCancel }: DeliveryForm
               <Input
                 id="title"
                 value={title}
-                onChange={(e) => setTitle(e.target.value)}
+                onChange={(e) => {
+                  setTitle(e.target.value);
+                  setDeliveryColor(generateColorFromString(e.target.value));
+                }}
                 placeholder="Ex: Implementar sistema de autenticação"
                 required
               />
@@ -126,7 +172,6 @@ export function DeliveryForm({ delivery, teams, onSave, onCancel }: DeliveryForm
                       selected={startDate}
                       onSelect={setStartDate}
                       initialFocus
-                      className="pointer-events-auto"
                     />
                   </PopoverContent>
                 </Popover>
@@ -153,7 +198,6 @@ export function DeliveryForm({ delivery, teams, onSave, onCancel }: DeliveryForm
                       selected={endDate}
                       onSelect={setEndDate}
                       initialFocus
-                      className="pointer-events-auto"
                     />
                   </PopoverContent>
                 </Popover>
@@ -162,64 +206,29 @@ export function DeliveryForm({ delivery, teams, onSave, onCancel }: DeliveryForm
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label>Time Responsável</Label>
-                <Select value={selectedTeam?.id} onValueChange={(id) => {
-                  const team = teams.find(t => t.id === id);
-                  setSelectedTeam(team);
-                  setResponsible(undefined);
-                }}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecionar time" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {teams.map((team) => (
-                      <SelectItem key={team.id} value={team.id}>
-                        <div className="flex items-center gap-2">
-                          <div 
-                            className="w-3 h-3 rounded-full"
-                            style={{ backgroundColor: team.color }}
-                          />
-                          {team.name}
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Label htmlFor="team">Time Responsável</Label>
+                <Input
+                  id="team"
+                  value={team}
+                  onChange={(e) => setTeam(e.target.value)}
+                  placeholder="Ex: Frontend, Backend, Mobile..."
+                  required
+                />
               </div>
 
               <div>
-                <Label>Responsável</Label>
-                <Select 
-                  value={responsible?.id} 
-                  onValueChange={(id) => {
-                    const member = availableMembers.find(m => m.id === id);
-                    setResponsible(member);
-                  }}
-                  disabled={!selectedTeam}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecionar responsável" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {availableMembers.map((member) => (
-                      <SelectItem key={member.id} value={member.id}>
-                        <div className="flex items-center gap-2">
-                          <div className="w-6 h-6 bg-primary/20 rounded-full flex items-center justify-center text-xs font-medium">
-                            {member.name.split(' ').map(n => n[0]).join('').toUpperCase()}
-                          </div>
-                          <div>
-                            <div className="font-medium">{member.name}</div>
-                            <div className="text-xs text-muted-foreground">{member.role}</div>
-                          </div>
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Label htmlFor="responsible">Responsável</Label>
+                <Input
+                  id="responsible"
+                  value={responsible}
+                  onChange={(e) => setResponsible(e.target.value)}
+                  placeholder="Ex: João Silva, Maria Santos..."
+                  required
+                />
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-3 gap-4">
               <div>
                 <Label>Complexidade</Label>
                 <Select value={complexity} onValueChange={(value: Complexity) => setComplexity(value)}>
@@ -269,20 +278,141 @@ export function DeliveryForm({ delivery, teams, onSave, onCancel }: DeliveryForm
                   </SelectContent>
                 </Select>
               </div>
+
+              <div>
+                <Label>Cor da Entrega</Label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="color"
+                    value={deliveryColor}
+                    onChange={(e) => setDeliveryColor(e.target.value)}
+                    className="w-full h-10 rounded-md border border-input"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Sub-entregas */}
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <Label className="text-base font-medium">Sub-entregas</Label>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={addSubDelivery}
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Adicionar Sub-entrega
+                </Button>
+              </div>
+
+              {subDeliveries.map((sub, index) => (
+                <div key={index} className="p-4 border rounded-lg space-y-3 bg-muted/20">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-sm font-medium">Sub-entrega {index + 1}</Label>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => removeSubDelivery(index)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <Label className="text-xs">Título</Label>
+                      <Input
+                        value={sub.title}
+                        onChange={(e) => updateSubDelivery(index, 'title', e.target.value)}
+                        placeholder="Título da sub-entrega"
+                        className="h-8"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-xs">Responsável</Label>
+                      <Input
+                        value={sub.responsible}
+                        onChange={(e) => updateSubDelivery(index, 'responsible', e.target.value)}
+                        placeholder="Responsável"
+                        className="h-8"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <Label className="text-xs">Data Início</Label>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant="outline"
+                            className="w-full justify-start text-left font-normal h-8 text-xs"
+                          >
+                            <CalendarIcon className="mr-2 h-3 w-3" />
+                            {sub.startDate ? format(sub.startDate, "dd/MM/yyyy") : "Data"}
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar
+                            mode="single"
+                            selected={sub.startDate}
+                            onSelect={(date) => date && updateSubDelivery(index, 'startDate', date)}
+                            initialFocus
+                          />
+                        </PopoverContent>
+                      </Popover>
+                    </div>
+                    <div>
+                      <Label className="text-xs">Data Fim</Label>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant="outline"
+                            className="w-full justify-start text-left font-normal h-8 text-xs"
+                          >
+                            <CalendarIcon className="mr-2 h-3 w-3" />
+                            {sub.endDate ? format(sub.endDate, "dd/MM/yyyy") : "Data"}
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar
+                            mode="single"
+                            selected={sub.endDate}
+                            onSelect={(date) => date && updateSubDelivery(index, 'endDate', date)}
+                            initialFocus
+                          />
+                        </PopoverContent>
+                      </Popover>
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label className="text-xs">Descrição</Label>
+                    <Textarea
+                      value={sub.description}
+                      onChange={(e) => updateSubDelivery(index, 'description', e.target.value)}
+                      placeholder="Descrição da sub-entrega"
+                      rows={2}
+                      className="text-xs"
+                    />
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
 
           <div className="flex items-center justify-between pt-4">
             <div className="flex gap-2">
-              {selectedTeam && (
-                <Badge variant="secondary" className="bg-gradient-roadmap">
-                  <div 
-                    className="w-2 h-2 rounded-full mr-2"
-                    style={{ backgroundColor: selectedTeam.color }}
-                  />
-                  {selectedTeam.name}
-                </Badge>
-              )}
+              <Badge variant="secondary" className="bg-gradient-roadmap">
+                <div 
+                  className="w-2 h-2 rounded-full mr-2"
+                  style={{ backgroundColor: deliveryColor }}
+                />
+                {team || 'Time'}
+              </Badge>
               <Badge 
                 variant="secondary"
                 className={`text-${getPriorityColor(priority)}`}
