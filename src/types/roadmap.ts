@@ -32,14 +32,13 @@ export interface Delivery {
   description: string;
   startDate: Date;
   endDate: Date;
-  team: string; // Changed to string for free text input
+  team: Team;
   complexity: Complexity;
   priority: Priority;
-  responsible: string; // Changed to string for free text input
+  responsible: TeamMember;
   subDeliveries: SubDelivery[];
   progress: number;
   status: 'not-started' | 'in-progress' | 'completed' | 'blocked';
-  linkedDeliveries: string[]; // Array of delivery IDs that are linked to this delivery
 }
 
 export interface Roadmap {

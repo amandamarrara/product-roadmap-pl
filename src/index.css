@@ -52,16 +52,6 @@ All colors MUST be HSL.
     --roadmap-high: 0 84% 60%;
     --roadmap-critical: 348 83% 47%;
 
-    /* Category lane colors */
-    --category-frontend: 217 91% 60%;
-    --category-backend: 142 76% 45%;
-    --category-mobile: 270 95% 65%;
-    --category-devops: 24 95% 53%;
-    --category-design: 310 87% 60%;
-    --category-qa: 187 85% 53%;
-    --category-data: 45 93% 47%;
-    --category-default: 220 14% 50%;
-
     --gradient-primary: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary-glow)));
     --gradient-card: linear-gradient(135deg, hsl(0 0% 100%), hsl(214 32% 98%));
     --gradient-roadmap: linear-gradient(90deg, hsl(var(--primary) / 0.1), hsl(var(--primary) / 0.05));
