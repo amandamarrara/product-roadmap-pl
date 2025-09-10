@@ -13,39 +13,67 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 
 // Mock data for teams and members
-const mockTeams: Team[] = [
-  {
+const mockTeams: Team[] = [{
+  id: '1',
+  name: 'Frontend',
+  color: '#3b82f6',
+  members: [{
     id: '1',
-    name: 'Frontend',
-    color: '#3b82f6',
-    members: [
-      { id: '1', name: 'Ana Silva', role: 'Tech Lead', avatar: '' },
-      { id: '2', name: 'Carlos Santos', role: 'Developer', avatar: '' },
-      { id: '3', name: 'Lucia Costa', role: 'UI/UX Designer', avatar: '' }
-    ]
-  },
-  {
+    name: 'Ana Silva',
+    role: 'Tech Lead',
+    avatar: ''
+  }, {
     id: '2',
-    name: 'Backend',
-    color: '#10b981',
-    members: [
-      { id: '4', name: 'Pedro Lima', role: 'Tech Lead', avatar: '' },
-      { id: '5', name: 'Marina Oliveira', role: 'Developer', avatar: '' },
-      { id: '6', name: 'Roberto Alves', role: 'DevOps', avatar: '' }
-    ]
-  },
-  {
+    name: 'Carlos Santos',
+    role: 'Developer',
+    avatar: ''
+  }, {
     id: '3',
-    name: 'Mobile',
-    color: '#f59e0b',
-    members: [
-      { id: '7', name: 'Julia Ferreira', role: 'Tech Lead', avatar: '' },
-      { id: '8', name: 'Miguel Torres', role: 'iOS Developer', avatar: '' },
-      { id: '9', name: 'Sofia Rodrigues', role: 'Android Developer', avatar: '' }
-    ]
-  }
-];
-
+    name: 'Lucia Costa',
+    role: 'UI/UX Designer',
+    avatar: ''
+  }]
+}, {
+  id: '2',
+  name: 'Backend',
+  color: '#10b981',
+  members: [{
+    id: '4',
+    name: 'Pedro Lima',
+    role: 'Tech Lead',
+    avatar: ''
+  }, {
+    id: '5',
+    name: 'Marina Oliveira',
+    role: 'Developer',
+    avatar: ''
+  }, {
+    id: '6',
+    name: 'Roberto Alves',
+    role: 'DevOps',
+    avatar: ''
+  }]
+}, {
+  id: '3',
+  name: 'Mobile',
+  color: '#f59e0b',
+  members: [{
+    id: '7',
+    name: 'Julia Ferreira',
+    role: 'Tech Lead',
+    avatar: ''
+  }, {
+    id: '8',
+    name: 'Miguel Torres',
+    role: 'iOS Developer',
+    avatar: ''
+  }, {
+    id: '9',
+    name: 'Sofia Rodrigues',
+    role: 'Android Developer',
+    avatar: ''
+  }]
+}];
 export function RoadmapBuilder() {
   const [roadmapTitle, setRoadmapTitle] = useState('Meu Roadmap');
   const [roadmapSubtitle, setRoadmapSubtitle] = useState('');
@@ -54,15 +82,12 @@ export function RoadmapBuilder() {
   const [editingDelivery, setEditingDelivery] = useState<Delivery | undefined>();
   const [filterTeam, setFilterTeam] = useState<string>('all');
   const [filterPriority, setFilterPriority] = useState<string>('all');
-
   const handleSaveDelivery = (deliveryData: Omit<Delivery, 'id'>) => {
     if (editingDelivery) {
-      setDeliveries(prev => 
-        prev.map(d => d.id === editingDelivery.id 
-          ? { ...deliveryData, id: editingDelivery.id } 
-          : d
-        )
-      );
+      setDeliveries(prev => prev.map(d => d.id === editingDelivery.id ? {
+        ...deliveryData,
+        id: editingDelivery.id
+      } : d));
     } else {
       const newDelivery: Delivery = {
         ...deliveryData,
@@ -70,70 +95,51 @@ export function RoadmapBuilder() {
       };
       setDeliveries(prev => [...prev, newDelivery]);
     }
-    
     setShowForm(false);
     setEditingDelivery(undefined);
   };
-
   const handleEditDelivery = (delivery: Delivery) => {
     setEditingDelivery(delivery);
     setShowForm(true);
   };
-
   const handleDeleteDelivery = (id: string) => {
     setDeliveries(prev => prev.filter(d => d.id !== id));
   };
-
   const handleCancelForm = () => {
     setShowForm(false);
     setEditingDelivery(undefined);
   };
-
   const filteredDeliveries = deliveries.filter(delivery => {
     const teamMatch = filterTeam === 'all' || delivery.team === filterTeam;
     const priorityMatch = filterPriority === 'all' || delivery.priority === filterPriority;
     return teamMatch && priorityMatch;
   });
-
   const getStats = () => {
     const completed = deliveries.filter(d => d.status === 'completed').length;
     const inProgress = deliveries.filter(d => d.status === 'in-progress').length;
     const notStarted = deliveries.filter(d => d.status === 'not-started').length;
     const blocked = deliveries.filter(d => d.status === 'blocked').length;
-    
-    return { completed, inProgress, notStarted, blocked };
+    return {
+      completed,
+      inProgress,
+      notStarted,
+      blocked
+    };
   };
-
   const stats = getStats();
-
-  return (
-    <div className="min-h-screen bg-background p-4 md:p-6 lg:p-8">
+  return <div className="min-h-screen bg-background p-4 md:p-6 lg:p-8">
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div className="space-y-2 flex-1">
             <div className="flex items-center gap-2">
-              <Label htmlFor="roadmap-title" className="text-sm font-medium">Título do Roadmap</Label>
+              
             </div>
-            <Input
-              id="roadmap-title"
-              value={roadmapTitle}
-              onChange={(e) => setRoadmapTitle(e.target.value)}
-              className="text-2xl font-bold border-0 shadow-none p-0 h-auto bg-transparent focus-visible:ring-0"
-              placeholder="Nome do seu roadmap"
-            />
-            <Input
-              value={roadmapSubtitle}
-              onChange={(e) => setRoadmapSubtitle(e.target.value)}
-              className="text-lg text-muted-foreground border-0 shadow-none p-0 h-auto bg-transparent focus-visible:ring-0"
-              placeholder="Descrição do roadmap (opcional)"
-            />
+            <Input id="roadmap-title" value={roadmapTitle} onChange={e => setRoadmapTitle(e.target.value)} className="text-2xl font-bold border-0 shadow-none p-0 h-auto bg-transparent focus-visible:ring-0" placeholder="Nome do seu roadmap" />
+            <Input value={roadmapSubtitle} onChange={e => setRoadmapSubtitle(e.target.value)} className="text-lg text-muted-foreground border-0 shadow-none p-0 h-auto bg-transparent focus-visible:ring-0" placeholder="Descrição do roadmap (opcional)" />
           </div>
           
-          <Button 
-            onClick={() => setShowForm(true)}
-            className="bg-gradient-primary shadow-elegant hover:shadow-lg transition-all duration-300"
-          >
+          <Button onClick={() => setShowForm(true)} className="bg-gradient-primary shadow-elegant hover:shadow-lg transition-all duration-300">
             <Plus className="h-4 w-4 mr-2" />
             Nova Entrega
           </Button>
@@ -168,13 +174,7 @@ export function RoadmapBuilder() {
         </div>
 
         {/* Form */}
-        {showForm && (
-          <DeliveryForm
-            delivery={editingDelivery}
-            onSave={handleSaveDelivery}
-            onCancel={handleCancelForm}
-          />
-        )}
+        {showForm && <DeliveryForm delivery={editingDelivery} onSave={handleSaveDelivery} onCancel={handleCancelForm} />}
 
         {/* Main Content */}
         <Tabs defaultValue="timeline" className="space-y-6">
@@ -199,11 +199,9 @@ export function RoadmapBuilder() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Todos os times</SelectItem>
-                  {Array.from(new Set(deliveries.map(d => d.team))).map(team => (
-                    <SelectItem key={team} value={team}>
+                  {Array.from(new Set(deliveries.map(d => d.team))).map(team => <SelectItem key={team} value={team}>
                       {team}
-                    </SelectItem>
-                  ))}
+                    </SelectItem>)}
                 </SelectContent>
               </Select>
 
@@ -227,44 +225,27 @@ export function RoadmapBuilder() {
           </TabsContent>
 
           <TabsContent value="list" className="space-y-6">
-            {filteredDeliveries.length === 0 ? (
-              <Card className="shadow-card border-0">
+            {filteredDeliveries.length === 0 ? <Card className="shadow-card border-0">
                 <CardContent className="flex items-center justify-center py-12">
                   <div className="text-center space-y-4">
                     <MapPin className="h-12 w-12 text-muted-foreground mx-auto" />
                     <div className="space-y-2">
                       <h3 className="text-lg font-medium">Nenhuma entrega encontrada</h3>
                       <p className="text-muted-foreground">
-                        {deliveries.length === 0 
-                          ? "Comece criando sua primeira entrega!" 
-                          : "Tente ajustar os filtros para ver mais entregas."}
+                        {deliveries.length === 0 ? "Comece criando sua primeira entrega!" : "Tente ajustar os filtros para ver mais entregas."}
                       </p>
                     </div>
-                    <Button 
-                      onClick={() => setShowForm(true)}
-                      className="bg-gradient-primary"
-                    >
+                    <Button onClick={() => setShowForm(true)} className="bg-gradient-primary">
                       <Plus className="h-4 w-4 mr-2" />
                       Criar Primeira Entrega
                     </Button>
                   </div>
                 </CardContent>
-              </Card>
-            ) : (
-              <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-                {filteredDeliveries.map(delivery => (
-                  <DeliveryCard
-                    key={delivery.id}
-                    delivery={delivery}
-                    onEdit={handleEditDelivery}
-                    onDelete={handleDeleteDelivery}
-                  />
-                ))}
-              </div>
-            )}
+              </Card> : <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+                {filteredDeliveries.map(delivery => <DeliveryCard key={delivery.id} delivery={delivery} onEdit={handleEditDelivery} onDelete={handleDeleteDelivery} />)}
+              </div>}
           </TabsContent>
         </Tabs>
       </div>
-    </div>
-  );
+    </div>;
 }
