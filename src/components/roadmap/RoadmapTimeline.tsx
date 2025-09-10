@@ -224,7 +224,12 @@ export function RoadmapTimeline({ deliveries, onEditDelivery, allDeliveries = []
                   </div>
 
                   {/* Main Delivery Lane */}
-                  <div className="relative min-h-[100px] bg-muted/10 rounded-lg p-4">
+                  <div 
+                    className="relative bg-muted/10 rounded-lg p-4"
+                    style={{ 
+                      minHeight: `${80 + (linked.length * 56)}px` // 80px for main + 56px per linked task
+                    }}
+                  >
                     {/* Month background dividers */}
                     <div className="absolute top-0 left-4 right-4 bottom-0 pointer-events-none">
                       {months.slice(1).map((month) => {
@@ -243,12 +248,12 @@ export function RoadmapTimeline({ deliveries, onEditDelivery, allDeliveries = []
                     </div>
 
                     {/* Main Delivery Card */}
-                    <div className="relative mb-4">
+                    <div className="relative h-16 mb-4">
                       <Tooltip>
                         <TooltipTrigger asChild>
                           <div
                             className={cn(
-                              "absolute h-16 rounded-lg flex items-center px-4 transition-all duration-300 cursor-pointer hover:shadow-lg hover:scale-105",
+                              "absolute top-0 h-16 rounded-lg flex items-center px-4 transition-all duration-300 cursor-pointer hover:shadow-lg hover:scale-[1.02]",
                               getStatusColor(main.status),
                               "text-white shadow-lg border-2 border-white/20"
                             )}
@@ -320,17 +325,22 @@ export function RoadmapTimeline({ deliveries, onEditDelivery, allDeliveries = []
 
                     {/* Linked Tasks */}
                     {linked.length > 0 && (
-                      <div className="space-y-2 ml-6">
-                        <div className="text-sm font-medium text-muted-foreground mb-2">
-                          Tarefas Vinculadas:
+                      <div className="space-y-3 ml-8">
+                        <div className="text-sm font-medium text-muted-foreground mb-2 flex items-center gap-2">
+                          <div className="w-6 h-px bg-border"></div>
+                          Tarefas Vinculadas
                         </div>
-                        {linked.map((task) => (
-                          <div key={task.id} className="relative">
+                        {linked.map((task, index) => (
+                          <div 
+                            key={task.id} 
+                            className="relative h-10"
+                            style={{ marginTop: index === 0 ? 0 : '12px' }}
+                          >
                             <Tooltip>
                               <TooltipTrigger asChild>
                                 <div
                                   className={cn(
-                                    "absolute h-10 rounded-md flex items-center px-3 transition-all duration-300 cursor-pointer",
+                                    "absolute top-0 h-10 rounded-md flex items-center px-3 transition-all duration-300 cursor-pointer hover:shadow-md hover:scale-[1.02]",
                                     getStatusColor(task.status),
                                     "text-white shadow-sm opacity-90 hover:opacity-100 border border-white/20"
                                   )}
