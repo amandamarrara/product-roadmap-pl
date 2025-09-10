@@ -117,7 +117,6 @@ export function RoadmapTimeline({ deliveries }: RoadmapTimelineProps) {
                 <div key={delivery.id} className="relative">
                   <div className="flex items-center gap-3 mb-2">
                     <div className="flex-1 min-w-0">
-                      <h4 className="font-medium truncate">{delivery.title}</h4>
                       <div className="flex items-center gap-2 text-sm text-muted-foreground">
                         <Badge 
                           variant="secondary" 
