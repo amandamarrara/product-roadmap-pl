@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { CalendarDays, Link, ChevronDown, ChevronRight, Calendar } from "lucide-react";
-import { format, startOfYear, endOfYear, eachQuarterOfInterval, startOfQuarter, endOfQuarter, differenceInDays, getQuarter } from "date-fns";
+import { format, differenceInDays, addDays, startOfMonth, eachMonthOfInterval, min, max } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import type { Delivery } from "@/types/roadmap";
 import { cn } from "@/lib/utils";
@@ -34,44 +34,57 @@ export function RoadmapTimeline({ deliveries, onEditDelivery, allDeliveries = []
     );
   }
 
-  // Group deliveries by team/category
-  const deliveriesByCategory = deliveries.reduce((acc, delivery) => {
-    const category = delivery.team || 'Sem Categoria';
-    if (!acc[category]) {
-      acc[category] = [];
-    }
-    acc[category].push(delivery);
-    return acc;
-  }, {} as Record<string, Delivery[]>);
+  // Group deliveries: main deliveries with their linked tasks
+  const mainDeliveries = deliveries.filter(delivery => 
+    !allDeliveries.some(other => other.linkedDeliveries?.includes(delivery.id))
+  );
 
-  // Calculate timeline bounds by quarters
-  const currentYear = new Date().getFullYear();
-  const yearStart = startOfYear(new Date(currentYear, 0, 1));
-  const yearEnd = endOfYear(new Date(currentYear, 11, 31));
-  const quarters = eachQuarterOfInterval({ start: yearStart, end: yearEnd });
+  const deliveriesWithLinked = mainDeliveries.map(delivery => ({
+    main: delivery,
+    linked: allDeliveries.filter(d => delivery.linkedDeliveries?.includes(d.id))
+  }));
+
+  // Calculate dynamic timeline bounds
+  const allDates = deliveries.flatMap(d => [d.startDate, d.endDate]);
+  const timelineStart = allDates.length > 0 ? min(allDates) : new Date();
+  const timelineEnd = allDates.length > 0 ? max(allDates) : addDays(new Date(), 90);
   
-  const totalDays = differenceInDays(yearEnd, yearStart);
+  // Add some padding to the timeline
+  const paddedStart = addDays(timelineStart, -7);
+  const paddedEnd = addDays(timelineEnd, 7);
+  
+  const totalDays = differenceInDays(paddedEnd, paddedStart);
+  
+  // Generate month markers for the timeline
+  const months = eachMonthOfInterval({ start: paddedStart, end: paddedEnd });
 
   const getDeliveryPosition = (delivery: Delivery) => {
-    const startOffset = differenceInDays(delivery.startDate, yearStart);
+    const startOffset = differenceInDays(delivery.startDate, paddedStart);
     const duration = differenceInDays(delivery.endDate, delivery.startDate) + 1;
     
     return {
-      left: `${(startOffset / totalDays) * 100}%`,
-      width: `${(duration / totalDays) * 100}%`
+      left: `${Math.max(0, (startOffset / totalDays) * 100)}%`,
+      width: `${Math.min(100, (duration / totalDays) * 100)}%`
     };
   };
 
-  const getCategoryColor = (teamName: string) => {
-    const normalizedName = teamName.toLowerCase();
-    if (normalizedName.includes('frontend') || normalizedName.includes('front')) return 'bg-category-frontend';
-    if (normalizedName.includes('backend') || normalizedName.includes('back')) return 'bg-category-backend';
-    if (normalizedName.includes('mobile') || normalizedName.includes('app')) return 'bg-category-mobile';
-    if (normalizedName.includes('devops') || normalizedName.includes('infra')) return 'bg-category-devops';
-    if (normalizedName.includes('design') || normalizedName.includes('ux')) return 'bg-category-design';
-    if (normalizedName.includes('qa') || normalizedName.includes('test')) return 'bg-category-qa';
-    if (normalizedName.includes('data') || normalizedName.includes('analy')) return 'bg-category-data';
-    return 'bg-category-default';
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'completed': return 'bg-green-600';
+      case 'in-progress': return 'bg-blue-600';
+      case 'blocked': return 'bg-red-600';
+      default: return 'bg-gray-600';
+    }
+  };
+
+  const getPriorityColor = (priority: string) => {
+    switch (priority) {
+      case 'critical': return 'bg-red-600';
+      case 'high': return 'bg-orange-600';
+      case 'medium': return 'bg-yellow-600';
+      case 'low': return 'bg-green-600';
+      default: return 'bg-gray-600';
+    }
   };
 
   const getComplexityLabel = (complexity: string) => {
@@ -141,234 +154,237 @@ export function RoadmapTimeline({ deliveries, onEditDelivery, allDeliveries = []
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Calendar className="h-5 w-5" />
-            Roadmap por Categorias - {currentYear}
+            Roadmap de Entregas
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
-          {/* Quarter Headers */}
+          {/* Timeline Headers - Dynamic months */}
           <div className="relative border-b pb-4">
-            <div className="grid grid-cols-4 gap-1">
-              {quarters.map((quarter, index) => (
-                <div 
-                  key={quarter.getTime()}
-                  className="text-center"
-                >
-                  <div className="text-lg font-semibold text-foreground mb-1">
-                    Q{index + 1} {currentYear}
+            <div className="flex gap-1 overflow-x-auto">
+              {months.map((month) => {
+                const monthStart = startOfMonth(month);
+                const monthOffset = differenceInDays(monthStart, paddedStart);
+                const monthPosition = (monthOffset / totalDays) * 100;
+                
+                return (
+                  <div 
+                    key={month.getTime()}
+                    className="flex-shrink-0 text-center min-w-[80px]"
+                    style={{ 
+                      position: 'absolute',
+                      left: `${monthPosition}%`,
+                      transform: 'translateX(-50%)'
+                    }}
+                  >
+                    <div className="text-sm font-semibold text-foreground">
+                      {format(month, "MMM yyyy", { locale: ptBR })}
+                    </div>
                   </div>
-                  <div className="text-sm text-muted-foreground">
-                    {format(startOfQuarter(quarter), "MMM", { locale: ptBR })} - {format(endOfQuarter(quarter), "MMM", { locale: ptBR })}
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
             
-            {/* Quarter dividers */}
+            {/* Month dividers */}
             <div className="absolute top-0 left-0 w-full h-full pointer-events-none">
-              {[25, 50, 75].map(position => (
-                <div
-                  key={position}
-                  className="absolute top-0 bottom-0 w-px bg-border/50"
-                  style={{ left: `${position}%` }}
-                />
-              ))}
+              {months.slice(1).map((month) => {
+                const monthStart = startOfMonth(month);
+                const monthOffset = differenceInDays(monthStart, paddedStart);
+                const monthPosition = (monthOffset / totalDays) * 100;
+                
+                return (
+                  <div
+                    key={month.getTime()}
+                    className="absolute top-0 bottom-0 w-px bg-border/50"
+                    style={{ left: `${monthPosition}%` }}
+                  />
+                );
+              })}
             </div>
           </div>
 
-          {/* Category Lanes */}
+          {/* Main Deliveries with Linked Tasks */}
           <TooltipProvider>
-            <div className="space-y-6">
-              {Object.entries(deliveriesByCategory).map(([category, categoryDeliveries]) => (
-                <div key={category} className="space-y-3">
-                  {/* Category Header */}
+            <div className="space-y-8">
+              {deliveriesWithLinked.map(({ main, linked }) => (
+                <div key={main.id} className="space-y-4">
+                  {/* Main Delivery Header */}
                   <div className="flex items-center gap-3">
-                    <div 
-                      className={cn(
-                        "w-4 h-4 rounded-full",
-                        getCategoryColor(category)
-                      )}
-                    />
-                    <h3 className="font-semibold text-foreground">{category}</h3>
+                    <h3 className="font-semibold text-foreground text-lg">{main.title}</h3>
                     <Badge variant="outline" className="text-xs">
-                      {categoryDeliveries.length} {categoryDeliveries.length === 1 ? 'entrega' : 'entregas'}
+                      {linked.length > 0 ? `${linked.length + 1} tarefas` : '1 tarefa'}
+                    </Badge>
+                    <Badge 
+                      className={cn(
+                        "text-white text-xs",
+                        getPriorityColor(main.priority)
+                      )}
+                    >
+                      {getPriorityLabel(main.priority)}
                     </Badge>
                   </div>
 
-                  {/* Category Lane */}
-                  <div className="relative min-h-[80px] bg-muted/10 rounded-lg p-4">
-                    {/* Quarter background dividers */}
+                  {/* Main Delivery Lane */}
+                  <div className="relative min-h-[100px] bg-muted/10 rounded-lg p-4">
+                    {/* Month background dividers */}
                     <div className="absolute top-0 left-4 right-4 bottom-0 pointer-events-none">
-                      {[25, 50, 75].map(position => (
-                        <div
-                          key={position}
-                          className="absolute top-0 bottom-0 w-px bg-border/30"
-                          style={{ left: `${position}%` }}
-                        />
-                      ))}
+                      {months.slice(1).map((month) => {
+                        const monthStart = startOfMonth(month);
+                        const monthOffset = differenceInDays(monthStart, paddedStart);
+                        const monthPosition = (monthOffset / totalDays) * 100;
+                        
+                        return (
+                          <div
+                            key={month.getTime()}
+                            className="absolute top-0 bottom-0 w-px bg-border/30"
+                            style={{ left: `${monthPosition}%` }}
+                          />
+                        );
+                      })}
                     </div>
 
-                    {/* Delivery Cards */}
-                    {categoryDeliveries.map((delivery, index) => {
-                      const position = getDeliveryPosition(delivery);
-                      const linkedDeliveries = getLinkedDeliveries(delivery);
-                      const isExpanded = expandedDeliveries.has(delivery.id);
-                      
-                      return (
-                        <div 
-                          key={delivery.id} 
-                          className="relative mb-3 last:mb-0"
-                          style={{ 
-                            marginTop: index > 0 ? '8px' : '0'
-                          }}
-                        >
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <div
-                                className={cn(
-                                  "absolute h-12 rounded-lg flex items-center px-3 transition-all duration-300 cursor-pointer hover:shadow-lg hover:scale-105",
-                                  getCategoryColor(category),
-                                  "text-white shadow-md"
+                    {/* Main Delivery Card */}
+                    <div className="relative mb-4">
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <div
+                            className={cn(
+                              "absolute h-16 rounded-lg flex items-center px-4 transition-all duration-300 cursor-pointer hover:shadow-lg hover:scale-105",
+                              getStatusColor(main.status),
+                              "text-white shadow-lg border-2 border-white/20"
+                            )}
+                            style={getDeliveryPosition(main)}
+                            onClick={() => handleCardClick(main)}
+                          >
+                            <div className="flex items-center justify-between w-full min-w-0">
+                              <div className="flex items-center gap-2 min-w-0 flex-1">
+                                <span className="font-semibold text-base truncate">
+                                  {main.title}
+                                </span>
+                                {linked.length > 0 && (
+                                  <Badge variant="secondary" className="bg-white/30 text-white text-xs">
+                                    <Link className="h-3 w-3 mr-1" />
+                                    {linked.length}
+                                  </Badge>
                                 )}
-                                style={position}
-                                onClick={() => handleCardClick(delivery)}
-                              >
-                                <div className="flex items-center justify-between w-full min-w-0">
-                                  <div className="flex items-center gap-2 min-w-0 flex-1">
-                                    <span className="font-medium text-sm truncate">
-                                      {delivery.title}
-                                    </span>
-                                    {linkedDeliveries.length > 0 && (
-                                      <div className="flex items-center gap-1">
-                                        <Button
-                                          variant="ghost"
-                                          size="sm"
-                                          onClick={(e) => {
-                                            e.stopPropagation();
-                                            toggleExpanded(delivery.id);
-                                          }}
-                                          className="h-6 w-6 p-0 text-white hover:bg-white/20"
-                                        >
-                                          {isExpanded ? (
-                                            <ChevronDown className="h-3 w-3" />
-                                          ) : (
-                                            <ChevronRight className="h-3 w-3" />
-                                          )}
-                                        </Button>
-                                        <Badge variant="secondary" className="bg-white/20 text-white text-xs px-1">
-                                          <Link className="h-3 w-3 mr-1" />
-                                          {linkedDeliveries.length}
-                                        </Badge>
-                                      </div>
-                                    )}
-                                  </div>
-                                  <div className="text-xs font-medium">
-                                    {delivery.progress}%
-                                  </div>
-                                </div>
-
-                                {/* Progress overlay */}
-                                <div
-                                  className="absolute top-0 left-0 h-full bg-white/20 rounded-lg pointer-events-none"
-                                  style={{
-                                    width: `${delivery.progress}%`
-                                  }}
-                                />
                               </div>
-                            </TooltipTrigger>
-                            <TooltipContent 
-                              side="top" 
-                              className="max-w-sm p-4 bg-popover border shadow-lg"
-                            >
-                              <div className="space-y-3">
-                                <div className="font-semibold text-base">{delivery.title}</div>
-                                {delivery.description && (
-                                  <div className="text-sm text-muted-foreground leading-relaxed">
-                                    {delivery.description}
-                                  </div>
-                                )}
-                                <div className="grid grid-cols-2 gap-2 text-xs">
-                                  <div>
-                                    <span className="font-medium">Responsável:</span>
-                                    <div>{delivery.responsible}</div>
-                                  </div>
-                                  <div>
-                                    <span className="font-medium">Categoria:</span>
-                                    <div>{delivery.team}</div>
-                                  </div>
-                                  <div>
-                                    <span className="font-medium">Complexidade:</span>
-                                    <div>{getComplexityLabel(delivery.complexity)}</div>
-                                  </div>
-                                  <div>
-                                    <span className="font-medium">Prioridade:</span>
-                                    <div>{getPriorityLabel(delivery.priority)}</div>
-                                  </div>
-                                </div>
-                                <div className="text-xs text-muted-foreground">
-                                  {format(delivery.startDate, "dd/MM/yyyy", { locale: ptBR })} - {format(delivery.endDate, "dd/MM/yyyy", { locale: ptBR })}
-                                </div>
+                              <div className="text-sm font-bold">
+                                {main.progress}%
                               </div>
-                            </TooltipContent>
-                          </Tooltip>
-
-                          {/* Linked Deliveries */}
-                          {isExpanded && linkedDeliveries.length > 0 && (
-                            <div className="mt-16 ml-6 space-y-2">
-                              <div className="text-sm font-medium text-muted-foreground mb-2">
-                                Entregas Vinculadas:
-                              </div>
-                              {linkedDeliveries.map((linked) => {
-                                const linkedPosition = getDeliveryPosition(linked);
-                                return (
-                                  <div 
-                                    key={linked.id} 
-                                    className="relative"
-                                  >
-                                    <div
-                                      className={cn(
-                                        "absolute h-8 rounded-md flex items-center px-2 transition-all duration-300 cursor-pointer",
-                                        getCategoryColor(linked.team),
-                                        "text-white shadow-sm opacity-80 hover:opacity-100"
-                                      )}
-                                      style={linkedPosition}
-                                      onClick={() => handleCardClick(linked)}
-                                    >
-                                      <div className="flex items-center gap-2 w-full">
-                                        <Link className="h-3 w-3" />
-                                        <span className="text-xs font-medium truncate">
-                                          {linked.title}
-                                        </span>
-                                        <span className="text-xs ml-auto">
-                                          {linked.progress}%
-                                        </span>
-                                      </div>
-                                    </div>
-                                  </div>
-                                );
-                              })}
                             </div>
-                          )}
+
+                            {/* Progress overlay */}
+                            <div
+                              className="absolute top-0 left-0 h-full bg-white/30 rounded-lg pointer-events-none"
+                              style={{
+                                width: `${main.progress}%`
+                              }}
+                            />
+                          </div>
+                        </TooltipTrigger>
+                        <TooltipContent 
+                          side="top" 
+                          className="max-w-sm p-4 bg-popover border shadow-lg"
+                        >
+                          <div className="space-y-3">
+                            <div className="font-semibold text-base">{main.title}</div>
+                            {main.description && (
+                              <div className="text-sm text-muted-foreground leading-relaxed">
+                                {main.description}
+                              </div>
+                            )}
+                            <div className="grid grid-cols-2 gap-2 text-xs">
+                              <div>
+                                <span className="font-medium">Responsável:</span>
+                                <div>{main.responsible}</div>
+                              </div>
+                              <div>
+                                <span className="font-medium">Team:</span>
+                                <div>{main.team}</div>
+                              </div>
+                              <div>
+                                <span className="font-medium">Complexidade:</span>
+                                <div>{getComplexityLabel(main.complexity)}</div>
+                              </div>
+                              <div>
+                                <span className="font-medium">Status:</span>
+                                <div className="capitalize">{main.status}</div>
+                              </div>
+                            </div>
+                            <div className="text-xs text-muted-foreground">
+                              {format(main.startDate, "dd/MM/yyyy", { locale: ptBR })} - {format(main.endDate, "dd/MM/yyyy", { locale: ptBR })}
+                            </div>
+                          </div>
+                        </TooltipContent>
+                      </Tooltip>
+                    </div>
+
+                    {/* Linked Tasks */}
+                    {linked.length > 0 && (
+                      <div className="space-y-2 ml-6">
+                        <div className="text-sm font-medium text-muted-foreground mb-2">
+                          Tarefas Vinculadas:
                         </div>
-                      );
-                    })}
+                        {linked.map((task) => (
+                          <div key={task.id} className="relative">
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <div
+                                  className={cn(
+                                    "absolute h-10 rounded-md flex items-center px-3 transition-all duration-300 cursor-pointer",
+                                    getStatusColor(task.status),
+                                    "text-white shadow-sm opacity-90 hover:opacity-100 border border-white/20"
+                                  )}
+                                  style={getDeliveryPosition(task)}
+                                  onClick={() => handleCardClick(task)}
+                                >
+                                  <div className="flex items-center gap-2 w-full min-w-0">
+                                    <Link className="h-3 w-3 flex-shrink-0" />
+                                    <span className="text-sm font-medium truncate flex-1">
+                                      {task.title}
+                                    </span>
+                                    <span className="text-xs font-medium">
+                                      {task.progress}%
+                                    </span>
+                                  </div>
+
+                                  {/* Progress overlay */}
+                                  <div
+                                    className="absolute top-0 left-0 h-full bg-white/20 rounded-md pointer-events-none"
+                                    style={{
+                                      width: `${task.progress}%`
+                                    }}
+                                  />
+                                </div>
+                              </TooltipTrigger>
+                              <TooltipContent 
+                                side="top" 
+                                className="max-w-sm p-4 bg-popover border shadow-lg"
+                              >
+                                <div className="space-y-2">
+                                  <div className="font-semibold">{task.title}</div>
+                                  {task.description && (
+                                    <div className="text-sm text-muted-foreground">
+                                      {task.description}
+                                    </div>
+                                  )}
+                                  <div className="text-xs text-muted-foreground">
+                                    {format(task.startDate, "dd/MM/yyyy", { locale: ptBR })} - {format(task.endDate, "dd/MM/yyyy", { locale: ptBR })}
+                                  </div>
+                                  <div className="text-xs">
+                                    <span className="font-medium">Responsável:</span> {task.responsible}
+                                  </div>
+                                </div>
+                              </TooltipContent>
+                            </Tooltip>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
               ))}
             </div>
           </TooltipProvider>
-
-          {/* Legend */}
-          <div className="flex flex-wrap gap-4 pt-4 border-t">
-            <div className="text-sm font-medium text-muted-foreground mb-2 w-full">
-              Categorias:
-            </div>
-            {Object.keys(deliveriesByCategory).map(category => (
-              <div key={category} className="flex items-center gap-2 text-sm">
-                <div className={cn("w-3 h-3 rounded-full", getCategoryColor(category))} />
-                <span>{category}</span>
-              </div>
-            ))}
-          </div>
         </CardContent>
       </Card>
     </div>
