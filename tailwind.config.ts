@@ -66,6 +66,16 @@ export default {
           high: "hsl(var(--roadmap-high))",
           critical: "hsl(var(--roadmap-critical))",
         },
+        category: {
+          frontend: "hsl(var(--category-frontend))",
+          backend: "hsl(var(--category-backend))",
+          mobile: "hsl(var(--category-mobile))",
+          devops: "hsl(var(--category-devops))",
+          design: "hsl(var(--category-design))",
+          qa: "hsl(var(--category-qa))",
+          data: "hsl(var(--category-data))",
+          default: "hsl(var(--category-default))",
+        },
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",
           foreground: "hsl(var(--sidebar-foreground))",
