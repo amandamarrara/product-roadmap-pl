@@ -8,48 +8,49 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import { CalendarIcon, Plus, X } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
-import type { Delivery, Priority, Complexity, Team, TeamMember } from "@/types/roadmap";
+import type { Delivery, Priority, Complexity } from "@/types/roadmap";
 
 interface DeliveryFormProps {
   delivery?: Delivery;
-  teams: Team[];
+  allDeliveries?: Delivery[];
   onSave: (delivery: Omit<Delivery, 'id'>) => void;
   onCancel: () => void;
 }
 
-export function DeliveryForm({ delivery, teams, onSave, onCancel }: DeliveryFormProps) {
+export function DeliveryForm({ delivery, allDeliveries = [], onSave, onCancel }: DeliveryFormProps) {
   const [title, setTitle] = useState(delivery?.title || '');
   const [description, setDescription] = useState(delivery?.description || '');
   const [startDate, setStartDate] = useState<Date | undefined>(delivery?.startDate);
   const [endDate, setEndDate] = useState<Date | undefined>(delivery?.endDate);
-  const [selectedTeam, setSelectedTeam] = useState<Team | undefined>(delivery?.team);
+  const [team, setTeam] = useState(delivery?.team || '');
   const [complexity, setComplexity] = useState<Complexity>(delivery?.complexity || 'medium');
   const [priority, setPriority] = useState<Priority>(delivery?.priority || 'medium');
-  const [responsible, setResponsible] = useState<TeamMember | undefined>(delivery?.responsible);
+  const [responsible, setResponsible] = useState(delivery?.responsible || '');
+  const [linkedDeliveries, setLinkedDeliveries] = useState<string[]>(delivery?.linkedDeliveries || []);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title || !startDate || !endDate || !selectedTeam || !responsible) return;
+    if (!title || !startDate || !endDate || !team || !responsible) return;
 
     onSave({
       title,
       description,
       startDate,
       endDate,
-      team: selectedTeam,
+      team,
       complexity,
       priority,
       responsible,
       subDeliveries: delivery?.subDeliveries || [],
       progress: delivery?.progress || 0,
-      status: delivery?.status || 'not-started'
+      status: delivery?.status || 'not-started',
+      linkedDeliveries
     });
   };
-
-  const availableMembers = selectedTeam?.members || [];
 
   const getPriorityColor = (priority: Priority) => {
     switch (priority) {
@@ -67,6 +68,16 @@ export function DeliveryForm({ delivery, teams, onSave, onCancel }: DeliveryForm
       case 'complex': return 'Complexo';
       case 'very-complex': return 'Muito Complexo';
     }
+  };
+
+  const availableLinkedDeliveries = allDeliveries.filter(d => d.id !== delivery?.id);
+
+  const toggleLinkedDelivery = (deliveryId: string) => {
+    setLinkedDeliveries(prev => 
+      prev.includes(deliveryId) 
+        ? prev.filter(id => id !== deliveryId)
+        : [...prev, deliveryId]
+    );
   };
 
   return (
@@ -162,60 +173,25 @@ export function DeliveryForm({ delivery, teams, onSave, onCancel }: DeliveryForm
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label>Time Responsável</Label>
-                <Select value={selectedTeam?.id} onValueChange={(id) => {
-                  const team = teams.find(t => t.id === id);
-                  setSelectedTeam(team);
-                  setResponsible(undefined);
-                }}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecionar time" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {teams.map((team) => (
-                      <SelectItem key={team.id} value={team.id}>
-                        <div className="flex items-center gap-2">
-                          <div 
-                            className="w-3 h-3 rounded-full"
-                            style={{ backgroundColor: team.color }}
-                          />
-                          {team.name}
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Label htmlFor="team">Time Responsável</Label>
+                <Input
+                  id="team"
+                  value={team}
+                  onChange={(e) => setTeam(e.target.value)}
+                  placeholder="Ex: Frontend, Backend, Mobile..."
+                  required
+                />
               </div>
 
               <div>
-                <Label>Responsável</Label>
-                <Select 
-                  value={responsible?.id} 
-                  onValueChange={(id) => {
-                    const member = availableMembers.find(m => m.id === id);
-                    setResponsible(member);
-                  }}
-                  disabled={!selectedTeam}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecionar responsável" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {availableMembers.map((member) => (
-                      <SelectItem key={member.id} value={member.id}>
-                        <div className="flex items-center gap-2">
-                          <div className="w-6 h-6 bg-primary/20 rounded-full flex items-center justify-center text-xs font-medium">
-                            {member.name.split(' ').map(n => n[0]).join('').toUpperCase()}
-                          </div>
-                          <div>
-                            <div className="font-medium">{member.name}</div>
-                            <div className="text-xs text-muted-foreground">{member.role}</div>
-                          </div>
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Label htmlFor="responsible">Responsável</Label>
+                <Input
+                  id="responsible"
+                  value={responsible}
+                  onChange={(e) => setResponsible(e.target.value)}
+                  placeholder="Ex: João Silva, Maria Santos..."
+                  required
+                />
               </div>
             </div>
 
@@ -270,17 +246,36 @@ export function DeliveryForm({ delivery, teams, onSave, onCancel }: DeliveryForm
                 </Select>
               </div>
             </div>
+
+            {availableLinkedDeliveries.length > 0 && (
+              <div>
+                <Label>Entregas Vinculadas</Label>
+                <div className="mt-2 space-y-2 max-h-40 overflow-y-auto border rounded-md p-3">
+                  {availableLinkedDeliveries.map((linkedDelivery) => (
+                    <div key={linkedDelivery.id} className="flex items-center space-x-2">
+                      <Checkbox
+                        id={`linked-${linkedDelivery.id}`}
+                        checked={linkedDeliveries.includes(linkedDelivery.id)}
+                        onCheckedChange={() => toggleLinkedDelivery(linkedDelivery.id)}
+                      />
+                      <Label 
+                        htmlFor={`linked-${linkedDelivery.id}`}
+                        className="text-sm font-normal cursor-pointer flex-1"
+                      >
+                        {linkedDelivery.title}
+                      </Label>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="flex items-center justify-between pt-4">
             <div className="flex gap-2">
-              {selectedTeam && (
+              {team && (
                 <Badge variant="secondary" className="bg-gradient-roadmap">
-                  <div 
-                    className="w-2 h-2 rounded-full mr-2"
-                    style={{ backgroundColor: selectedTeam.color }}
-                  />
-                  {selectedTeam.name}
+                  {team}
                 </Badge>
               )}
               <Badge 
@@ -295,6 +290,11 @@ export function DeliveryForm({ delivery, teams, onSave, onCancel }: DeliveryForm
               <Badge variant="outline">
                 {getComplexityLabel(complexity)}
               </Badge>
+              {linkedDeliveries.length > 0 && (
+                <Badge variant="outline">
+                  {linkedDeliveries.length} vinculada{linkedDeliveries.length > 1 ? 's' : ''}
+                </Badge>
+              )}
             </div>
             
             <div className="flex gap-2">

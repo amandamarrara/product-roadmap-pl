@@ -47,7 +47,7 @@ const mockTeams: Team[] = [
 ];
 
 export function RoadmapBuilder() {
-  const [roadmapTitle, setRoadmapTitle] = useState('Meu Roadmap');
+  const [roadmapTitle, setRoadmapTitle] = useState('Roadmap Plataforma Logística');
   const [deliveries, setDeliveries] = useState<Delivery[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [editingDelivery, setEditingDelivery] = useState<Delivery | undefined>();
@@ -89,7 +89,7 @@ export function RoadmapBuilder() {
   };
 
   const filteredDeliveries = deliveries.filter(delivery => {
-    const teamMatch = filterTeam === 'all' || delivery.team.id === filterTeam;
+    const teamMatch = filterTeam === 'all' || delivery.team === filterTeam;
     const priorityMatch = filterPriority === 'all' || delivery.priority === filterPriority;
     return teamMatch && priorityMatch;
   });
@@ -111,16 +111,7 @@ export function RoadmapBuilder() {
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <Label htmlFor="roadmap-title" className="text-sm font-medium">Título do Roadmap</Label>
-            </div>
-            <Input
-              id="roadmap-title"
-              value={roadmapTitle}
-              onChange={(e) => setRoadmapTitle(e.target.value)}
-              className="text-2xl font-bold border-0 shadow-none p-0 h-auto bg-transparent focus-visible:ring-0"
-              placeholder="Nome do seu roadmap"
-            />
+            <h1 className="text-2xl font-bold">{roadmapTitle}</h1>
           </div>
           
           <Button 
@@ -164,7 +155,7 @@ export function RoadmapBuilder() {
         {showForm && (
           <DeliveryForm
             delivery={editingDelivery}
-            teams={mockTeams}
+            allDeliveries={deliveries}
             onSave={handleSaveDelivery}
             onCancel={handleCancelForm}
           />
@@ -191,20 +182,14 @@ export function RoadmapBuilder() {
                 <SelectTrigger className="w-32">
                   <SelectValue placeholder="Time" />
                 </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos os times</SelectItem>
-                  {mockTeams.map(team => (
-                    <SelectItem key={team.id} value={team.id}>
-                      <div className="flex items-center gap-2">
-                        <div 
-                          className="w-2 h-2 rounded-full"
-                          style={{ backgroundColor: team.color }}
-                        />
-                        {team.name}
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
+                 <SelectContent>
+                   <SelectItem value="all">Todos os times</SelectItem>
+                   {[...new Set(deliveries.map(d => d.team))].map(team => (
+                     <SelectItem key={team} value={team}>
+                       {team}
+                     </SelectItem>
+                   ))}
+                 </SelectContent>
               </Select>
 
               <Select value={filterPriority} onValueChange={setFilterPriority}>
@@ -222,9 +207,13 @@ export function RoadmapBuilder() {
             </div>
           </div>
 
-          <TabsContent value="timeline" className="space-y-6">
-            <RoadmapTimeline deliveries={filteredDeliveries} />
-          </TabsContent>
+           <TabsContent value="timeline" className="space-y-6">
+             <RoadmapTimeline 
+               deliveries={filteredDeliveries} 
+               onEditDelivery={handleEditDelivery}
+               allDeliveries={deliveries}
+             />
+           </TabsContent>
 
           <TabsContent value="list" className="space-y-6">
             {filteredDeliveries.length === 0 ? (

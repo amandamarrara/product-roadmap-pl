@@ -112,11 +112,7 @@ export function DeliveryCard({ delivery, onEdit, onDelete, className }: Delivery
           </Badge>
           
           <Badge variant="outline" className="bg-background/50">
-            <div 
-              className="w-2 h-2 rounded-full mr-2"
-              style={{ backgroundColor: delivery.team.color }}
-            />
-            {delivery.team.name}
+            {delivery.team}
           </Badge>
 
           <div className="flex items-center gap-1">
@@ -152,12 +148,11 @@ export function DeliveryCard({ delivery, onEdit, onDelete, className }: Delivery
           <div className="flex items-center gap-2">
             <Avatar className="h-6 w-6">
               <AvatarFallback className="text-xs bg-primary/20">
-                {delivery.responsible.name.split(' ').map(n => n[0]).join('').toUpperCase()}
+                {delivery.responsible.split(' ').map(n => n[0]).join('').toUpperCase()}
               </AvatarFallback>
             </Avatar>
             <div className="text-sm">
-              <div className="font-medium">{delivery.responsible.name}</div>
-              <div className="text-muted-foreground text-xs">{delivery.responsible.role}</div>
+              <div className="font-medium">{delivery.responsible}</div>
             </div>
           </div>
 
