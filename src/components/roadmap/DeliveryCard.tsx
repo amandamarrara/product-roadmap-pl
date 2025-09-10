@@ -3,7 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { CalendarDays, Edit, MoreVertical, Users, Clock, AlertTriangle } from "lucide-react";
+import { CalendarDays, Edit, MoreVertical, Users, Clock, AlertTriangle, ExternalLink, MapPin } from "lucide-react";
 import { format, differenceInDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import type { Delivery, Priority, Complexity } from "@/types/roadmap";
@@ -111,13 +111,26 @@ export function DeliveryCard({ delivery, onEdit, onDelete, className }: Delivery
             {delivery.priority === 'critical' && 'Crítica'}
           </Badge>
           
-          <Badge variant="outline" className="bg-background/50">
-            <div 
-              className="w-2 h-2 rounded-full mr-2"
-              style={{ backgroundColor: delivery.deliveryColor || '#3b82f6' }}
-            />
-            {delivery.team}
-          </Badge>
+          {delivery.deliveryPhase && (
+            <Badge variant="outline" className="bg-background/50">
+              <MapPin className="w-3 h-3 mr-1" />
+              {delivery.deliveryPhase}
+            </Badge>
+          )}
+          
+          {delivery.jiraLink && (
+            <Badge variant="outline" className="bg-background/50">
+              <a
+                href={delivery.jiraLink}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1 hover:text-primary"
+              >
+                <ExternalLink className="w-3 h-3" />
+                Épico
+              </a>
+            </Badge>
+          )}
 
           <div className="flex items-center gap-1">
             {Array.from({ length: getComplexityDots(delivery.complexity) }).map((_, i) => (
@@ -149,17 +162,6 @@ export function DeliveryCard({ delivery, onEdit, onDelete, className }: Delivery
         </div>
 
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Avatar className="h-6 w-6">
-              <AvatarFallback className="text-xs bg-primary/20">
-                {delivery.responsible.split(' ').map(n => n[0]).join('').toUpperCase()}
-              </AvatarFallback>
-            </Avatar>
-            <div className="text-sm">
-              <div className="font-medium">{delivery.responsible}</div>
-            </div>
-          </div>
-
           {delivery.subDeliveries.length > 0 && (
             <Badge variant="secondary" className="bg-primary/10 text-primary">
               <Users className="h-3 w-3 mr-1" />

@@ -110,7 +110,7 @@ export function RoadmapBuilder() {
     setEditingDelivery(undefined);
   };
   const filteredDeliveries = deliveries.filter(delivery => {
-    const teamMatch = filterTeam === 'all' || delivery.team === filterTeam;
+    const teamMatch = filterTeam === 'all' || delivery.deliveryPhase === filterTeam;
     const priorityMatch = filterPriority === 'all' || delivery.priority === filterPriority;
     return teamMatch && priorityMatch;
   });
@@ -195,12 +195,12 @@ export function RoadmapBuilder() {
               <Filter className="h-4 w-4 text-muted-foreground" />
               <Select value={filterTeam} onValueChange={setFilterTeam}>
                 <SelectTrigger className="w-32">
-                  <SelectValue placeholder="Time" />
+                  <SelectValue placeholder="Fase" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Todos os times</SelectItem>
-                  {Array.from(new Set(deliveries.map(d => d.team))).map(team => <SelectItem key={team} value={team}>
-                      {team}
+                  <SelectItem value="all">Todas as fases</SelectItem>
+                  {Array.from(new Set(deliveries.map(d => d.deliveryPhase).filter(Boolean))).map(phase => <SelectItem key={phase} value={phase!}>
+                      {phase}
                     </SelectItem>)}
                 </SelectContent>
               </Select>

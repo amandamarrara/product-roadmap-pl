@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { CalendarDays, Users } from "lucide-react";
+import { CalendarDays, Users, MapPin, ExternalLink } from "lucide-react";
 import { format, startOfWeek, endOfWeek, eachWeekOfInterval, isSameWeek, differenceInDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -167,17 +167,52 @@ export function RoadmapTimeline({
                     <TooltipContent className="max-w-sm">
                       <div className="space-y-2">
                         <div className="font-semibold">{delivery.title}</div>
-                        {delivery.description && <div className="text-sm text-muted-foreground">{delivery.description}</div>}
-                        <div className="grid grid-cols-2 gap-2 text-sm">
-                          <div><strong>Team:</strong> {delivery.team}</div>
-                          <div><strong>Responsável:</strong> {delivery.responsible}</div>
-                          <div><strong>Prioridade:</strong> {getPriorityLabel(delivery.priority)}</div>
-                          <div><strong>Complexidade:</strong> {getComplexityLabel(delivery.complexity)}</div>
-                          <div><strong>Status:</strong> {getStatusLabel(delivery.status)}</div>
-                          <div><strong>Progresso:</strong> {delivery.progress}%</div>
+                        <p className="text-sm text-muted-foreground">{delivery.description}</p>
+                        
+                        <div className="flex flex-wrap gap-2">
+                          {delivery.deliveryPhase && (
+                            <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                              <MapPin className="h-3 w-3" />
+                              {delivery.deliveryPhase}
+                            </div>
+                          )}
+                          <div className="text-xs">
+                            <span className="font-medium">Prioridade:</span> {getPriorityLabel(delivery.priority)}
+                          </div>
+                          <div className="text-xs">
+                            <span className="font-medium">Complexidade:</span> {getComplexityLabel(delivery.complexity)}
+                          </div>
+                          <div className="text-xs">
+                            <span className="font-medium">Status:</span> {getStatusLabel(delivery.status)}
+                          </div>
+                          {delivery.jiraLink && (
+                            <a
+                              href={delivery.jiraLink}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex items-center gap-1 text-xs text-primary hover:underline"
+                            >
+                              <ExternalLink className="h-3 w-3" />
+                              Ver Épico
+                            </a>
+                          )}
                         </div>
-                        <div className="text-sm">
-                          <strong>Período:</strong> {format(delivery.startDate, "dd/MM/yyyy")} - {format(delivery.endDate, "dd/MM/yyyy")}
+                        
+                        <div className="flex items-center gap-2">
+                          <div className="text-xs">
+                            <span className="font-medium">Progresso:</span> {delivery.progress}%
+                          </div>
+                          <div className="flex-1 bg-muted rounded-full h-1">
+                            <div
+                              className="h-1 rounded-full bg-primary"
+                              style={{ width: `${delivery.progress}%` }}
+                            />
+                          </div>
+                        </div>
+                        
+                        <div className="text-xs text-muted-foreground">
+                          <div><span className="font-medium">Início:</span> {format(delivery.startDate, "dd/MM/yyyy")}</div>
+                          <div><span className="font-medium">Fim:</span> {format(delivery.endDate, "dd/MM/yyyy")}</div>
                         </div>
                       </div>
                     </TooltipContent>
@@ -214,11 +249,25 @@ export function RoadmapTimeline({
                             <TooltipContent>
                               <div className="space-y-1">
                                 <div className="font-medium">{sub.title}</div>
-                                {sub.description && <div className="text-xs text-muted-foreground">{sub.description}</div>}
-                                <div className="text-xs">
-                                  <div><strong>Responsável:</strong> {sub.responsible}</div>
-                                  <div><strong>Progresso:</strong> {sub.progress}%</div>
-                                  <div><strong>Período:</strong> {format(sub.startDate, "dd/MM/yyyy")} - {format(sub.endDate, "dd/MM/yyyy")}</div>
+                                <p className="text-xs text-muted-foreground">{sub.description}</p>
+                                <div className="flex flex-wrap gap-2 text-xs">
+                                  <span><strong>Time:</strong> {sub.team}</span>
+                                  <span><strong>Responsável:</strong> {sub.responsible}</span>
+                                  <span><strong>Status:</strong> {getStatusLabel(sub.status)}</span>
+                                  <span><strong>Progresso:</strong> {sub.progress}%</span>
+                                  <span><strong>Início:</strong> {format(sub.startDate, "dd/MM")}</span>
+                                  <span><strong>Fim:</strong> {format(sub.endDate, "dd/MM")}</span>
+                                  {sub.jiraLink && (
+                                    <a
+                                      href={sub.jiraLink}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="flex items-center gap-1 text-primary hover:underline"
+                                    >
+                                      <ExternalLink className="h-3 w-3" />
+                                      Tarefa
+                                    </a>
+                                  )}
                                 </div>
                               </div>
                             </TooltipContent>

@@ -21,9 +21,12 @@ export interface SubDelivery {
   description: string;
   startDate: Date;
   endDate: Date;
+  team: string;
   responsible: string;
   completed: boolean;
   progress: number;
+  status: 'not-started' | 'in-progress' | 'completed' | 'blocked';
+  jiraLink?: string;
 }
 
 export interface Delivery {
@@ -32,11 +35,11 @@ export interface Delivery {
   description: string;
   startDate: Date;
   endDate: Date;
-  team: string;
   complexity: Complexity;
   priority: Priority;
-  responsible: string;
   deliveryColor?: string;
+  deliveryPhase?: string;
+  jiraLink?: string;
   subDeliveries: SubDelivery[];
   progress: number;
   status: 'not-started' | 'in-progress' | 'completed' | 'blocked';

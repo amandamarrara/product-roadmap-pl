@@ -8,7 +8,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Badge } from "@/components/ui/badge";
-import { CalendarIcon, Plus, X, Trash2 } from "lucide-react";
+import { CalendarIcon, Plus, X, Trash2, ExternalLink } from "lucide-react";
+import { Slider } from "@/components/ui/slider";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import type { Delivery, Priority, Complexity, SubDelivery } from "@/types/roadmap";
@@ -24,11 +25,13 @@ export function DeliveryForm({ delivery, onSave, onCancel }: DeliveryFormProps) 
   const [description, setDescription] = useState(delivery?.description || '');
   const [startDate, setStartDate] = useState<Date | undefined>(delivery?.startDate);
   const [endDate, setEndDate] = useState<Date | undefined>(delivery?.endDate);
-  const [team, setTeam] = useState(delivery?.team || '');
   const [complexity, setComplexity] = useState<Complexity>(delivery?.complexity || 'medium');
   const [priority, setPriority] = useState<Priority>(delivery?.priority || 'medium');
-  const [responsible, setResponsible] = useState(delivery?.responsible || '');
   const [deliveryColor, setDeliveryColor] = useState(delivery?.deliveryColor || generateColorFromString(delivery?.title || ''));
+  const [deliveryPhase, setDeliveryPhase] = useState(delivery?.deliveryPhase || '');
+  const [jiraLink, setJiraLink] = useState(delivery?.jiraLink || '');
+  const [status, setStatus] = useState(delivery?.status || 'not-started');
+  const [progress, setProgress] = useState(delivery?.progress || 0);
   const [subDeliveries, setSubDeliveries] = useState<Omit<SubDelivery, 'id'>[]>(
     delivery?.subDeliveries?.map(sub => ({ ...sub, id: undefined })) || []
   );
@@ -51,9 +54,12 @@ export function DeliveryForm({ delivery, onSave, onCancel }: DeliveryFormProps) 
       description: '',
       startDate: startDate || new Date(),
       endDate: endDate || new Date(),
+      team: '',
       responsible: '',
       completed: false,
-      progress: 0
+      progress: 0,
+      status: 'not-started',
+      jiraLink: ''
     }]);
   };
 
@@ -69,10 +75,10 @@ export function DeliveryForm({ delivery, onSave, onCancel }: DeliveryFormProps) 
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title || !startDate || !endDate || !team || !responsible) return;
+    if (!title || !startDate || !endDate) return;
 
     const validSubDeliveries = subDeliveries
-      .filter(sub => sub.title.trim() && sub.responsible.trim())
+      .filter(sub => sub.title.trim() && sub.team.trim() && sub.responsible.trim())
       .map(sub => ({
         ...sub,
         id: Date.now().toString() + Math.random().toString(36).substr(2, 9)
@@ -83,14 +89,14 @@ export function DeliveryForm({ delivery, onSave, onCancel }: DeliveryFormProps) 
       description,
       startDate,
       endDate,
-      team,
       complexity,
       priority,
-      responsible,
       deliveryColor,
+      deliveryPhase,
+      jiraLink,
       subDeliveries: validSubDeliveries,
-      progress: delivery?.progress || 0,
-      status: delivery?.status || 'not-started'
+      progress,
+      status
     });
   };
 
@@ -206,25 +212,36 @@ export function DeliveryForm({ delivery, onSave, onCancel }: DeliveryFormProps) 
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="team">Time Responsável</Label>
+                <Label htmlFor="deliveryPhase">Fase de Entrega</Label>
                 <Input
-                  id="team"
-                  value={team}
-                  onChange={(e) => setTeam(e.target.value)}
-                  placeholder="Ex: Frontend, Backend, Mobile..."
-                  required
+                  id="deliveryPhase"
+                  value={deliveryPhase}
+                  onChange={(e) => setDeliveryPhase(e.target.value)}
+                  placeholder="Ex: Descoberta, Desenvolvimento, Testes..."
                 />
               </div>
 
               <div>
-                <Label htmlFor="responsible">Responsável</Label>
-                <Input
-                  id="responsible"
-                  value={responsible}
-                  onChange={(e) => setResponsible(e.target.value)}
-                  placeholder="Ex: João Silva, Maria Santos..."
-                  required
-                />
+                <Label htmlFor="jiraLink">Link do Jira (Épico)</Label>
+                <div className="relative">
+                  <Input
+                    id="jiraLink"
+                    value={jiraLink}
+                    onChange={(e) => setJiraLink(e.target.value)}
+                    placeholder="https://empresa.atlassian.net/browse/EPIC-123"
+                    type="url"
+                  />
+                  {jiraLink && (
+                    <a
+                      href={jiraLink}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="absolute right-2 top-1/2 -translate-y-1/2"
+                    >
+                      <ExternalLink className="h-4 w-4 text-muted-foreground hover:text-primary" />
+                    </a>
+                  )}
+                </div>
               </div>
             </div>
 
@@ -292,6 +309,36 @@ export function DeliveryForm({ delivery, onSave, onCancel }: DeliveryFormProps) 
               </div>
             </div>
 
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label>Status da Entrega</Label>
+                <Select value={status} onValueChange={(value: any) => setStatus(value)}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="not-started">Não Iniciado</SelectItem>
+                    <SelectItem value="in-progress">Em Progresso</SelectItem>
+                    <SelectItem value="completed">Concluído</SelectItem>
+                    <SelectItem value="blocked">Bloqueado</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label>Progresso ({progress}%)</Label>
+                <div className="pt-2">
+                  <Slider
+                    value={[progress]}
+                    onValueChange={(value) => setProgress(value[0])}
+                    max={100}
+                    step={5}
+                    className="w-full"
+                  />
+                </div>
+              </div>
+            </div>
+
             {/* Sub-entregas */}
             <div className="space-y-4">
               <div className="flex items-center justify-between">
@@ -332,13 +379,47 @@ export function DeliveryForm({ delivery, onSave, onCancel }: DeliveryFormProps) 
                       />
                     </div>
                     <div>
+                      <Label className="text-xs">Time Responsável</Label>
+                      <Input
+                        value={sub.team}
+                        onChange={(e) => updateSubDelivery(index, 'team', e.target.value)}
+                        placeholder="Ex: Frontend, Backend..."
+                        className="h-8"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
                       <Label className="text-xs">Responsável</Label>
                       <Input
                         value={sub.responsible}
                         onChange={(e) => updateSubDelivery(index, 'responsible', e.target.value)}
-                        placeholder="Responsável"
+                        placeholder="Ex: João Silva"
                         className="h-8"
                       />
+                    </div>
+                    <div>
+                      <Label className="text-xs">Link do Jira (Tarefa)</Label>
+                      <div className="relative">
+                        <Input
+                          value={sub.jiraLink || ''}
+                          onChange={(e) => updateSubDelivery(index, 'jiraLink', e.target.value)}
+                          placeholder="https://empresa.atlassian.net/browse/TASK-123"
+                          className="h-8"
+                          type="url"
+                        />
+                        {sub.jiraLink && (
+                          <a
+                            href={sub.jiraLink}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="absolute right-2 top-1/2 -translate-y-1/2"
+                          >
+                            <ExternalLink className="h-3 w-3 text-muted-foreground hover:text-primary" />
+                          </a>
+                        )}
+                      </div>
                     </div>
                   </div>
 
@@ -399,6 +480,35 @@ export function DeliveryForm({ delivery, onSave, onCancel }: DeliveryFormProps) 
                       className="text-xs"
                     />
                   </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <Label className="text-xs">Status</Label>
+                      <Select value={sub.status} onValueChange={(value: any) => updateSubDelivery(index, 'status', value)}>
+                        <SelectTrigger className="h-8">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="not-started">Não Iniciado</SelectItem>
+                          <SelectItem value="in-progress">Em Progresso</SelectItem>
+                          <SelectItem value="completed">Concluído</SelectItem>
+                          <SelectItem value="blocked">Bloqueado</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label className="text-xs">Progresso ({sub.progress}%)</Label>
+                      <div className="pt-1">
+                        <Slider
+                          value={[sub.progress]}
+                          onValueChange={(value) => updateSubDelivery(index, 'progress', value[0])}
+                          max={100}
+                          step={5}
+                          className="w-full"
+                        />
+                      </div>
+                    </div>
+                  </div>
                 </div>
               ))}
             </div>
@@ -411,7 +521,7 @@ export function DeliveryForm({ delivery, onSave, onCancel }: DeliveryFormProps) 
                   className="w-2 h-2 rounded-full mr-2"
                   style={{ backgroundColor: deliveryColor }}
                 />
-                {team || 'Time'}
+                {deliveryPhase || 'Fase'}
               </Badge>
               <Badge 
                 variant="secondary"
