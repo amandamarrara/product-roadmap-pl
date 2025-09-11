@@ -29,10 +29,14 @@ export function useRoadmaps() {
           ...delivery,
           startDate: delivery.start_date ? new Date(delivery.start_date) : new Date(),
           endDate: delivery.end_date ? new Date(delivery.end_date) : new Date(),
+          deliveryColor: delivery.delivery_color || undefined,
+          deliveryPhase: delivery.delivery_phase || undefined,
+          jiraLink: delivery.jira_link || undefined,
           subDeliveries: delivery.sub_deliveries.map((sub: any) => ({
             ...sub,
             startDate: sub.start_date ? new Date(sub.start_date) : new Date(),
             endDate: sub.end_date ? new Date(sub.end_date) : new Date(),
+            jiraLink: sub.jira_link || undefined,
           }))
         })),
         milestones: Array.isArray(roadmap.milestones) 
@@ -73,10 +77,14 @@ export function useRoadmap(id: string) {
           ...delivery,
           startDate: delivery.start_date ? new Date(delivery.start_date) : new Date(),
           endDate: delivery.end_date ? new Date(delivery.end_date) : new Date(),
+          deliveryColor: delivery.delivery_color || undefined,
+          deliveryPhase: delivery.delivery_phase || undefined,
+          jiraLink: delivery.jira_link || undefined,
           subDeliveries: delivery.sub_deliveries.map((sub: any) => ({
             ...sub,
             startDate: sub.start_date ? new Date(sub.start_date) : new Date(),
             endDate: sub.end_date ? new Date(sub.end_date) : new Date(),
+            jiraLink: sub.jira_link || undefined,
           }))
         })),
         milestones: Array.isArray(data.milestones) 

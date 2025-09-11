@@ -7,6 +7,7 @@ import { ptBR } from "date-fns/locale";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import type { Delivery, Milestone } from "@/types/roadmap";
 import { cn } from "@/lib/utils";
+import { useRef, useCallback } from "react";
 interface RoadmapTimelineProps {
   deliveries: Delivery[];
   milestones?: Milestone[];
@@ -15,6 +16,8 @@ export function RoadmapTimeline({
   deliveries,
   milestones = []
 }: RoadmapTimelineProps) {
+  const headerRef = useRef<HTMLDivElement>(null);
+  const bodyRef = useRef<HTMLDivElement>(null);
   if (deliveries.length === 0) {
     return <Card className="shadow-card border-0">
         <CardContent className="flex items-center justify-center py-12">
@@ -54,7 +57,20 @@ export function RoadmapTimeline({
         end: endOfWeek(timelineEnd, { locale: ptBR })
       });
   
-  const totalUnits = useDaily ? totalDays : differenceInWeeks(endOfWeek(timelineEnd, { locale: ptBR }), startOfWeek(timelineStart, { locale: ptBR }));
+  const totalUnits = Math.max(dateHeaders.length - 1, 1);
+  
+  // Timeline constants
+  const CELL_WIDTH = 60;
+  const trackWidthStyle = useDaily ? { width: `${dateHeaders.length * CELL_WIDTH}px` } : { width: '100%' };
+  
+  // Scroll synchronization
+  const syncScroll = useCallback((source: 'header' | 'body') => {
+    if (source === 'header' && headerRef.current && bodyRef.current) {
+      bodyRef.current.scrollLeft = headerRef.current.scrollLeft;
+    } else if (source === 'body' && headerRef.current && bodyRef.current) {
+      headerRef.current.scrollLeft = bodyRef.current.scrollLeft;
+    }
+  }, []);
   const getDeliveryPosition = (delivery: Delivery) => {
     const startOffset = useDaily 
       ? differenceInDays(delivery.startDate, timelineStart)
@@ -145,62 +161,75 @@ export function RoadmapTimeline({
         <CardContent className="space-y-6">
           {/* Timeline Header */}
           <div className="relative">
-            <div className={`flex border-b pb-2 ${useDaily ? 'overflow-x-auto' : ''}`}>
-              {dateHeaders.map((date, index) => (
-                <div 
-                  key={date.getTime()} 
-                  className="text-center text-sm text-muted-foreground flex-shrink-0" 
-                  style={{
-                    minWidth: useDaily ? '60px' : `${100 / dateHeaders.length}%`,
-                    width: useDaily ? '60px' : `${100 / dateHeaders.length}%`
-                  }}
-                >
-                  {format(date, useDaily ? "dd/MM" : "dd MMM", {
-                    locale: ptBR
-                  })}
+            <div 
+              ref={headerRef}
+              className={`${useDaily ? 'overflow-x-auto' : ''}`}
+              onScroll={() => syncScroll('header')}
+            >
+              <div className="relative border-b pb-2" style={trackWidthStyle}>
+                <div className="flex">
+                  {dateHeaders.map((date, index) => (
+                    <div 
+                      key={date.getTime()} 
+                      className="text-center text-sm text-muted-foreground flex-shrink-0" 
+                      style={{
+                        minWidth: useDaily ? `${CELL_WIDTH}px` : `${100 / dateHeaders.length}%`,
+                        width: useDaily ? `${CELL_WIDTH}px` : `${100 / dateHeaders.length}%`
+                      }}
+                    >
+                      {format(date, useDaily ? "dd/MM" : "dd MMM", {
+                        locale: ptBR
+                      })}
+                    </div>
+                  ))}
                 </div>
-              ))}
+                
+                {/* Milestone indicators in header */}
+                {milestones.map(milestone => (
+                  <Tooltip key={milestone.id}>
+                    <TooltipTrigger asChild>
+                      <div
+                        className="absolute top-0 h-6 w-1 cursor-pointer z-10"
+                        style={{
+                          left: getMilestonePosition(milestone),
+                          backgroundColor: milestone.color || '#ef4444'
+                        }}
+                      />
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <div className="space-y-1">
+                        <div className="font-medium">{milestone.title}</div>
+                        <div className="text-xs">{format(milestone.date, "dd/MM/yyyy", { locale: ptBR })}</div>
+                        {milestone.description && (
+                          <p className="text-xs text-muted-foreground">{milestone.description}</p>
+                        )}
+                      </div>
+                    </TooltipContent>
+                  </Tooltip>
+                ))}
+              </div>
             </div>
-            
-            {/* Milestone indicators in header */}
-            {milestones.map(milestone => (
-              <Tooltip key={milestone.id}>
-                <TooltipTrigger asChild>
-                  <div
-                    className="absolute top-0 h-6 w-1 cursor-pointer z-10"
-                    style={{
-                      left: getMilestonePosition(milestone),
-                      backgroundColor: milestone.color || '#ef4444'
-                    }}
-                  />
-                </TooltipTrigger>
-                <TooltipContent>
-                  <div className="space-y-1">
-                    <div className="font-medium">{milestone.title}</div>
-                    <div className="text-xs">{format(milestone.date, "dd/MM/yyyy", { locale: ptBR })}</div>
-                    {milestone.description && (
-                      <p className="text-xs text-muted-foreground">{milestone.description}</p>
-                    )}
-                  </div>
-                </TooltipContent>
-              </Tooltip>
-            ))}
           </div>
 
           {/* Timeline Bars */}
-          <div className="space-y-4 relative">
-            {/* Milestone vertical lines */}
-            {milestones.map(milestone => (
-              <div
-                key={`line-${milestone.id}`}
-                className="absolute top-0 bottom-0 w-0.5 pointer-events-none z-20"
-                style={{
-                  left: getMilestonePosition(milestone),
-                  backgroundColor: milestone.color || '#ef4444',
-                  opacity: 0.8
-                }}
-              />
-            ))}
+          <div 
+            ref={bodyRef}
+            className={`space-y-4 ${useDaily ? 'overflow-x-auto' : ''}`}
+            onScroll={() => syncScroll('body')}
+          >
+            <div className="relative space-y-4" style={trackWidthStyle}>
+              {/* Milestone vertical lines */}
+              {milestones.map(milestone => (
+                <div
+                  key={`line-${milestone.id}`}
+                  className="absolute top-0 bottom-0 w-0.5 pointer-events-none z-20"
+                  style={{
+                    left: getMilestonePosition(milestone),
+                    backgroundColor: milestone.color || '#ef4444',
+                    opacity: 0.8
+                  }}
+                />
+              ))}
             
             {deliveries.map((delivery, index) => {
             const position = getDeliveryPosition(delivery);
@@ -358,8 +387,9 @@ export function RoadmapTimeline({
                           +{delivery.subDeliveries.length - 3} mais sub-entregas
                         </div>}
                     </div>}
-                </div>;
+                 </div>;
           })}
+            </div>
           </div>
         </CardContent>
       </Card>
