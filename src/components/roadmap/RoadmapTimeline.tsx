@@ -106,7 +106,7 @@ export function RoadmapTimeline({
     const unitOffset = useDaily
       ? differenceInDays(milestone.date, timelineStart)
       : differenceInWeeks(milestone.date, startOfWeek(timelineStart, { locale: ptBR }));
-    return `${unitOffset / totalUnits * 100}%`;
+    return `${unitOffset / (dateHeaders.length - 1) * 100}%`;
   };
   const getComplexityLabel = (complexity: string) => {
     switch (complexity) {
