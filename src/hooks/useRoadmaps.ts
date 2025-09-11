@@ -83,6 +83,13 @@ export function useSaveRoadmap() {
 
   return useMutation({
     mutationFn: async (roadmap: Partial<Roadmap> & { deliveries: Delivery[] }) => {
+      console.log("Saving roadmap:", roadmap);
+      
+      // Validate required fields
+      if (!roadmap.title?.trim()) {
+        throw new Error("O título do roadmap é obrigatório");
+      }
+
       // Save or update roadmap
       let roadmapData;
       if (roadmap.id) {
@@ -123,47 +130,57 @@ export function useSaveRoadmap() {
       }
 
       // Save deliveries
-      for (const delivery of roadmap.deliveries) {
+      for (const delivery of roadmap.deliveries || []) {
+        console.log("Saving delivery:", delivery);
+        
         const { data: deliveryData, error: deliveryError } = await supabase
           .from("deliveries")
           .insert({
             roadmap_id: roadmapData.id,
-            title: delivery.title,
-            description: delivery.description,
-            start_date: delivery.startDate?.toISOString().split('T')[0],
-            end_date: delivery.endDate?.toISOString().split('T')[0],
-            complexity: delivery.complexity,
-            priority: delivery.priority,
-            delivery_color: delivery.deliveryColor,
-            delivery_phase: delivery.deliveryPhase,
-            jira_link: delivery.jiraLink,
-            progress: delivery.progress,
-            status: delivery.status,
+            title: delivery.title || "Entrega sem título",
+            description: delivery.description || null,
+            start_date: delivery.startDate ? delivery.startDate.toISOString().split('T')[0] : null,
+            end_date: delivery.endDate ? delivery.endDate.toISOString().split('T')[0] : null,
+            complexity: delivery.complexity || null,
+            priority: delivery.priority || null,
+            delivery_color: delivery.deliveryColor || null,
+            delivery_phase: delivery.deliveryPhase || null,
+            jira_link: delivery.jiraLink || null,
+            progress: delivery.progress || 0,
+            status: delivery.status || 'not-started',
           })
           .select()
           .single();
 
-        if (deliveryError) throw deliveryError;
+        if (deliveryError) {
+          console.error("Delivery error:", deliveryError);
+          throw deliveryError;
+        }
 
         // Save sub-deliveries
-        for (const subDelivery of delivery.subDeliveries) {
+        for (const subDelivery of delivery.subDeliveries || []) {
+          console.log("Saving sub-delivery:", subDelivery);
+          
           const { error: subError } = await supabase
             .from("sub_deliveries")
             .insert({
               delivery_id: deliveryData.id,
-              title: subDelivery.title,
-              description: subDelivery.description,
-              start_date: subDelivery.startDate?.toISOString().split('T')[0],
-              end_date: subDelivery.endDate?.toISOString().split('T')[0],
-              team: subDelivery.team,
-              responsible: subDelivery.responsible,
-              completed: subDelivery.completed,
-              progress: subDelivery.progress,
-              status: subDelivery.status,
-              jira_link: subDelivery.jiraLink,
+              title: subDelivery.title || "Sub-entrega sem título",
+              description: subDelivery.description || null,
+              start_date: subDelivery.startDate ? subDelivery.startDate.toISOString().split('T')[0] : null,
+              end_date: subDelivery.endDate ? subDelivery.endDate.toISOString().split('T')[0] : null,
+              team: subDelivery.team || null,
+              responsible: subDelivery.responsible || null,
+              completed: subDelivery.completed || false,
+              progress: subDelivery.progress || 0,
+              status: subDelivery.status || 'not-started',
+              jira_link: subDelivery.jiraLink || null,
             });
 
-          if (subError) throw subError;
+          if (subError) {
+            console.error("Sub-delivery error:", subError);
+            throw subError;
+          }
         }
       }
 
@@ -177,12 +194,13 @@ export function useSaveRoadmap() {
       });
     },
     onError: (error) => {
+      console.error("Error saving roadmap:", error);
+      const errorMessage = error instanceof Error ? error.message : "Ocorreu um erro ao salvar o roadmap. Tente novamente.";
       toast({
         title: "Erro ao salvar roadmap",
-        description: "Ocorreu um erro ao salvar o roadmap. Tente novamente.",
+        description: errorMessage,
         variant: "destructive",
       });
-      console.error("Error saving roadmap:", error);
     }
   });
 }

@@ -93,7 +93,7 @@ export function RoadmapBuilder({
   isEmbedded = false 
 }: RoadmapBuilderProps) {
   const [roadmapTitle, setRoadmapTitle] = useState(
-    initialData?.title || 'Meu Roadmap'
+    initialData?.title || ''
   );
   const [roadmapSubtitle, setRoadmapSubtitle] = useState(
     initialData?.subtitle || ''
@@ -117,12 +117,12 @@ export function RoadmapBuilder({
     }
   }, [roadmapTitle, roadmapSubtitle, deliveries, onDataChange]);
 
-  // Update local state when initialData changes
+  // Update local state when initialData changes (only once on mount)
   useEffect(() => {
-    if (initialData) {
-      setRoadmapTitle(initialData.title);
-      setRoadmapSubtitle(initialData.subtitle);
-      setDeliveries(initialData.deliveries);
+    if (initialData && roadmapTitle === '' && roadmapSubtitle === '' && deliveries.length === 0) {
+      setRoadmapTitle(initialData.title || '');
+      setRoadmapSubtitle(initialData.subtitle || '');
+      setDeliveries(initialData.deliveries || []);
     }
   }, [initialData]);
 

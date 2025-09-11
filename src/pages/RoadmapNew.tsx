@@ -18,16 +18,22 @@ const RoadmapNew = () => {
   });
   const saveRoadmap = useSaveRoadmap();
   const handleSave = async () => {
-    if (!roadmapData.title.trim()) {
+    console.log("Save button clicked, roadmapData:", roadmapData);
+    
+    if (!roadmapData.title?.trim()) {
+      console.log("Title is empty, not saving");
       return;
     }
+    
     try {
+      console.log("Attempting to save roadmap...");
       const result = await saveRoadmap.mutateAsync({
-        title: roadmapData.title,
-        subtitle: roadmapData.subtitle,
+        title: roadmapData.title.trim(),
+        subtitle: roadmapData.subtitle?.trim() || "",
         description: "",
-        deliveries: roadmapData.deliveries
+        deliveries: roadmapData.deliveries || []
       });
+      console.log("Roadmap saved successfully:", result);
       navigate(`/roadmap/${result.id}`);
     } catch (error) {
       console.error("Error saving roadmap:", error);
