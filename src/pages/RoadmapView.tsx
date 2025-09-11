@@ -3,6 +3,7 @@ import { ArrowLeft, Edit, Save, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useRoadmap, useSaveRoadmap } from "@/hooks/useRoadmaps";
 import { RoadmapBuilder } from "@/components/roadmap/RoadmapBuilder";
+import { ExportButton } from "@/components/roadmap/ExportButton";
 import { useState } from "react";
 import { Delivery } from "@/types/roadmap";
 
@@ -89,6 +90,12 @@ const RoadmapView = () => {
             </div>
             
             <div className="flex items-center gap-2">
+              {!isEditing && (
+                <ExportButton 
+                  roadmapTitle={roadmap.title}
+                  timelineElementId="roadmap-timeline"
+                />
+              )}
               {isEditing ? (
                 <>
                   <Button
@@ -136,7 +143,7 @@ const RoadmapView = () => {
       </div>
 
       {/* Content */}
-      <div className="container mx-auto py-6">
+      <div className="container mx-auto py-6" id="roadmap-timeline">
         {isEditing && editingData ? (
           <RoadmapBuilder
             initialData={editingData}
