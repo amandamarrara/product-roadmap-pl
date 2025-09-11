@@ -35,10 +35,12 @@ export function useRoadmaps() {
             endDate: sub.end_date ? new Date(sub.end_date) : new Date(),
           }))
         })),
-        milestones: (roadmap.milestones || []).map((milestone: any) => ({
-          ...milestone,
-          date: new Date(milestone.date),
-        }))
+        milestones: Array.isArray(roadmap.milestones) 
+          ? roadmap.milestones.map((milestone: any) => ({
+              ...milestone,
+              date: new Date(milestone.date),
+            }))
+          : []
       })) as Roadmap[];
     }
   });
@@ -77,10 +79,12 @@ export function useRoadmap(id: string) {
             endDate: sub.end_date ? new Date(sub.end_date) : new Date(),
           }))
         })),
-        milestones: (data.milestones || []).map((milestone: any) => ({
-          ...milestone,
-          date: new Date(milestone.date),
-        }))
+        milestones: Array.isArray(data.milestones) 
+          ? data.milestones.map((milestone: any) => ({
+              ...milestone,
+              date: new Date(milestone.date),
+            }))
+          : []
       } as Roadmap;
     },
     enabled: !!id
