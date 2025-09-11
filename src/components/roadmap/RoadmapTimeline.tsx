@@ -27,11 +27,15 @@ export function RoadmapTimeline({
       </Card>;
   }
 
-  // Calculate timeline bounds
+  // Calculate timeline bounds including all sub-deliveries
   const allDates = [
-    ...deliveries.flatMap(d => [d.startDate, d.endDate]),
+    ...deliveries.flatMap(d => [
+      d.startDate, 
+      d.endDate,
+      ...d.subDeliveries.flatMap(sub => [sub.startDate, sub.endDate])
+    ]),
     ...milestones.map(m => m.date)
-  ];
+  ].filter(date => date && !isNaN(date.getTime())); // Filter out invalid dates
   const minDate = new Date(Math.min(...allDates.map(d => d.getTime())));
   const maxDate = new Date(Math.max(...allDates.map(d => d.getTime())));
   
