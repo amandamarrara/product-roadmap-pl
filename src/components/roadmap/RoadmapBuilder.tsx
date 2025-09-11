@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -74,14 +74,58 @@ const mockTeams: Team[] = [{
     avatar: ''
   }]
 }];
-export function RoadmapBuilder() {
-  const [roadmapTitle, setRoadmapTitle] = useState('Meu Roadmap');
-  const [roadmapSubtitle, setRoadmapSubtitle] = useState('');
-  const [deliveries, setDeliveries] = useState<Delivery[]>([]);
+
+interface RoadmapBuilderProps {
+  initialData?: {
+    title: string;
+    subtitle: string;
+    deliveries: Delivery[];
+  };
+  onDataChange?: (data: { title: string; subtitle: string; deliveries: Delivery[] }) => void;
+  readOnly?: boolean;
+  isEmbedded?: boolean;
+}
+
+export function RoadmapBuilder({ 
+  initialData, 
+  onDataChange, 
+  readOnly = false,
+  isEmbedded = false 
+}: RoadmapBuilderProps) {
+  const [roadmapTitle, setRoadmapTitle] = useState(
+    initialData?.title || 'Meu Roadmap'
+  );
+  const [roadmapSubtitle, setRoadmapSubtitle] = useState(
+    initialData?.subtitle || ''
+  );
+  const [deliveries, setDeliveries] = useState<Delivery[]>(
+    initialData?.deliveries || []
+  );
   const [showForm, setShowForm] = useState(false);
   const [editingDelivery, setEditingDelivery] = useState<Delivery | undefined>();
   const [filterTeam, setFilterTeam] = useState<string>('all');
   const [filterPriority, setFilterPriority] = useState<string>('all');
+
+  // Update parent component when data changes
+  useEffect(() => {
+    if (onDataChange) {
+      onDataChange({
+        title: roadmapTitle,
+        subtitle: roadmapSubtitle,
+        deliveries: deliveries,
+      });
+    }
+  }, [roadmapTitle, roadmapSubtitle, deliveries, onDataChange]);
+
+  // Update local state when initialData changes
+  useEffect(() => {
+    if (initialData) {
+      setRoadmapTitle(initialData.title);
+      setRoadmapSubtitle(initialData.subtitle);
+      setDeliveries(initialData.deliveries);
+    }
+  }, [initialData]);
+
   const handleSaveDelivery = (deliveryData: Omit<Delivery, 'id'>) => {
     if (editingDelivery) {
       setDeliveries(prev => prev.map(d => d.id === editingDelivery.id ? {
@@ -98,22 +142,27 @@ export function RoadmapBuilder() {
     setShowForm(false);
     setEditingDelivery(undefined);
   };
+
   const handleEditDelivery = (delivery: Delivery) => {
     setEditingDelivery(delivery);
     setShowForm(true);
   };
+
   const handleDeleteDelivery = (id: string) => {
     setDeliveries(prev => prev.filter(d => d.id !== id));
   };
+
   const handleCancelForm = () => {
     setShowForm(false);
     setEditingDelivery(undefined);
   };
+
   const filteredDeliveries = deliveries.filter(delivery => {
     const teamMatch = filterTeam === 'all' || delivery.deliveryPhase === filterTeam;
     const priorityMatch = filterPriority === 'all' || delivery.priority === filterPriority;
     return teamMatch && priorityMatch;
   });
+
   const getStats = () => {
     const completed = deliveries.filter(d => d.status === 'completed').length;
     const inProgress = deliveries.filter(d => d.status === 'in-progress').length;
@@ -126,23 +175,41 @@ export function RoadmapBuilder() {
       blocked
     };
   };
+
   const stats = getStats();
-  return <div className="min-h-screen bg-background p-4 md:p-6 lg:p-8">
-      <div className="max-w-7xl mx-auto space-y-6">
+
+  return (
+    <div className={`${isEmbedded ? '' : 'min-h-screen bg-background p-4 md:p-6 lg:p-8'}`}>
+      <div className={`${isEmbedded ? '' : 'max-w-7xl mx-auto'} space-y-6`}>
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div className="space-y-2 flex-1">
             <div className="flex items-center gap-2">
               
             </div>
-            <Input id="roadmap-title" value={roadmapTitle} onChange={e => setRoadmapTitle(e.target.value)} className="text-2xl font-bold border-0 shadow-none p-0 h-auto bg-transparent focus-visible:ring-0" placeholder="Nome do seu roadmap" />
-            <Input value={roadmapSubtitle} onChange={e => setRoadmapSubtitle(e.target.value)} className="text-lg text-muted-foreground border-0 shadow-none p-0 h-auto bg-transparent focus-visible:ring-0" placeholder="Descrição do roadmap (opcional)" />
+            <Input 
+              id="roadmap-title" 
+              value={roadmapTitle} 
+              onChange={e => setRoadmapTitle(e.target.value)} 
+              className="text-2xl font-bold border-0 shadow-none p-0 h-auto bg-transparent focus-visible:ring-0" 
+              placeholder="Nome do seu roadmap"
+              readOnly={readOnly}
+            />
+            <Input 
+              value={roadmapSubtitle} 
+              onChange={e => setRoadmapSubtitle(e.target.value)} 
+              className="text-lg text-muted-foreground border-0 shadow-none p-0 h-auto bg-transparent focus-visible:ring-0" 
+              placeholder="Descrição do roadmap (opcional)"
+              readOnly={readOnly}
+            />
           </div>
           
-          <Button onClick={() => setShowForm(true)} className="bg-gradient-primary shadow-elegant hover:shadow-lg transition-all duration-300">
-            <Plus className="h-4 w-4 mr-2" />
-            Nova Entrega
-          </Button>
+          {!readOnly && (
+            <Button onClick={() => setShowForm(true)} className="bg-gradient-primary shadow-elegant hover:shadow-lg transition-all duration-300">
+              <Plus className="h-4 w-4 mr-2" />
+              Nova Entrega
+            </Button>
+          )}
         </div>
 
         {/* Stats Cards */}
@@ -174,7 +241,13 @@ export function RoadmapBuilder() {
         </div>
 
         {/* Form */}
-        {showForm && <DeliveryForm delivery={editingDelivery} onSave={handleSaveDelivery} onCancel={handleCancelForm} />}
+        {showForm && !readOnly && (
+          <DeliveryForm 
+            delivery={editingDelivery} 
+            onSave={handleSaveDelivery} 
+            onCancel={handleCancelForm} 
+          />
+        )}
 
         {/* Main Content */}
         <Tabs defaultValue="timeline" className="space-y-6">
@@ -191,33 +264,37 @@ export function RoadmapBuilder() {
             </TabsList>
 
             {/* Filters */}
-            <div className="flex items-center gap-2">
-              <Filter className="h-4 w-4 text-muted-foreground" />
-              <Select value={filterTeam} onValueChange={setFilterTeam}>
-                <SelectTrigger className="w-32">
-                  <SelectValue placeholder="Fase" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todas as fases</SelectItem>
-                  {Array.from(new Set(deliveries.map(d => d.deliveryPhase).filter(Boolean))).map(phase => <SelectItem key={phase} value={phase!}>
-                      {phase}
-                    </SelectItem>)}
-                </SelectContent>
-              </Select>
+            {!readOnly && (
+              <div className="flex items-center gap-2">
+                <Filter className="h-4 w-4 text-muted-foreground" />
+                <Select value={filterTeam} onValueChange={setFilterTeam}>
+                  <SelectTrigger className="w-32">
+                    <SelectValue placeholder="Fase" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todas as fases</SelectItem>
+                    {Array.from(new Set(deliveries.map(d => d.deliveryPhase).filter(Boolean))).map(phase => (
+                      <SelectItem key={phase} value={phase!}>
+                        {phase}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
 
-              <Select value={filterPriority} onValueChange={setFilterPriority}>
-                <SelectTrigger className="w-32">
-                  <SelectValue placeholder="Prioridade" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todas</SelectItem>
-                  <SelectItem value="low">Baixa</SelectItem>
-                  <SelectItem value="medium">Média</SelectItem>
-                  <SelectItem value="high">Alta</SelectItem>
-                  <SelectItem value="critical">Crítica</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+                <Select value={filterPriority} onValueChange={setFilterPriority}>
+                  <SelectTrigger className="w-32">
+                    <SelectValue placeholder="Prioridade" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todas</SelectItem>
+                    <SelectItem value="low">Baixa</SelectItem>
+                    <SelectItem value="medium">Média</SelectItem>
+                    <SelectItem value="high">Alta</SelectItem>
+                    <SelectItem value="critical">Crítica</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
           </div>
 
           <TabsContent value="timeline" className="space-y-6">
@@ -225,7 +302,8 @@ export function RoadmapBuilder() {
           </TabsContent>
 
           <TabsContent value="list" className="space-y-6">
-            {filteredDeliveries.length === 0 ? <Card className="shadow-card border-0">
+            {filteredDeliveries.length === 0 ? (
+              <Card className="shadow-card border-0">
                 <CardContent className="flex items-center justify-center py-12">
                   <div className="text-center space-y-4">
                     <MapPin className="h-12 w-12 text-muted-foreground mx-auto" />
@@ -235,17 +313,30 @@ export function RoadmapBuilder() {
                         {deliveries.length === 0 ? "Comece criando sua primeira entrega!" : "Tente ajustar os filtros para ver mais entregas."}
                       </p>
                     </div>
-                    <Button onClick={() => setShowForm(true)} className="bg-gradient-primary">
-                      <Plus className="h-4 w-4 mr-2" />
-                      Criar Primeira Entrega
-                    </Button>
+                    {!readOnly && (
+                      <Button onClick={() => setShowForm(true)} className="bg-gradient-primary">
+                        <Plus className="h-4 w-4 mr-2" />
+                        Criar Primeira Entrega
+                      </Button>
+                    )}
                   </div>
                 </CardContent>
-              </Card> : <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-                {filteredDeliveries.map(delivery => <DeliveryCard key={delivery.id} delivery={delivery} onEdit={handleEditDelivery} onDelete={handleDeleteDelivery} />)}
-              </div>}
+              </Card>
+            ) : (
+              <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+                {filteredDeliveries.map(delivery => (
+                  <DeliveryCard 
+                    key={delivery.id} 
+                    delivery={delivery} 
+                    onEdit={readOnly ? undefined : handleEditDelivery} 
+                    onDelete={readOnly ? undefined : handleDeleteDelivery} 
+                  />
+                ))}
+              </div>
+            )}
           </TabsContent>
         </Tabs>
       </div>
-    </div>;
+    </div>
+  );
 }

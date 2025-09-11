@@ -14,7 +14,148 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      deliveries: {
+        Row: {
+          complexity: string | null
+          created_at: string
+          delivery_color: string | null
+          delivery_phase: string | null
+          description: string | null
+          end_date: string | null
+          id: string
+          jira_link: string | null
+          priority: string | null
+          progress: number | null
+          roadmap_id: string
+          start_date: string | null
+          status: string | null
+          title: string
+        }
+        Insert: {
+          complexity?: string | null
+          created_at?: string
+          delivery_color?: string | null
+          delivery_phase?: string | null
+          description?: string | null
+          end_date?: string | null
+          id?: string
+          jira_link?: string | null
+          priority?: string | null
+          progress?: number | null
+          roadmap_id: string
+          start_date?: string | null
+          status?: string | null
+          title: string
+        }
+        Update: {
+          complexity?: string | null
+          created_at?: string
+          delivery_color?: string | null
+          delivery_phase?: string | null
+          description?: string | null
+          end_date?: string | null
+          id?: string
+          jira_link?: string | null
+          priority?: string | null
+          progress?: number | null
+          roadmap_id?: string
+          start_date?: string | null
+          status?: string | null
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "deliveries_roadmap_id_fkey"
+            columns: ["roadmap_id"]
+            isOneToOne: false
+            referencedRelation: "roadmaps"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      roadmaps: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          subtitle: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          subtitle?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          subtitle?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      sub_deliveries: {
+        Row: {
+          completed: boolean | null
+          delivery_id: string
+          description: string | null
+          end_date: string | null
+          id: string
+          jira_link: string | null
+          progress: number | null
+          responsible: string | null
+          start_date: string | null
+          status: string | null
+          team: string | null
+          title: string
+        }
+        Insert: {
+          completed?: boolean | null
+          delivery_id: string
+          description?: string | null
+          end_date?: string | null
+          id?: string
+          jira_link?: string | null
+          progress?: number | null
+          responsible?: string | null
+          start_date?: string | null
+          status?: string | null
+          team?: string | null
+          title: string
+        }
+        Update: {
+          completed?: boolean | null
+          delivery_id?: string
+          description?: string | null
+          end_date?: string | null
+          id?: string
+          jira_link?: string | null
+          progress?: number | null
+          responsible?: string | null
+          start_date?: string | null
+          status?: string | null
+          team?: string | null
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sub_deliveries_delivery_id_fkey"
+            columns: ["delivery_id"]
+            isOneToOne: false
+            referencedRelation: "deliveries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
