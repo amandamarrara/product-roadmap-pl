@@ -85,6 +85,12 @@ export function useSaveRoadmap() {
     mutationFn: async (roadmap: Partial<Roadmap> & { deliveries: Delivery[] }) => {
       console.log("Saving roadmap:", roadmap);
       
+      // Get current user
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      if (userError || !user) {
+        throw new Error("Usuário não autenticado");
+      }
+      
       // Validate required fields
       if (!roadmap.title?.trim()) {
         throw new Error("O título do roadmap é obrigatório");
@@ -101,6 +107,7 @@ export function useSaveRoadmap() {
             description: roadmap.description,
           })
           .eq("id", roadmap.id)
+          .eq("user_id", user.id)
           .select()
           .single();
         
@@ -113,6 +120,7 @@ export function useSaveRoadmap() {
             title: roadmap.title,
             subtitle: roadmap.subtitle,
             description: roadmap.description,
+            user_id: user.id,
           })
           .select()
           .single();
@@ -126,7 +134,8 @@ export function useSaveRoadmap() {
         await supabase
           .from("deliveries")
           .delete()
-          .eq("roadmap_id", roadmap.id);
+          .eq("roadmap_id", roadmap.id)
+          .eq("user_id", user.id);
       }
 
       // Save deliveries
@@ -137,6 +146,7 @@ export function useSaveRoadmap() {
           .from("deliveries")
           .insert({
             roadmap_id: roadmapData.id,
+            user_id: user.id,
             title: delivery.title || "Entrega sem título",
             description: delivery.description || null,
             start_date: delivery.startDate ? delivery.startDate.toISOString().split('T')[0] : null,
@@ -165,6 +175,7 @@ export function useSaveRoadmap() {
             .from("sub_deliveries")
             .insert({
               delivery_id: deliveryData.id,
+              user_id: user.id,
               title: subDelivery.title || "Sub-entrega sem título",
               description: subDelivery.description || null,
               start_date: subDelivery.startDate ? subDelivery.startDate.toISOString().split('T')[0] : null,
@@ -211,10 +222,17 @@ export function useDeleteRoadmap() {
 
   return useMutation({
     mutationFn: async (id: string) => {
+      // Get current user
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      if (userError || !user) {
+        throw new Error("Usuário não autenticado");
+      }
+
       const { error } = await supabase
         .from("roadmaps")
         .delete()
-        .eq("id", id);
+        .eq("id", id)
+        .eq("user_id", user.id);
 
       if (error) throw error;
     },

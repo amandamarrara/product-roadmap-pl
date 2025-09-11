@@ -3,10 +3,13 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import RoadmapsList from "./pages/RoadmapsList";
-import RoadmapNew from "./pages/RoadmapNew";
-import RoadmapView from "./pages/RoadmapView";
+import { ProtectedRoute } from "@/components/ProtectedRoute";
+import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
+import RoadmapsList from "./pages/RoadmapsList";
+import RoadmapView from "./pages/RoadmapView";
+import RoadmapNew from "./pages/RoadmapNew";
+import Auth from "./pages/Auth";
 
 const queryClient = new QueryClient();
 
@@ -17,10 +20,39 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<RoadmapsList />} />
-          <Route path="/roadmap/new" element={<RoadmapNew />} />
-          <Route path="/roadmap/:id" element={<RoadmapView />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+          <Route path="/auth" element={<Auth />} />
+          <Route
+            path="/"
+            element={
+              <ProtectedRoute>
+                <Index />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/roadmaps"
+            element={
+              <ProtectedRoute>
+                <RoadmapsList />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/roadmap/new"
+            element={
+              <ProtectedRoute>
+                <RoadmapNew />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/roadmap/:id"
+            element={
+              <ProtectedRoute>
+                <RoadmapView />
+              </ProtectedRoute>
+            }
+          />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
