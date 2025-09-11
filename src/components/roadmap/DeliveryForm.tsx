@@ -75,7 +75,27 @@ export function DeliveryForm({ delivery, onSave, onCancel }: DeliveryFormProps) 
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title || !startDate || !endDate) return;
+    
+    // Validate required fields
+    if (!title.trim()) {
+      alert('O título da entrega é obrigatório');
+      return;
+    }
+    
+    if (!startDate) {
+      alert('A data de início é obrigatória');
+      return;
+    }
+    
+    if (!endDate) {
+      alert('A data de fim é obrigatória');
+      return;
+    }
+    
+    if (startDate > endDate) {
+      alert('A data de início deve ser anterior à data de fim');
+      return;
+    }
 
     const validSubDeliveries = subDeliveries
       .filter(sub => sub.title.trim() && sub.team.trim() && sub.responsible.trim())

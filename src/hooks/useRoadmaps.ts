@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Roadmap, Delivery, SubDelivery, Milestone } from "@/types/roadmap";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 
 export function useRoadmaps() {
   return useQuery({
@@ -101,7 +101,6 @@ export function useRoadmap(id: string) {
 
 export function useSaveRoadmap() {
   const queryClient = useQueryClient();
-  const { toast } = useToast();
 
   return useMutation({
     mutationFn: async (roadmap: Partial<Roadmap> & { deliveries: Delivery[]; milestones?: Milestone[] }) => {
@@ -221,26 +220,18 @@ export function useSaveRoadmap() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["roadmaps"] });
-      toast({
-        title: "Roadmap salvo com sucesso!",
-        description: "Todas as alterações foram salvas.",
-      });
+      toast.success("Roadmap salvo com sucesso!");
     },
     onError: (error) => {
       console.error("Error saving roadmap:", error);
       const errorMessage = error instanceof Error ? error.message : "Ocorreu um erro ao salvar o roadmap. Tente novamente.";
-      toast({
-        title: "Erro ao salvar roadmap",
-        description: errorMessage,
-        variant: "destructive",
-      });
+      toast.error(`Erro ao salvar roadmap: ${errorMessage}`);
     }
   });
 }
 
 export function useDeleteRoadmap() {
   const queryClient = useQueryClient();
-  const { toast } = useToast();
 
   return useMutation({
     mutationFn: async (id: string) => {
@@ -260,17 +251,10 @@ export function useDeleteRoadmap() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["roadmaps"] });
-      toast({
-        title: "Roadmap excluído",
-        description: "O roadmap foi excluído com sucesso.",
-      });
+      toast.success("Roadmap excluído com sucesso!");
     },
     onError: () => {
-      toast({
-        title: "Erro ao excluir",
-        description: "Não foi possível excluir o roadmap.",
-        variant: "destructive",
-      });
+      toast.error("Não foi possível excluir o roadmap.");
     }
   });
 }
