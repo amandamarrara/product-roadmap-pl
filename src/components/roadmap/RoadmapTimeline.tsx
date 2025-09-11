@@ -5,15 +5,13 @@ import { CalendarDays, Users, MapPin, ExternalLink } from "lucide-react";
 import { format, startOfWeek, endOfWeek, eachWeekOfInterval, isSameWeek, differenceInDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import type { Delivery, Milestone } from "@/types/roadmap";
+import type { Delivery } from "@/types/roadmap";
 import { cn } from "@/lib/utils";
 interface RoadmapTimelineProps {
   deliveries: Delivery[];
-  milestones?: Milestone[];
 }
 export function RoadmapTimeline({
-  deliveries,
-  milestones = []
+  deliveries
 }: RoadmapTimelineProps) {
   if (deliveries.length === 0) {
     return <Card className="shadow-card border-0">
@@ -28,10 +26,7 @@ export function RoadmapTimeline({
   }
 
   // Calculate timeline bounds
-  const allDates = [
-    ...deliveries.flatMap(d => [d.startDate, d.endDate]),
-    ...milestones.map(m => m.date)
-  ];
+  const allDates = deliveries.flatMap(d => [d.startDate, d.endDate]);
   const minDate = new Date(Math.min(...allDates.map(d => d.getTime())));
   const maxDate = new Date(Math.max(...allDates.map(d => d.getTime())));
   const timelineStart = startOfWeek(minDate, {
@@ -55,11 +50,6 @@ export function RoadmapTimeline({
   };
   const getDeliveryColor = (delivery: Delivery) => {
     return delivery.deliveryColor || '#3b82f6';
-  };
-
-  const getMilestonePosition = (milestone: Milestone) => {
-    const dayOffset = differenceInDays(milestone.date, timelineStart);
-    return `${dayOffset / totalDays * 100}%`;
   };
   const getComplexityLabel = (complexity: string) => {
     switch (complexity) {
@@ -123,47 +113,10 @@ export function RoadmapTimeline({
               })}
                 </div>)}
             </div>
-            
-            {/* Milestone indicators in header */}
-            {milestones.map(milestone => (
-              <Tooltip key={milestone.id}>
-                <TooltipTrigger asChild>
-                  <div
-                    className="absolute top-0 h-6 w-1 cursor-pointer z-10"
-                    style={{
-                      left: getMilestonePosition(milestone),
-                      backgroundColor: milestone.color || '#ef4444'
-                    }}
-                  />
-                </TooltipTrigger>
-                <TooltipContent>
-                  <div className="space-y-1">
-                    <div className="font-medium">{milestone.title}</div>
-                    <div className="text-xs">{format(milestone.date, "dd/MM/yyyy", { locale: ptBR })}</div>
-                    {milestone.description && (
-                      <p className="text-xs text-muted-foreground">{milestone.description}</p>
-                    )}
-                  </div>
-                </TooltipContent>
-              </Tooltip>
-            ))}
           </div>
 
           {/* Timeline Bars */}
-          <div className="space-y-4 relative">
-            {/* Milestone vertical lines */}
-            {milestones.map(milestone => (
-              <div
-                key={`line-${milestone.id}`}
-                className="absolute top-0 bottom-0 w-0.5 pointer-events-none z-20"
-                style={{
-                  left: getMilestonePosition(milestone),
-                  backgroundColor: milestone.color || '#ef4444',
-                  opacity: 0.8
-                }}
-              />
-            ))}
-            
+          <div className="space-y-4">
             {deliveries.map((delivery, index) => {
             const position = getDeliveryPosition(delivery);
             const deliveryColor = getDeliveryColor(delivery);

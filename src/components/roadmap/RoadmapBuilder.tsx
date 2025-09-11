@@ -8,8 +8,7 @@ import { Plus, MapPin, List, Calendar, Filter } from "lucide-react";
 import { DeliveryForm } from "./DeliveryForm";
 import { DeliveryCard } from "./DeliveryCard";
 import { RoadmapTimeline } from "./RoadmapTimeline";
-import { MilestoneManager } from "./MilestoneManager";
-import type { Delivery, Team, TeamMember, Milestone } from "@/types/roadmap";
+import type { Delivery, Team, TeamMember } from "@/types/roadmap";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 
@@ -81,9 +80,8 @@ interface RoadmapBuilderProps {
     title: string;
     subtitle: string;
     deliveries: Delivery[];
-    milestones?: Milestone[];
   };
-  onDataChange?: (data: { title: string; subtitle: string; deliveries: Delivery[]; milestones: Milestone[] }) => void;
+  onDataChange?: (data: { title: string; subtitle: string; deliveries: Delivery[] }) => void;
   readOnly?: boolean;
   isEmbedded?: boolean;
 }
@@ -103,9 +101,6 @@ export function RoadmapBuilder({
   const [deliveries, setDeliveries] = useState<Delivery[]>(
     initialData?.deliveries || []
   );
-  const [milestones, setMilestones] = useState<Milestone[]>(
-    initialData?.milestones || []
-  );
   const [showForm, setShowForm] = useState(false);
   const [editingDelivery, setEditingDelivery] = useState<Delivery | undefined>();
   const [filterTeam, setFilterTeam] = useState<string>('all');
@@ -118,10 +113,9 @@ export function RoadmapBuilder({
         title: roadmapTitle,
         subtitle: roadmapSubtitle,
         deliveries: deliveries,
-        milestones: milestones,
       });
     }
-  }, [roadmapTitle, roadmapSubtitle, deliveries, milestones, onDataChange]);
+  }, [roadmapTitle, roadmapSubtitle, deliveries, onDataChange]);
 
   // Update local state when initialData changes (only once on mount)
   useEffect(() => {
@@ -129,7 +123,6 @@ export function RoadmapBuilder({
       setRoadmapTitle(initialData.title || '');
       setRoadmapSubtitle(initialData.subtitle || '');
       setDeliveries(initialData.deliveries || []);
-      setMilestones(initialData.milestones || []);
     }
   }, [initialData]);
 
@@ -162,22 +155,6 @@ export function RoadmapBuilder({
   const handleCancelForm = () => {
     setShowForm(false);
     setEditingDelivery(undefined);
-  };
-
-  const handleSaveMilestone = (milestoneData: Omit<Milestone, 'id'>) => {
-    const newMilestone: Milestone = {
-      ...milestoneData,
-      id: Date.now().toString()
-    };
-    setMilestones(prev => [...prev, newMilestone]);
-  };
-
-  const handleEditMilestone = (milestone: Milestone) => {
-    setMilestones(prev => prev.map(m => m.id === milestone.id ? milestone : m));
-  };
-
-  const handleDeleteMilestone = (id: string) => {
-    setMilestones(prev => prev.filter(m => m.id !== id));
   };
 
   const filteredDeliveries = deliveries.filter(delivery => {
@@ -263,15 +240,6 @@ export function RoadmapBuilder({
           </Card>
         </div>
 
-        {/* Milestone Manager */}
-        <MilestoneManager
-          milestones={milestones}
-          onSave={handleSaveMilestone}
-          onEdit={handleEditMilestone}
-          onDelete={handleDeleteMilestone}
-          readOnly={readOnly}
-        />
-
         {/* Form */}
         {showForm && !readOnly && (
           <DeliveryForm 
@@ -330,7 +298,7 @@ export function RoadmapBuilder({
           </div>
 
           <TabsContent value="timeline" className="space-y-6">
-            <RoadmapTimeline deliveries={filteredDeliveries} milestones={milestones} />
+            <RoadmapTimeline deliveries={filteredDeliveries} />
           </TabsContent>
 
           <TabsContent value="list" className="space-y-6">

@@ -45,21 +45,12 @@ export interface Delivery {
   status: 'not-started' | 'in-progress' | 'completed' | 'blocked';
 }
 
-export interface Milestone {
-  id: string;
-  title: string;
-  description?: string;
-  date: Date;
-  color?: string;
-}
-
 export interface Roadmap {
   id: string;
   title: string;
   description: string;
   subtitle?: string;
   deliveries: Delivery[];
-  milestones: Milestone[];
   createdAt: Date;
   updatedAt: Date;
 }
