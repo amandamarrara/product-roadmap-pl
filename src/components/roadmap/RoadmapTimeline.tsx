@@ -64,6 +64,20 @@ export function RoadmapTimeline({
       width: `${Math.max(duration / totalUnits * 100, 1)}%`
     };
   };
+
+  const getSubDeliveryPosition = (startDate: Date, endDate: Date) => {
+    const startOffset = useDaily 
+      ? differenceInDays(startDate, timelineStart)
+      : differenceInWeeks(startDate, startOfWeek(timelineStart, { locale: ptBR }));
+    const duration = useDaily
+      ? differenceInDays(endDate, startDate) + 1
+      : differenceInWeeks(endDate, startDate);
+    
+    return {
+      left: `${startOffset / totalUnits * 100}%`,
+      width: `${Math.max(duration / totalUnits * 100, useDaily ? 2 : 1)}%`
+    };
+  };
   const getDeliveryColor = (delivery: Delivery) => {
     return delivery.deliveryColor || '#3b82f6';
   };
@@ -288,11 +302,7 @@ export function RoadmapTimeline({
                   {/* Sub-deliveries */}
                   {delivery.subDeliveries.length > 0 && <div className="mt-2 ml-4 space-y-1">
                       {delivery.subDeliveries.slice(0, 3).map(sub => {
-                  const subPosition = getDeliveryPosition({
-                    ...delivery,
-                    startDate: sub.startDate,
-                    endDate: sub.endDate
-                  });
+                  const subPosition = getSubDeliveryPosition(sub.startDate, sub.endDate);
                   return <Tooltip key={sub.id}>
                             <TooltipTrigger asChild>
                               <div className="relative cursor-pointer">
