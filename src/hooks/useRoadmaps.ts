@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Roadmap, Delivery, SubDelivery } from "@/types/roadmap";
+import { Roadmap, Delivery, SubDelivery, Milestone } from "@/types/roadmap";
 import { useToast } from "@/hooks/use-toast";
 
 export function useRoadmaps() {
@@ -14,7 +14,8 @@ export function useRoadmaps() {
           deliveries:deliveries(
             *,
             sub_deliveries:sub_deliveries(*)
-          )
+          ),
+          milestones:milestones(*)
         `)
         .order("created_at", { ascending: false });
 
@@ -33,6 +34,10 @@ export function useRoadmaps() {
             startDate: sub.start_date ? new Date(sub.start_date) : new Date(),
             endDate: sub.end_date ? new Date(sub.end_date) : new Date(),
           }))
+        })),
+        milestones: (roadmap.milestones || []).map((milestone: any) => ({
+          ...milestone,
+          date: new Date(milestone.date),
         }))
       })) as Roadmap[];
     }
@@ -50,7 +55,8 @@ export function useRoadmap(id: string) {
           deliveries:deliveries(
             *,
             sub_deliveries:sub_deliveries(*)
-          )
+          ),
+          milestones:milestones(*)
         `)
         .eq("id", id)
         .single();
@@ -70,6 +76,10 @@ export function useRoadmap(id: string) {
             startDate: sub.start_date ? new Date(sub.start_date) : new Date(),
             endDate: sub.end_date ? new Date(sub.end_date) : new Date(),
           }))
+        })),
+        milestones: (data.milestones || []).map((milestone: any) => ({
+          ...milestone,
+          date: new Date(milestone.date),
         }))
       } as Roadmap;
     },
@@ -82,7 +92,7 @@ export function useSaveRoadmap() {
   const { toast } = useToast();
 
   return useMutation({
-    mutationFn: async (roadmap: Partial<Roadmap> & { deliveries: Delivery[] }) => {
+    mutationFn: async (roadmap: Partial<Roadmap> & { deliveries: Delivery[]; milestones?: Milestone[] }) => {
       console.log("Saving roadmap:", roadmap);
       
       // Get current user
