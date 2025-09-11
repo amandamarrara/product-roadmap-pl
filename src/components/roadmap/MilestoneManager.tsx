@@ -25,7 +25,6 @@ interface MilestoneManagerProps {
   onEdit: (milestone: Milestone) => void;
   onDelete: (id: string) => void;
   readOnly?: boolean;
-  compact?: boolean;
 }
 
 export function MilestoneManager({ 
@@ -33,8 +32,7 @@ export function MilestoneManager({
   onSave, 
   onEdit, 
   onDelete, 
-  readOnly = false,
-  compact = false
+  readOnly = false 
 }: MilestoneManagerProps) {
   const [showForm, setShowForm] = useState(false);
   const [editingMilestone, setEditingMilestone] = useState<Milestone | undefined>();
@@ -60,91 +58,6 @@ export function MilestoneManager({
   };
 
   const sortedMilestones = [...milestones].sort((a, b) => a.date.getTime() - b.date.getTime());
-
-  if (compact) {
-    return (
-      <div className="space-y-3">
-        <div className="flex items-center justify-between">
-          <h3 className="text-sm font-medium text-muted-foreground">Marcos</h3>
-          {!readOnly && (
-            <Button onClick={() => setShowForm(true)} size="sm" variant="outline">
-              <Plus className="h-3 w-3 mr-1" />
-              Marco
-            </Button>
-          )}
-        </div>
-        
-        {sortedMilestones.length === 0 ? (
-          <p className="text-xs text-muted-foreground">Nenhum marco criado.</p>
-        ) : (
-          <div className="flex flex-wrap gap-2">
-            {sortedMilestones.map((milestone) => (
-              <div
-                key={milestone.id}
-                className="flex items-center space-x-2 px-3 py-1 bg-accent/20 rounded-full border border-border group hover:bg-accent/40 transition-colors"
-              >
-                <div
-                  className="w-2 h-2 rounded-full flex-shrink-0"
-                  style={{ backgroundColor: milestone.color || '#ef4444' }}
-                />
-                <span className="text-xs font-medium text-foreground">{milestone.title}</span>
-                <span className="text-xs text-muted-foreground">
-                  {format(milestone.date, 'dd/MM')}
-                </span>
-                {!readOnly && (
-                  <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleEdit(milestone)}
-                      className="h-5 w-5 p-0"
-                    >
-                      <Edit className="h-3 w-3" />
-                    </Button>
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-5 w-5 p-0 text-destructive hover:text-destructive"
-                        >
-                          <Trash2 className="h-3 w-3" />
-                        </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>Excluir Marco</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            Tem certeza que deseja excluir este marco? Esta ação não pode ser desfeita.
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                          <AlertDialogAction
-                            onClick={() => onDelete(milestone.id)}
-                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                          >
-                            Excluir
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        )}
-
-        <MilestoneForm
-          milestone={editingMilestone}
-          open={showForm}
-          onSave={handleSave}
-          onCancel={handleCancel}
-        />
-      </div>
-    );
-  }
 
   return (
     <Card className="shadow-card border-0">

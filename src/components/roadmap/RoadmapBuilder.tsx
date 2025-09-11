@@ -263,6 +263,14 @@ export function RoadmapBuilder({
           </Card>
         </div>
 
+        {/* Milestone Manager */}
+        <MilestoneManager
+          milestones={milestones}
+          onSave={handleSaveMilestone}
+          onEdit={handleEditMilestone}
+          onDelete={handleDeleteMilestone}
+          readOnly={readOnly}
+        />
 
         {/* Form */}
         {showForm && !readOnly && (
@@ -360,18 +368,6 @@ export function RoadmapBuilder({
             )}
           </TabsContent>
         </Tabs>
-
-        {/* Milestone Manager - Below Timeline */}
-        <div className="mt-6">
-          <MilestoneManager 
-            milestones={milestones}
-            onSave={handleSaveMilestone}
-            onEdit={handleEditMilestone}
-            onDelete={handleDeleteMilestone}
-            readOnly={readOnly}
-            compact={true}
-          />
-        </div>
       </div>
     </div>
   );
