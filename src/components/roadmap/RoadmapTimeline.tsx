@@ -2,7 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { CalendarDays, Users, MapPin, ExternalLink } from "lucide-react";
-import { format, startOfWeek, endOfWeek, eachWeekOfInterval, eachDayOfInterval, isSameWeek, differenceInDays, differenceInWeeks } from "date-fns";
+import { format, startOfWeek, endOfWeek, eachWeekOfInterval, eachDayOfInterval, isSameWeek, differenceInDays, differenceInWeeks, startOfDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import type { Delivery, Milestone } from "@/types/roadmap";
@@ -42,8 +42,9 @@ export function RoadmapTimeline({
   const minDate = new Date(Math.min(...allDates.map(d => d.getTime())));
   const maxDate = new Date(Math.max(...allDates.map(d => d.getTime())));
   
-  const timelineStart = minDate;
-  const timelineEnd = maxDate;
+  // Normalize dates to avoid timezone issues
+  const timelineStart = startOfDay(minDate);
+  const timelineEnd = startOfDay(maxDate);
   const totalDays = differenceInDays(timelineEnd, timelineStart);
   
   // Determine granularity based on timeline length
@@ -51,11 +52,11 @@ export function RoadmapTimeline({
   
   // Generate date headers based on granularity
   const dateHeaders = useDaily 
-    ? eachDayOfInterval({ start: timelineStart, end: timelineEnd })
+    ? eachDayOfInterval({ start: timelineStart, end: timelineEnd }).map(d => startOfDay(d))
     : eachWeekOfInterval({
         start: startOfWeek(timelineStart, { locale: ptBR }),
         end: endOfWeek(timelineEnd, { locale: ptBR })
-      });
+      }).map(d => startOfDay(d));
   
   const totalUnits = Math.max(dateHeaders.length - 1, 1);
   
@@ -103,10 +104,17 @@ export function RoadmapTimeline({
   };
 
   const getMilestonePosition = (milestone: Milestone) => {
-    const unitOffset = useDaily
-      ? differenceInDays(milestone.date, timelineStart)
-      : differenceInWeeks(milestone.date, startOfWeek(timelineStart, { locale: ptBR }));
-    return `${unitOffset / (dateHeaders.length - 1) * 100}%`;
+    const normalizedMilestoneDate = startOfDay(milestone.date);
+    
+    if (useDaily) {
+      const dayOffset = differenceInDays(normalizedMilestoneDate, timelineStart);
+      return `${Math.max(0, Math.min(dayOffset / (dateHeaders.length - 1) * 100, 100))}%`;
+    } else {
+      // For weekly view, calculate exact day position and convert to fractional week position
+      const dayOffset = differenceInDays(normalizedMilestoneDate, timelineStart);
+      const weekOffset = dayOffset / 7;
+      return `${Math.max(0, Math.min(weekOffset / (dateHeaders.length - 1) * 100, 100))}%`;
+    }
   };
   const getComplexityLabel = (complexity: string) => {
     switch (complexity) {
@@ -192,7 +200,8 @@ export function RoadmapTimeline({
                         className="absolute top-0 h-6 w-1 cursor-pointer z-10"
                         style={{
                           left: getMilestonePosition(milestone),
-                          backgroundColor: milestone.color || '#ef4444'
+                          backgroundColor: milestone.color || '#ef4444',
+                          transform: 'translateX(-0.5px)'
                         }}
                       />
                     </TooltipTrigger>
@@ -226,7 +235,8 @@ export function RoadmapTimeline({
                   style={{
                     left: getMilestonePosition(milestone),
                     backgroundColor: milestone.color || '#ef4444',
-                    opacity: 0.8
+                    opacity: 0.8,
+                    transform: 'translateX(-0.5px)'
                   }}
                 />
               ))}
