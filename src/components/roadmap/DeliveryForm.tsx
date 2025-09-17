@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { DatePickerWithSearch } from "@/components/ui/date-picker-with-search";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Badge } from "@/components/ui/badge";
@@ -49,7 +50,7 @@ export function DeliveryForm({ delivery, onSave, onCancel }: DeliveryFormProps) 
   }
 
   const addSubDelivery = () => {
-    setSubDeliveries(prev => [...prev, {
+    const newSubDelivery: Omit<SubDelivery, 'id'> = {
       title: '',
       description: '',
       startDate: startDate || new Date(),
@@ -58,9 +59,11 @@ export function DeliveryForm({ delivery, onSave, onCancel }: DeliveryFormProps) 
       responsible: '',
       completed: false,
       progress: 0,
-      status: 'not-started',
+      status: 'not-started' as const,
       jiraLink: ''
-    }]);
+    };
+    // Add new sub-delivery at the beginning of the list
+    setSubDeliveries(prev => [newSubDelivery, ...prev]);
   };
 
   const updateSubDelivery = (index: number, field: keyof Omit<SubDelivery, 'id'>, value: any) => {
@@ -193,54 +196,20 @@ export function DeliveryForm({ delivery, onSave, onCancel }: DeliveryFormProps) 
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label>Data de Início</Label>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      className={cn(
-                        "w-full justify-start text-left font-normal",
-                        !startDate && "text-muted-foreground"
-                      )}
-                    >
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {startDate ? format(startDate, "dd/MM/yyyy") : "Selecionar data"}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={startDate}
-                      onSelect={setStartDate}
-                      initialFocus
-                    />
-                  </PopoverContent>
-                </Popover>
+                <DatePickerWithSearch
+                  selected={startDate}
+                  onSelect={setStartDate}
+                  placeholder="Selecionar data de início"
+                />
               </div>
 
               <div>
                 <Label>Data de Fim</Label>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      className={cn(
-                        "w-full justify-start text-left font-normal",
-                        !endDate && "text-muted-foreground"
-                      )}
-                    >
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {endDate ? format(endDate, "dd/MM/yyyy") : "Selecionar data"}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={endDate}
-                      onSelect={setEndDate}
-                      initialFocus
-                    />
-                  </PopoverContent>
-                </Popover>
+                <DatePickerWithSearch
+                  selected={endDate}
+                  onSelect={setEndDate}
+                  placeholder="Selecionar data de fim"
+                />
               </div>
             </div>
 
@@ -457,52 +426,26 @@ export function DeliveryForm({ delivery, onSave, onCancel }: DeliveryFormProps) 
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <Label className="text-xs">Data Início</Label>
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <Button
-                            variant="outline"
-                            className="w-full justify-start text-left font-normal h-8 text-xs"
-                          >
-                            <CalendarIcon className="mr-2 h-3 w-3" />
-                            {sub.startDate ? format(sub.startDate, "dd/MM/yyyy") : "Data"}
-                          </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0" align="start">
-                          <Calendar
-                            mode="single"
-                            selected={sub.startDate}
-                            onSelect={(date) => date && updateSubDelivery(index, 'startDate', date)}
-                            initialFocus
-                          />
-                        </PopoverContent>
-                      </Popover>
-                    </div>
-                    <div>
-                      <Label className="text-xs">Data Fim</Label>
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <Button
-                            variant="outline"
-                            className="w-full justify-start text-left font-normal h-8 text-xs"
-                          >
-                            <CalendarIcon className="mr-2 h-3 w-3" />
-                            {sub.endDate ? format(sub.endDate, "dd/MM/yyyy") : "Data"}
-                          </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0" align="start">
-                          <Calendar
-                            mode="single"
-                            selected={sub.endDate}
-                            onSelect={(date) => date && updateSubDelivery(index, 'endDate', date)}
-                            initialFocus
-                          />
-                        </PopoverContent>
-                      </Popover>
-                    </div>
-                  </div>
+                   <div className="grid grid-cols-2 gap-3">
+                     <div>
+                       <Label className="text-xs">Data Início</Label>
+                       <DatePickerWithSearch
+                         selected={sub.startDate}
+                         onSelect={(date) => date && updateSubDelivery(index, 'startDate', date)}
+                         placeholder="Data início"
+                         className="h-8 text-xs"
+                       />
+                     </div>
+                     <div>
+                       <Label className="text-xs">Data Fim</Label>
+                       <DatePickerWithSearch
+                         selected={sub.endDate}
+                         onSelect={(date) => date && updateSubDelivery(index, 'endDate', date)}
+                         placeholder="Data fim"
+                         className="h-8 text-xs"
+                       />
+                     </div>
+                   </div>
 
                   <div>
                     <Label className="text-xs">Descrição</Label>

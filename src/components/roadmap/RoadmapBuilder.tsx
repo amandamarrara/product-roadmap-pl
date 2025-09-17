@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -110,6 +110,9 @@ export function RoadmapBuilder({
   const [editingDelivery, setEditingDelivery] = useState<Delivery | undefined>();
   const [filterTeam, setFilterTeam] = useState<string>('all');
   const [filterPriority, setFilterPriority] = useState<string>('all');
+  
+  // Ref for form auto-scroll
+  const formRef = useRef<HTMLDivElement>(null);
 
   // Update parent component when data changes
   useEffect(() => {
@@ -158,6 +161,14 @@ export function RoadmapBuilder({
   const handleEditDelivery = (delivery: Delivery) => {
     setEditingDelivery(delivery);
     setShowForm(true);
+    
+    // Auto-scroll to form with slight delay to ensure it's rendered
+    setTimeout(() => {
+      formRef.current?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center'
+      });
+    }, 100);
   };
 
   const handleDeleteDelivery = (id: string) => {
@@ -271,11 +282,13 @@ export function RoadmapBuilder({
 
         {/* Form */}
         {showForm && !readOnly && (
-          <DeliveryForm 
-            delivery={editingDelivery} 
-            onSave={handleSaveDelivery} 
-            onCancel={handleCancelForm} 
-          />
+          <div ref={formRef}>
+            <DeliveryForm 
+              delivery={editingDelivery} 
+              onSave={handleSaveDelivery} 
+              onCancel={handleCancelForm} 
+            />
+          </div>
         )}
 
         {/* Main Content */}
@@ -292,38 +305,36 @@ export function RoadmapBuilder({
               </TabsTrigger>
             </TabsList>
 
-            {/* Filters */}
-            {!readOnly && (
-              <div className="flex items-center gap-2">
-                <Filter className="h-4 w-4 text-muted-foreground" />
-                <Select value={filterTeam} onValueChange={setFilterTeam}>
-                  <SelectTrigger className="w-32">
-                    <SelectValue placeholder="Fase" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Todas as fases</SelectItem>
-                    {Array.from(new Set(deliveries.map(d => d.deliveryPhase).filter(Boolean))).map(phase => (
-                      <SelectItem key={phase} value={phase!}>
-                        {phase}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+            {/* Filters - Now available in both readOnly and edit modes */}
+            <div className="flex items-center gap-2">
+              <Filter className="h-4 w-4 text-muted-foreground" />
+              <Select value={filterTeam} onValueChange={setFilterTeam}>
+                <SelectTrigger className="w-32">
+                  <SelectValue placeholder="Fase" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todas as fases</SelectItem>
+                  {Array.from(new Set(deliveries.map(d => d.deliveryPhase).filter(Boolean))).map(phase => (
+                    <SelectItem key={phase} value={phase!}>
+                      {phase}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
 
-                <Select value={filterPriority} onValueChange={setFilterPriority}>
-                  <SelectTrigger className="w-32">
-                    <SelectValue placeholder="Prioridade" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Todas</SelectItem>
-                    <SelectItem value="low">Baixa</SelectItem>
-                    <SelectItem value="medium">Média</SelectItem>
-                    <SelectItem value="high">Alta</SelectItem>
-                    <SelectItem value="critical">Crítica</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
+              <Select value={filterPriority} onValueChange={setFilterPriority}>
+                <SelectTrigger className="w-32">
+                  <SelectValue placeholder="Prioridade" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todas</SelectItem>
+                  <SelectItem value="low">Baixa</SelectItem>
+                  <SelectItem value="medium">Média</SelectItem>
+                  <SelectItem value="high">Alta</SelectItem>
+                  <SelectItem value="critical">Crítica</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
           <TabsContent value="timeline" className="space-y-6">
