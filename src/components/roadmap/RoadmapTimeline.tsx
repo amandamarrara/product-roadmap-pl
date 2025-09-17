@@ -18,6 +18,16 @@ export function RoadmapTimeline({
 }: RoadmapTimelineProps) {
   const headerRef = useRef<HTMLDivElement>(null);
   const bodyRef = useRef<HTMLDivElement>(null);
+
+  // Scroll synchronization - moved before early return to maintain hook order
+  const syncScroll = useCallback((source: 'header' | 'body') => {
+    if (source === 'header' && headerRef.current && bodyRef.current) {
+      bodyRef.current.scrollLeft = headerRef.current.scrollLeft;
+    } else if (source === 'body' && headerRef.current && bodyRef.current) {
+      headerRef.current.scrollLeft = bodyRef.current.scrollLeft;
+    }
+  }, []);
+
   if (deliveries.length === 0) {
     return <Card className="shadow-card border-0">
         <CardContent className="flex items-center justify-center py-12">
@@ -64,14 +74,6 @@ export function RoadmapTimeline({
   const CELL_WIDTH = 60;
   const trackWidthStyle = useDaily ? { width: `${dateHeaders.length * CELL_WIDTH}px` } : { width: '100%' };
   
-  // Scroll synchronization
-  const syncScroll = useCallback((source: 'header' | 'body') => {
-    if (source === 'header' && headerRef.current && bodyRef.current) {
-      bodyRef.current.scrollLeft = headerRef.current.scrollLeft;
-    } else if (source === 'body' && headerRef.current && bodyRef.current) {
-      headerRef.current.scrollLeft = bodyRef.current.scrollLeft;
-    }
-  }, []);
   const getDeliveryPosition = (delivery: Delivery) => {
     const startOffset = useDaily 
       ? differenceInDays(delivery.startDate, timelineStart)
