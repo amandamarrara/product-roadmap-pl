@@ -79,10 +79,7 @@ const RoadmapView = () => {
                   Voltar
                 </Link>
               </Button>
-              <div>
-                
-                {roadmap.subtitle}
-              </div>
+              
             </div>
             
             <div className="flex items-center gap-2">
