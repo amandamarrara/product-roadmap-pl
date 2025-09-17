@@ -6,9 +6,12 @@ import { RoadmapBuilder } from "@/components/roadmap/RoadmapBuilder";
 import { ExportButton } from "@/components/roadmap/ExportButton";
 import { useState } from "react";
 import { Delivery } from "@/types/roadmap";
-
 const RoadmapView = () => {
-  const { id } = useParams<{ id: string }>();
+  const {
+    id
+  } = useParams<{
+    id: string;
+  }>();
   const navigate = useNavigate();
   const [isEditing, setIsEditing] = useState(false);
   const [editingData, setEditingData] = useState<{
@@ -17,13 +20,14 @@ const RoadmapView = () => {
     deliveries: Delivery[];
     milestones: any[];
   } | null>(null);
-
-  const { data: roadmap, isLoading, error } = useRoadmap(id!);
+  const {
+    data: roadmap,
+    isLoading,
+    error
+  } = useRoadmap(id!);
   const saveRoadmap = useSaveRoadmap();
-
   const handleSave = async () => {
     if (!editingData || !roadmap) return;
-    
     try {
       await saveRoadmap.mutateAsync({
         id: roadmap.id,
@@ -39,21 +43,16 @@ const RoadmapView = () => {
       console.error("Error saving roadmap:", error);
     }
   };
-
   if (isLoading) {
-    return (
-      <div className="container mx-auto py-8 flex items-center justify-center min-h-[400px]">
+    return <div className="container mx-auto py-8 flex items-center justify-center min-h-[400px]">
         <div className="flex items-center gap-2">
           <Loader2 className="h-6 w-6 animate-spin" />
           <span>Carregando roadmap...</span>
         </div>
-      </div>
-    );
+      </div>;
   }
-
   if (error || !roadmap) {
-    return (
-      <div className="container mx-auto py-8">
+    return <div className="container mx-auto py-8">
         <div className="text-center">
           <h1 className="text-2xl font-bold mb-4">Roadmap não encontrado</h1>
           <p className="text-muted-foreground mb-6">
@@ -66,12 +65,9 @@ const RoadmapView = () => {
             </Link>
           </Button>
         </div>
-      </div>
-    );
+      </div>;
   }
-
-  return (
-    <div className="min-h-screen bg-background">
+  return <div className="min-h-screen bg-background">
       {/* Header */}
       <div className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container mx-auto py-4">
@@ -84,62 +80,36 @@ const RoadmapView = () => {
                 </Link>
               </Button>
               <div>
-                <h1 className="text-xl font-semibold">{roadmap.title}</h1>
-                {roadmap.subtitle && (
-                  <p className="text-sm text-muted-foreground">{roadmap.subtitle}</p>
-                )}
+                
+                {roadmap.subtitle}
               </div>
             </div>
             
             <div className="flex items-center gap-2">
-              {!isEditing && (
-                <ExportButton 
-                  roadmapTitle={roadmap.title}
-                  timelineElementId="roadmap-timeline"
-                />
-              )}
-              {isEditing ? (
-                <>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      setIsEditing(false);
-                      setEditingData(null);
-                    }}
-                  >
+              {!isEditing && <ExportButton roadmapTitle={roadmap.title} timelineElementId="roadmap-timeline" />}
+              {isEditing ? <>
+                  <Button variant="outline" size="sm" onClick={() => {
+                setIsEditing(false);
+                setEditingData(null);
+              }}>
                     Cancelar
                   </Button>
-                  <Button
-                    size="sm"
-                    onClick={handleSave}
-                    disabled={saveRoadmap.isPending}
-                  >
-                    {saveRoadmap.isPending ? (
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    ) : (
-                      <Save className="h-4 w-4 mr-2" />
-                    )}
+                  <Button size="sm" onClick={handleSave} disabled={saveRoadmap.isPending}>
+                    {saveRoadmap.isPending ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
                     Salvar
                   </Button>
-                </>
-              ) : (
-                <Button
-                  size="sm"
-                  onClick={() => {
-                    setIsEditing(true);
-                    setEditingData({
-                      title: roadmap.title,
-                      subtitle: roadmap.subtitle || "",
-                      deliveries: roadmap.deliveries,
-                      milestones: roadmap.milestones || []
-                    });
-                  }}
-                >
+                </> : <Button size="sm" onClick={() => {
+              setIsEditing(true);
+              setEditingData({
+                title: roadmap.title,
+                subtitle: roadmap.subtitle || "",
+                deliveries: roadmap.deliveries,
+                milestones: roadmap.milestones || []
+              });
+            }}>
                   <Edit className="h-4 w-4 mr-2" />
                   Editar
-                </Button>
-              )}
+                </Button>}
             </div>
           </div>
         </div>
@@ -147,27 +117,13 @@ const RoadmapView = () => {
 
       {/* Content */}
       <div className="container mx-auto py-6" id="roadmap-timeline">
-        {isEditing && editingData ? (
-          <RoadmapBuilder
-            initialData={editingData}
-            onDataChange={setEditingData}
-            isEmbedded={true}
-          />
-        ) : (
-          <RoadmapBuilder
-            initialData={{
-              title: roadmap.title,
-              subtitle: roadmap.subtitle || "",
-              deliveries: roadmap.deliveries,
-              milestones: roadmap.milestones || []
-            }}
-            readOnly={true}
-            isEmbedded={true}
-          />
-        )}
+        {isEditing && editingData ? <RoadmapBuilder initialData={editingData} onDataChange={setEditingData} isEmbedded={true} /> : <RoadmapBuilder initialData={{
+        title: roadmap.title,
+        subtitle: roadmap.subtitle || "",
+        deliveries: roadmap.deliveries,
+        milestones: roadmap.milestones || []
+      }} readOnly={true} isEmbedded={true} />}
       </div>
-    </div>
-  );
+    </div>;
 };
-
 export default RoadmapView;
