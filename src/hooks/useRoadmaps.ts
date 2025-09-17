@@ -104,22 +104,48 @@ export function useSaveRoadmap() {
 
   return useMutation({
     mutationFn: async (roadmap: Partial<Roadmap> & { deliveries: Delivery[]; milestones?: Milestone[] }) => {
-      console.log("Saving roadmap:", roadmap);
+      console.log('🚀 Starting roadmap save process...');
+      console.log('Roadmap data:', roadmap);
+      console.log('Supabase URL:', 'https://onyscnytemwkjeeevtvh.supabase.co');
       
-      // Get current user
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
-      if (userError || !user) {
+      // Check authentication first
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      console.log('Auth check result:', { user: user?.id, authError });
+      
+      if (authError) {
+        console.error('❌ Auth error:', authError);
+        throw new Error(`Erro de autenticação: ${authError.message}`);
+      }
+      
+      if (!user) {
+        console.error('❌ No user found');
         throw new Error("Usuário não autenticado");
       }
+
+      console.log('✅ User authenticated:', user.id);
       
       // Validate required fields
       if (!roadmap.title?.trim()) {
+        console.error('❌ Missing required field: title');
         throw new Error("O título do roadmap é obrigatório");
       }
+
+      console.log('✅ Validation passed');
+
+      // Prepare roadmap data
+      const roadmapPayload = {
+        title: roadmap.title,
+        subtitle: roadmap.subtitle,
+        description: roadmap.description,
+        user_id: user.id,
+      };
+
+      console.log('Prepared roadmap payload:', roadmapPayload);
 
       // Save or update roadmap
       let roadmapData;
       if (roadmap.id) {
+        console.log('🔄 Updating existing roadmap:', roadmap.id);
         const { data, error } = await supabase
           .from("roadmaps")
           .update({
@@ -132,100 +158,137 @@ export function useSaveRoadmap() {
           .select()
           .single();
         
-        if (error) throw error;
+        console.log('Update roadmap result:', { data, error });
+        if (error) {
+          console.error('❌ Error updating roadmap:', error);
+          throw new Error(`Erro ao atualizar roadmap: ${error.message} (Code: ${error.code})`);
+        }
         roadmapData = data;
       } else {
+        console.log('➕ Creating new roadmap');
         const { data, error } = await supabase
           .from("roadmaps")
-          .insert({
-            title: roadmap.title,
-            subtitle: roadmap.subtitle,
-            description: roadmap.description,
-            user_id: user.id,
-          })
+          .insert(roadmapPayload)
           .select()
           .single();
         
-        if (error) throw error;
+        console.log('Insert roadmap result:', { data, error });
+        if (error) {
+          console.error('❌ Error creating roadmap:', error);
+          throw new Error(`Erro ao criar roadmap: ${error.message} (Code: ${error.code})`);
+        }
         roadmapData = data;
       }
 
+      console.log('✅ Roadmap saved successfully:', roadmapData);
+
       // Delete existing deliveries if updating
       if (roadmap.id) {
-        await supabase
+        console.log('🗑️ Deleting existing deliveries for roadmap:', roadmap.id);
+        const { error: deleteError } = await supabase
           .from("deliveries")
           .delete()
           .eq("roadmap_id", roadmap.id)
           .eq("user_id", user.id);
+          
+        console.log('Delete existing deliveries result:', deleteError);
+        if (deleteError) {
+          console.error('❌ Error deleting existing deliveries:', deleteError);
+          throw new Error(`Erro ao deletar entregas existentes: ${deleteError.message} (Code: ${deleteError.code})`);
+        }
       }
 
       // Save deliveries
-      for (const delivery of roadmap.deliveries || []) {
-        console.log("Saving delivery:", delivery);
+      console.log(`📦 Processing ${roadmap.deliveries?.length || 0} deliveries`);
+      for (const [index, delivery] of (roadmap.deliveries || []).entries()) {
+        console.log(`📦 [${index + 1}/${roadmap.deliveries?.length}] Saving delivery:`, delivery.title);
+        
+        const deliveryPayload = {
+          roadmap_id: roadmapData.id,
+          user_id: user.id,
+          title: delivery.title || "Entrega sem título",
+          description: delivery.description || null,
+          start_date: delivery.startDate ? delivery.startDate.toISOString().split('T')[0] : null,
+          end_date: delivery.endDate ? delivery.endDate.toISOString().split('T')[0] : null,
+          complexity: delivery.complexity || null,
+          priority: delivery.priority || null,
+          delivery_color: delivery.deliveryColor || null,
+          delivery_phase: delivery.deliveryPhase || null,
+          jira_link: delivery.jiraLink || null,
+          progress: delivery.progress || 0,
+          status: delivery.status || 'not-started',
+        };
+        
+        console.log('Delivery payload:', deliveryPayload);
         
         const { data: deliveryData, error: deliveryError } = await supabase
           .from("deliveries")
-          .insert({
-            roadmap_id: roadmapData.id,
-            user_id: user.id,
-            title: delivery.title || "Entrega sem título",
-            description: delivery.description || null,
-            start_date: delivery.startDate ? delivery.startDate.toISOString().split('T')[0] : null,
-            end_date: delivery.endDate ? delivery.endDate.toISOString().split('T')[0] : null,
-            complexity: delivery.complexity || null,
-            priority: delivery.priority || null,
-            delivery_color: delivery.deliveryColor || null,
-            delivery_phase: delivery.deliveryPhase || null,
-            jira_link: delivery.jiraLink || null,
-            progress: delivery.progress || 0,
-            status: delivery.status || 'not-started',
-          })
+          .insert(deliveryPayload)
           .select()
           .single();
 
+        console.log('Delivery insert result:', { data: deliveryData, error: deliveryError });
         if (deliveryError) {
-          console.error("Delivery error:", deliveryError);
-          throw deliveryError;
+          console.error("❌ Delivery error:", deliveryError);
+          throw new Error(`Erro ao salvar entrega "${delivery.title}": ${deliveryError.message} (Code: ${deliveryError.code})`);
         }
 
         // Save sub-deliveries
-        for (const subDelivery of delivery.subDeliveries || []) {
-          console.log("Saving sub-delivery:", subDelivery);
+        console.log(`📋 Processing ${delivery.subDeliveries?.length || 0} sub-deliveries for delivery: ${delivery.title}`);
+        for (const [subIndex, subDelivery] of (delivery.subDeliveries || []).entries()) {
+          console.log(`📋 [${subIndex + 1}/${delivery.subDeliveries?.length}] Saving sub-delivery:`, subDelivery.title);
           
+          const subDeliveryPayload = {
+            delivery_id: deliveryData.id,
+            user_id: user.id,
+            title: subDelivery.title || "Sub-entrega sem título",
+            description: subDelivery.description || null,
+            start_date: subDelivery.startDate ? subDelivery.startDate.toISOString().split('T')[0] : null,
+            end_date: subDelivery.endDate ? subDelivery.endDate.toISOString().split('T')[0] : null,
+            team: subDelivery.team || null,
+            responsible: subDelivery.responsible || null,
+            completed: subDelivery.completed || false,
+            progress: subDelivery.progress || 0,
+            status: subDelivery.status || 'not-started',
+            jira_link: subDelivery.jiraLink || null,
+          };
+          
+          console.log('Sub-delivery payload:', subDeliveryPayload);
+
           const { error: subError } = await supabase
             .from("sub_deliveries")
-            .insert({
-              delivery_id: deliveryData.id,
-              user_id: user.id,
-              title: subDelivery.title || "Sub-entrega sem título",
-              description: subDelivery.description || null,
-              start_date: subDelivery.startDate ? subDelivery.startDate.toISOString().split('T')[0] : null,
-              end_date: subDelivery.endDate ? subDelivery.endDate.toISOString().split('T')[0] : null,
-              team: subDelivery.team || null,
-              responsible: subDelivery.responsible || null,
-              completed: subDelivery.completed || false,
-              progress: subDelivery.progress || 0,
-              status: subDelivery.status || 'not-started',
-              jira_link: subDelivery.jiraLink || null,
-            });
+            .insert(subDeliveryPayload);
 
+          console.log('Sub-delivery insert result:', subError);
           if (subError) {
-            console.error("Sub-delivery error:", subError);
-            throw subError;
+            console.error("❌ Sub-delivery error:", subError);
+            throw new Error(`Erro ao salvar sub-entrega "${subDelivery.title}": ${subError.message} (Code: ${subError.code})`);
           }
         }
       }
 
+      console.log('🎉 All operations completed successfully');
       return roadmapData;
     },
     onSuccess: () => {
+      console.log('✅ Save mutation completed successfully');
       queryClient.invalidateQueries({ queryKey: ["roadmaps"] });
       toast.success("Roadmap salvo com sucesso!");
     },
     onError: (error) => {
-      console.error("Error saving roadmap:", error);
+      console.error("❌ Error saving roadmap:", error);
       const errorMessage = error instanceof Error ? error.message : "Ocorreu um erro ao salvar o roadmap. Tente novamente.";
-      toast.error(`Erro ao salvar roadmap: ${errorMessage}`);
+      
+      // Check for specific error types
+      if (error instanceof Error && error.message.includes('404')) {
+        console.error('❌ 404 Error detected - possible auth/API issue');
+        toast.error("Erro de conectividade. Verifique sua conexão e tente novamente.");
+      } else if (error instanceof Error && error.message.includes('NOT_FOUND')) {
+        console.error('❌ NOT_FOUND Error detected');
+        toast.error("Recurso não encontrado. Verifique sua autenticação e tente novamente.");
+      } else {
+        toast.error(`Erro ao salvar roadmap: ${errorMessage}`);
+      }
     }
   });
 }
