@@ -106,7 +106,10 @@ export function useSaveRoadmap() {
     mutationFn: async (roadmap: Partial<Roadmap> & { deliveries: Delivery[]; milestones?: Milestone[] }) => {
       console.log('🚀 Starting roadmap save process...');
       console.log('Roadmap data:', roadmap);
-      console.log('Supabase URL:', 'https://onyscnytemwkjeeevtvh.supabase.co');
+      console.log('Environment check:', {
+        supabaseUrl: import.meta.env.VITE_SUPABASE_URL || 'https://onyscnytemwkjeeevtvh.supabase.co',
+        hasKey: !!(import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9ueXNjbnl0ZW13a2plZWV2dHZoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc1NTIyNDgsImV4cCI6MjA3MzEyODI0OH0.cuQgo5gpW8LMa_Shj_iisc-OuHowHfwX01UCITSVBa4')
+      });
       
       // Check authentication first
       const { data: { user }, error: authError } = await supabase.auth.getUser();
@@ -118,8 +121,8 @@ export function useSaveRoadmap() {
       }
       
       if (!user) {
-        console.error('❌ No user found');
-        throw new Error("Usuário não autenticado");
+        console.error('❌ No user found - user must be authenticated to save roadmap');
+        throw new Error("Usuário não autenticado. Faça login para salvar roadmaps.");
       }
 
       console.log('✅ User authenticated:', user.id);

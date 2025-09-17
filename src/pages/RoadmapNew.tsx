@@ -3,8 +3,10 @@ import { Link, useNavigate } from "react-router-dom";
 import { ArrowLeft, Save, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { RoadmapBuilder } from "@/components/roadmap/RoadmapBuilder";
+import { AuthStatus } from "@/components/AuthStatus";
 import { useSaveRoadmap } from "@/hooks/useRoadmaps";
 import { Delivery } from "@/types/roadmap";
+import { toast } from "sonner";
 const RoadmapNew = () => {
   const navigate = useNavigate();
   const [roadmapData, setRoadmapData] = useState<{
@@ -18,25 +20,28 @@ const RoadmapNew = () => {
   });
   const saveRoadmap = useSaveRoadmap();
   const handleSave = async () => {
-    console.log("Save button clicked, roadmapData:", roadmapData);
+    console.log("💾 Save button clicked, roadmapData:", roadmapData);
     
     if (!roadmapData.title?.trim()) {
-      console.log("Title is empty, not saving");
+      console.log("❌ Title is empty, not saving");
+      toast.error("O título do roadmap é obrigatório");
       return;
     }
     
     try {
-      console.log("Attempting to save roadmap...");
+      console.log("🚀 Attempting to save roadmap...");
       const result = await saveRoadmap.mutateAsync({
         title: roadmapData.title.trim(),
         subtitle: roadmapData.subtitle?.trim() || "",
         description: "",
         deliveries: roadmapData.deliveries || []
       });
-      console.log("Roadmap saved successfully:", result);
+      console.log("✅ Roadmap saved successfully:", result);
+      toast.success("Roadmap salvo com sucesso!");
       navigate(`/roadmap/${result.id}`);
-    } catch (error) {
-      console.error("Error saving roadmap:", error);
+    } catch (error: any) {
+      console.error("❌ Error saving roadmap:", error);
+      toast.error(error.message || "Erro ao salvar roadmap");
     }
   };
   const canSave = roadmapData.title.trim().length > 0;
@@ -67,7 +72,8 @@ const RoadmapNew = () => {
       </div>
 
       {/* Content */}
-      <div className="container mx-auto py-6">
+      <div className="container mx-auto py-6 space-y-6">
+        <AuthStatus />
         <RoadmapBuilder initialData={roadmapData} onDataChange={setRoadmapData} isEmbedded={true} />
       </div>
     </div>;

@@ -134,17 +134,22 @@ export function RoadmapBuilder({
   }, [initialData]);
 
   const handleSaveDelivery = (deliveryData: Omit<Delivery, 'id'>) => {
+    console.log('💾 RoadmapBuilder: Received delivery data from form:', deliveryData);
+    
     if (editingDelivery) {
+      console.log('✏️ RoadmapBuilder: Updating existing delivery:', editingDelivery.id);
       setDeliveries(prev => prev.map(d => d.id === editingDelivery.id ? {
         ...deliveryData,
         id: editingDelivery.id
       } : d));
     } else {
+      console.log('➕ RoadmapBuilder: Adding new delivery');
       const newDelivery: Delivery = {
         ...deliveryData,
         id: Date.now().toString()
       };
       setDeliveries(prev => [...prev, newDelivery]);
+      console.log('✅ RoadmapBuilder: New delivery added:', newDelivery.id);
     }
     setShowForm(false);
     setEditingDelivery(undefined);

@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import { MapPin, Plus, Eye, LogOut, User } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useRoadmaps } from "@/hooks/useRoadmaps";
+import { AuthStatus } from "@/components/AuthStatus";
 
 const Index = () => {
   const { user, signOut } = useAuth();
@@ -45,6 +46,8 @@ const Index = () => {
             Gerencie seus roadmaps de forma segura e organizada. Crie, visualize e acompanhe o progresso dos seus projetos.
           </p>
         </div>
+
+        <AuthStatus />
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
           <Card className="shadow-elegant border-0 hover:shadow-lg transition-all duration-300">

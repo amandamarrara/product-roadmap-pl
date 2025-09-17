@@ -76,26 +76,35 @@ export function DeliveryForm({ delivery, onSave, onCancel }: DeliveryFormProps) 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
+    console.log('📝 DeliveryForm: Starting form submission...');
+    console.log('Form data:', { title, startDate, endDate, complexity, priority });
+    
     // Validate required fields
     if (!title.trim()) {
+      console.error('❌ DeliveryForm: Missing title');
       alert('O título da entrega é obrigatório');
       return;
     }
     
     if (!startDate) {
+      console.error('❌ DeliveryForm: Missing start date');
       alert('A data de início é obrigatória');
       return;
     }
     
     if (!endDate) {
+      console.error('❌ DeliveryForm: Missing end date');
       alert('A data de fim é obrigatória');
       return;
     }
     
     if (startDate > endDate) {
+      console.error('❌ DeliveryForm: Invalid date range');
       alert('A data de início deve ser anterior à data de fim');
       return;
     }
+
+    console.log('✅ DeliveryForm: Validation passed');
 
     const validSubDeliveries = subDeliveries
       .filter(sub => sub.title.trim() && sub.team.trim() && sub.responsible.trim())
@@ -104,7 +113,9 @@ export function DeliveryForm({ delivery, onSave, onCancel }: DeliveryFormProps) 
         id: Date.now().toString() + Math.random().toString(36).substr(2, 9)
       }));
 
-    onSave({
+    console.log('📦 DeliveryForm: Prepared sub-deliveries:', validSubDeliveries.length);
+
+    const deliveryData = {
       title,
       description,
       startDate,
@@ -117,7 +128,10 @@ export function DeliveryForm({ delivery, onSave, onCancel }: DeliveryFormProps) 
       subDeliveries: validSubDeliveries,
       progress,
       status
-    });
+    };
+
+    console.log('🚀 DeliveryForm: Calling onSave with data:', deliveryData);
+    onSave(deliveryData);
   };
 
   const getPriorityColor = (priority: Priority) => {
