@@ -1,13 +1,13 @@
 import { useState, useEffect } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 
 export function useAuth() {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
-  const { toast } = useToast();
+  
 
   useEffect(() => {
     // Set up auth state listener FIRST
@@ -43,34 +43,19 @@ export function useAuth() {
 
       if (error) {
         if (error.message.includes('already registered')) {
-          toast({
-            title: "Email já cadastrado",
-            description: "Este email já está registrado. Tente fazer login.",
-            variant: "destructive",
-          });
+          toast.error("Este email já está registrado. Tente fazer login.");
         } else {
-          toast({
-            title: "Erro no cadastro",
-            description: error.message,
-            variant: "destructive",
-          });
+          toast.error(`Erro no cadastro: ${error.message}`);
         }
         return { error };
       }
 
-      toast({
-        title: "Cadastro realizado!",
-        description: "Verifique seu email para confirmar a conta.",
-      });
+      toast.success("Cadastro realizado! Verifique seu email para confirmar a conta.");
 
       return { error: null };
     } catch (error) {
       console.error('Sign up error:', error);
-      toast({
-        title: "Erro no cadastro",
-        description: "Ocorreu um erro inesperado. Tente novamente.",
-        variant: "destructive",
-      });
+      toast.error("Ocorreu um erro inesperado. Tente novamente.");
       return { error };
     }
   };
@@ -84,34 +69,19 @@ export function useAuth() {
 
       if (error) {
         if (error.message.includes('Invalid login credentials')) {
-          toast({
-            title: "Credenciais inválidas",
-            description: "Email ou senha incorretos.",
-            variant: "destructive",
-          });
+          toast.error("Email ou senha incorretos.");
         } else {
-          toast({
-            title: "Erro no login",
-            description: error.message,
-            variant: "destructive",
-          });
+          toast.error(`Erro no login: ${error.message}`);
         }
         return { error };
       }
 
-      toast({
-        title: "Login realizado!",
-        description: "Bem-vindo de volta!",
-      });
+      toast.success("Login realizado! Bem-vindo de volta!");
 
       return { error: null };
     } catch (error) {
       console.error('Sign in error:', error);
-      toast({
-        title: "Erro no login",
-        description: "Ocorreu um erro inesperado. Tente novamente.",
-        variant: "destructive",
-      });
+      toast.error("Ocorreu um erro inesperado. Tente novamente.");
       return { error };
     }
   };
@@ -121,18 +91,11 @@ export function useAuth() {
       const { error } = await supabase.auth.signOut();
       
       if (error) {
-        toast({
-          title: "Erro ao sair",
-          description: error.message,
-          variant: "destructive",
-        });
+        toast.error(`Erro ao sair: ${error.message}`);
         return { error };
       }
 
-      toast({
-        title: "Logout realizado",
-        description: "Você foi desconectado com sucesso.",
-      });
+      toast.success("Você foi desconectado com sucesso.");
 
       return { error: null };
     } catch (error) {
