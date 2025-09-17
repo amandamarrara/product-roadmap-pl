@@ -201,6 +201,22 @@ export function useSaveRoadmap() {
         }
       }
 
+      // Delete existing milestones if updating
+      if (roadmap.id) {
+        console.log('🗑️ Deleting existing milestones for roadmap:', roadmap.id);
+        const { error: deleteMilestonesError } = await supabase
+          .from("milestones")
+          .delete()
+          .eq("roadmap_id", roadmap.id)
+          .eq("user_id", user.id);
+          
+        console.log('Delete existing milestones result:', deleteMilestonesError);
+        if (deleteMilestonesError) {
+          console.error('❌ Error deleting existing milestones:', deleteMilestonesError);
+          throw new Error(`Erro ao deletar marcos existentes: ${deleteMilestonesError.message} (Code: ${deleteMilestonesError.code})`);
+        }
+      }
+
       // Save deliveries
       console.log(`📦 Processing ${roadmap.deliveries?.length || 0} deliveries`);
       for (const [index, delivery] of (roadmap.deliveries || []).entries()) {
@@ -267,6 +283,33 @@ export function useSaveRoadmap() {
             console.error("❌ Sub-delivery error:", subError);
             throw new Error(`Erro ao salvar sub-entrega "${subDelivery.title}": ${subError.message} (Code: ${subError.code})`);
           }
+        }
+      }
+
+      // Save milestones
+      console.log(`🏁 Processing ${roadmap.milestones?.length || 0} milestones`);
+      for (const [index, milestone] of (roadmap.milestones || []).entries()) {
+        console.log(`🏁 [${index + 1}/${roadmap.milestones?.length}] Saving milestone:`, milestone.title);
+        
+        const milestonePayload = {
+          roadmap_id: roadmapData.id,
+          user_id: user.id,
+          title: milestone.title || "Marco sem título",
+          description: milestone.description || null,
+          date: milestone.date ? milestone.date.toISOString().split('T')[0] : null,
+          color: milestone.color || '#ef4444',
+        };
+        
+        console.log('Milestone payload:', milestonePayload);
+        
+        const { error: milestoneError } = await supabase
+          .from("milestones")
+          .insert(milestonePayload);
+
+        console.log('Milestone insert result:', milestoneError);
+        if (milestoneError) {
+          console.error("❌ Milestone error:", milestoneError);
+          throw new Error(`Erro ao salvar marco "${milestone.title}": ${milestoneError.message} (Code: ${milestoneError.code})`);
         }
       }
 

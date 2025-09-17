@@ -13,10 +13,12 @@ const RoadmapNew = () => {
     title: string;
     subtitle: string;
     deliveries: Delivery[];
+    milestones: any[];
   }>({
     title: "",
     subtitle: "",
-    deliveries: []
+    deliveries: [],
+    milestones: []
   });
   const saveRoadmap = useSaveRoadmap();
   const handleSave = async () => {
@@ -34,7 +36,8 @@ const RoadmapNew = () => {
         title: roadmapData.title.trim(),
         subtitle: roadmapData.subtitle?.trim() || "",
         description: "",
-        deliveries: roadmapData.deliveries || []
+        deliveries: roadmapData.deliveries || [],
+        milestones: roadmapData.milestones || []
       });
       console.log("✅ Roadmap saved successfully:", result);
       toast.success("Roadmap salvo com sucesso!");

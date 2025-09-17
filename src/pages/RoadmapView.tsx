@@ -15,6 +15,7 @@ const RoadmapView = () => {
     title: string;
     subtitle: string;
     deliveries: Delivery[];
+    milestones: any[];
   } | null>(null);
 
   const { data: roadmap, isLoading, error } = useRoadmap(id!);
@@ -30,6 +31,7 @@ const RoadmapView = () => {
         subtitle: editingData.subtitle,
         description: roadmap.description,
         deliveries: editingData.deliveries,
+        milestones: editingData.milestones || roadmap.milestones || []
       });
       setIsEditing(false);
       setEditingData(null);
@@ -130,6 +132,7 @@ const RoadmapView = () => {
                       title: roadmap.title,
                       subtitle: roadmap.subtitle || "",
                       deliveries: roadmap.deliveries,
+                      milestones: roadmap.milestones || []
                     });
                   }}
                 >
@@ -156,6 +159,7 @@ const RoadmapView = () => {
               title: roadmap.title,
               subtitle: roadmap.subtitle || "",
               deliveries: roadmap.deliveries,
+              milestones: roadmap.milestones || []
             }}
             readOnly={true}
             isEmbedded={true}
