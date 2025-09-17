@@ -339,6 +339,38 @@ export function useSaveRoadmap() {
   });
 }
 
+export function useUpdateDeliveryOrder() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async ({ roadmapId, deliveries }: { roadmapId: string; deliveries: Delivery[] }) => {
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      if (userError || !user) {
+        throw new Error("Usuário não autenticado");
+      }
+
+      // Update delivery phases for deliveries that moved between phases
+      for (const delivery of deliveries) {
+        const { error } = await supabase
+          .from("deliveries")
+          .update({ 
+            delivery_phase: delivery.deliveryPhase || null
+          })
+          .eq("id", delivery.id)
+          .eq("user_id", user.id);
+          
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["roadmaps"] });
+    },
+    onError: () => {
+      toast.error("Erro ao reordenar entregas.");
+    }
+  });
+}
+
 export function useDeleteRoadmap() {
   const queryClient = useQueryClient();
 

@@ -353,6 +353,7 @@ export function RoadmapBuilder({
               deliveries={filteredDeliveries} 
               milestones={milestones} 
               groupByPhase={groupByPhase}
+              roadmapId={initialData ? '1' : undefined}
             />
           </TabsContent>
 
