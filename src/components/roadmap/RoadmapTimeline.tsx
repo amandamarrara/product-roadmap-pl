@@ -1,23 +1,29 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { CalendarDays, Users, MapPin, ExternalLink } from "lucide-react";
+import { CalendarDays, Users, MapPin, ExternalLink, ChevronDown, ChevronRight } from "lucide-react";
 import { format, startOfWeek, endOfWeek, eachWeekOfInterval, eachDayOfInterval, isSameWeek, differenceInDays, differenceInWeeks, startOfDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import type { Delivery, Milestone } from "@/types/roadmap";
 import { cn } from "@/lib/utils";
-import { useRef, useCallback } from "react";
+import { useRef, useCallback, useState, useMemo } from "react";
+import { Button } from "@/components/ui/button";
+
 interface RoadmapTimelineProps {
   deliveries: Delivery[];
   milestones?: Milestone[];
+  groupByPhase?: boolean;
 }
+
 export function RoadmapTimeline({
   deliveries,
-  milestones = []
+  milestones = [],
+  groupByPhase = false
 }: RoadmapTimelineProps) {
   const headerRef = useRef<HTMLDivElement>(null);
   const bodyRef = useRef<HTMLDivElement>(null);
+  const [expandedPhases, setExpandedPhases] = useState<Set<string>>(new Set());
 
   // Scroll synchronization - moved before early return to maintain hook order
   const syncScroll = useCallback((source: 'header' | 'body') => {
@@ -27,6 +33,39 @@ export function RoadmapTimeline({
       headerRef.current.scrollLeft = bodyRef.current.scrollLeft;
     }
   }, []);
+
+  // Group deliveries by phase
+  const groupedDeliveries = useMemo(() => {
+    if (!groupByPhase) return { ungrouped: deliveries };
+    
+    const grouped: { [key: string]: Delivery[] } = {};
+    deliveries.forEach(delivery => {
+      const phase = delivery.deliveryPhase || 'Sem Fase';
+      if (!grouped[phase]) grouped[phase] = [];
+      grouped[phase].push(delivery);
+    });
+    
+    return grouped;
+  }, [deliveries, groupByPhase]);
+
+  // Toggle phase expansion
+  const togglePhase = (phase: string) => {
+    const newExpanded = new Set(expandedPhases);
+    if (newExpanded.has(phase)) {
+      newExpanded.delete(phase);
+    } else {
+      newExpanded.add(phase);
+    }
+    setExpandedPhases(newExpanded);
+  };
+
+  // Initialize all phases as expanded on first render
+  useState(() => {
+    if (groupByPhase) {
+      const phases = Object.keys(groupedDeliveries);
+      setExpandedPhases(new Set(phases));
+    }
+  });
 
   if (deliveries.length === 0) {
     return <Card className="shadow-card border-0">
@@ -101,6 +140,7 @@ export function RoadmapTimeline({
       width: `${Math.max(duration / totalUnits * 100, useDaily ? 2 : 1)}%`
     };
   };
+
   const getDeliveryColor = (delivery: Delivery) => {
     return delivery.deliveryColor || '#3b82f6';
   };
@@ -118,6 +158,7 @@ export function RoadmapTimeline({
       return `${Math.max(0, Math.min(weekOffset / (dateHeaders.length - 1) * 100, 100))}%`;
     }
   };
+
   const getComplexityLabel = (complexity: string) => {
     switch (complexity) {
       case 'simple':
@@ -132,6 +173,7 @@ export function RoadmapTimeline({
         return complexity;
     }
   };
+
   const getPriorityLabel = (priority: string) => {
     switch (priority) {
       case 'low':
@@ -146,6 +188,7 @@ export function RoadmapTimeline({
         return priority;
     }
   };
+
   const getStatusLabel = (status: string) => {
     switch (status) {
       case 'not-started':
@@ -160,6 +203,170 @@ export function RoadmapTimeline({
         return status;
     }
   };
+
+  const renderDeliveryBar = (delivery: Delivery) => {
+    const position = getDeliveryPosition(delivery);
+    const deliveryColor = getDeliveryColor(delivery);
+    
+    return (
+      <div key={delivery.id} className="relative">
+        <div className="flex items-center gap-3 mb-2">
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              
+              
+            </div>
+          </div>
+          <div className="text-right text-sm">
+            <div className="font-medium">{delivery.progress}%</div>
+            <div className="text-muted-foreground">
+              {format(delivery.startDate, "dd/MM", {
+            locale: ptBR
+          })} - {format(delivery.endDate, "dd/MM", {
+            locale: ptBR
+          })}
+            </div>
+          </div>
+        </div>
+
+        {/* Timeline Bar */}
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <div className="relative h-8 bg-muted/20 rounded-lg overflow-hidden cursor-pointer">
+              <div className="absolute top-0 h-full rounded-lg flex items-center px-2 transition-all duration-300" style={{
+            ...position,
+            backgroundColor: deliveryColor
+          }}>
+                <div className="flex items-center gap-2 text-white text-xs font-medium truncate">
+                  <span className="truncate">{delivery.title}</span>
+                  {delivery.subDeliveries.length > 0 && <Badge variant="secondary" className="bg-white/20 text-white text-xs px-1">
+                      <Users className="h-3 w-3 mr-1" />
+                      {delivery.subDeliveries.length}
+                    </Badge>}
+                </div>
+              </div>
+
+              {/* Progress Overlay */}
+              <div className="absolute top-0 h-full bg-white/20 rounded-lg" style={{
+            ...position,
+            width: `${parseFloat(position.width.replace('%', '')) * delivery.progress / 100}%`
+          }} />
+            </div>
+          </TooltipTrigger>
+          <TooltipContent className="max-w-sm">
+            <div className="space-y-2">
+              <div className="font-semibold">{delivery.title}</div>
+              <p className="text-sm text-muted-foreground">{delivery.description}</p>
+              
+              <div className="flex flex-wrap gap-2">
+                {delivery.deliveryPhase && (
+                  <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                    <MapPin className="h-3 w-3" />
+                    {delivery.deliveryPhase}
+                  </div>
+                )}
+                <div className="text-xs">
+                  <span className="font-medium">Prioridade:</span> {getPriorityLabel(delivery.priority)}
+                </div>
+                <div className="text-xs">
+                  <span className="font-medium">Complexidade:</span> {getComplexityLabel(delivery.complexity)}
+                </div>
+                <div className="text-xs">
+                  <span className="font-medium">Status:</span> {getStatusLabel(delivery.status)}
+                </div>
+                {delivery.jiraLink && (
+                  <a
+                    href={delivery.jiraLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-1 text-xs text-primary hover:underline"
+                  >
+                    <ExternalLink className="h-3 w-3" />
+                    Ver Épico
+                  </a>
+                )}
+              </div>
+              
+              <div className="flex items-center gap-2">
+                <div className="text-xs">
+                  <span className="font-medium">Progresso:</span> {delivery.progress}%
+                </div>
+                <div className="flex-1 bg-muted rounded-full h-1">
+                  <div
+                    className="h-1 rounded-full bg-primary"
+                    style={{ width: `${delivery.progress}%` }}
+                  />
+                </div>
+              </div>
+              
+              <div className="text-xs text-muted-foreground">
+                <div><span className="font-medium">Início:</span> {format(delivery.startDate, "dd/MM/yyyy")}</div>
+                <div><span className="font-medium">Fim:</span> {format(delivery.endDate, "dd/MM/yyyy")}</div>
+              </div>
+            </div>
+          </TooltipContent>
+        </Tooltip>
+
+        {/* Sub-deliveries */}
+        {delivery.subDeliveries.length > 0 && <div className="mt-2 ml-4 space-y-1">
+            {delivery.subDeliveries.slice(0, 3).map(sub => {
+        const subPosition = getSubDeliveryPosition(sub.startDate, sub.endDate);
+        return <Tooltip key={sub.id}>
+                  <TooltipTrigger asChild>
+                    <div className="relative cursor-pointer">
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1">
+                        <span className="truncate">{sub.title}</span>
+                        <span>{sub.progress}%</span>
+                      </div>
+                      <div className="relative h-2 bg-muted/20 rounded">
+                        <div className="absolute top-0 h-full rounded" style={{
+                  ...subPosition,
+                  backgroundColor: `${deliveryColor}60`
+                }} />
+                        <div className="absolute top-0 h-full rounded" style={{
+                  ...subPosition,
+                  backgroundColor: deliveryColor,
+                  width: `${parseFloat(subPosition.width.replace('%', '')) * sub.progress / 100}%`
+                }} />
+                      </div>
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <div className="space-y-1">
+                      <div className="font-medium">{sub.title}</div>
+                      <p className="text-xs text-muted-foreground">{sub.description}</p>
+                      <div className="flex flex-wrap gap-2 text-xs">
+                        <span><strong>Time:</strong> {sub.team}</span>
+                        <span><strong>Responsável:</strong> {sub.responsible}</span>
+                        <span><strong>Status:</strong> {getStatusLabel(sub.status)}</span>
+                        <span><strong>Progresso:</strong> {sub.progress}%</span>
+                        <span><strong>Início:</strong> {format(sub.startDate, "dd/MM")}</span>
+                        <span><strong>Fim:</strong> {format(sub.endDate, "dd/MM")}</span>
+                        {sub.jiraLink && (
+                          <a
+                            href={sub.jiraLink}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-1 text-primary hover:underline"
+                          >
+                            <ExternalLink className="h-3 w-3" />
+                            Tarefa
+                          </a>
+                        )}
+                      </div>
+                    </div>
+                  </TooltipContent>
+                </Tooltip>;
+            })}
+            
+            {delivery.subDeliveries.length > 3 && <div className="text-xs text-muted-foreground">
+                +{delivery.subDeliveries.length - 3} outras sub-entregas
+              </div>}
+          </div>}
+      </div>
+    );
+  };
+
   return <TooltipProvider>
       <Card className="shadow-card border-0">
         <CardHeader>
@@ -243,164 +450,45 @@ export function RoadmapTimeline({
                 />
               ))}
             
-            {deliveries.map((delivery, index) => {
-            const position = getDeliveryPosition(delivery);
-            const deliveryColor = getDeliveryColor(delivery);
-            return <div key={delivery.id} className="relative">
-                  <div className="flex items-center gap-3 mb-2">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        
-                        
+            {groupByPhase ? (
+              // Grouped view by phase
+              Object.entries(groupedDeliveries).map(([phase, phaseDeliveries]) => (
+                <div key={phase} className="border border-border/50 rounded-lg overflow-hidden">
+                  {/* Phase Header */}
+                  <div className="bg-muted/30 p-3 border-b border-border/50">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => togglePhase(phase)}
+                      className="h-auto p-0 font-medium text-sm hover:bg-transparent"
+                    >
+                      <div className="flex items-center gap-2">
+                        {expandedPhases.has(phase) ? (
+                          <ChevronDown className="h-4 w-4" />
+                        ) : (
+                          <ChevronRight className="h-4 w-4" />
+                        )}
+                        <MapPin className="h-4 w-4" />
+                        <span>{phase}</span>
+                        <Badge variant="secondary" className="ml-2">
+                          {phaseDeliveries.length} entrega{phaseDeliveries.length !== 1 ? 's' : ''}
+                        </Badge>
                       </div>
-                    </div>
-                    <div className="text-right text-sm">
-                      <div className="font-medium">{delivery.progress}%</div>
-                      <div className="text-muted-foreground">
-                        {format(delivery.startDate, "dd/MM", {
-                      locale: ptBR
-                    })} - {format(delivery.endDate, "dd/MM", {
-                      locale: ptBR
-                    })}
-                      </div>
-                    </div>
+                    </Button>
                   </div>
 
-                  {/* Timeline Bar */}
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <div className="relative h-8 bg-muted/20 rounded-lg overflow-hidden cursor-pointer">
-                        <div className="absolute top-0 h-full rounded-lg flex items-center px-2 transition-all duration-300" style={{
-                      ...position,
-                      backgroundColor: deliveryColor
-                    }}>
-                          <div className="flex items-center gap-2 text-white text-xs font-medium truncate">
-                            <span className="truncate">{delivery.title}</span>
-                            {delivery.subDeliveries.length > 0 && <Badge variant="secondary" className="bg-white/20 text-white text-xs px-1">
-                                <Users className="h-3 w-3 mr-1" />
-                                {delivery.subDeliveries.length}
-                              </Badge>}
-                          </div>
-                        </div>
-
-                        {/* Progress Overlay */}
-                        <div className="absolute top-0 h-full bg-white/20 rounded-lg" style={{
-                      ...position,
-                      width: `${parseFloat(position.width.replace('%', '')) * delivery.progress / 100}%`
-                    }} />
-                      </div>
-                    </TooltipTrigger>
-                    <TooltipContent className="max-w-sm">
-                      <div className="space-y-2">
-                        <div className="font-semibold">{delivery.title}</div>
-                        <p className="text-sm text-muted-foreground">{delivery.description}</p>
-                        
-                        <div className="flex flex-wrap gap-2">
-                          {delivery.deliveryPhase && (
-                            <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                              <MapPin className="h-3 w-3" />
-                              {delivery.deliveryPhase}
-                            </div>
-                          )}
-                          <div className="text-xs">
-                            <span className="font-medium">Prioridade:</span> {getPriorityLabel(delivery.priority)}
-                          </div>
-                          <div className="text-xs">
-                            <span className="font-medium">Complexidade:</span> {getComplexityLabel(delivery.complexity)}
-                          </div>
-                          <div className="text-xs">
-                            <span className="font-medium">Status:</span> {getStatusLabel(delivery.status)}
-                          </div>
-                          {delivery.jiraLink && (
-                            <a
-                              href={delivery.jiraLink}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="flex items-center gap-1 text-xs text-primary hover:underline"
-                            >
-                              <ExternalLink className="h-3 w-3" />
-                              Ver Épico
-                            </a>
-                          )}
-                        </div>
-                        
-                        <div className="flex items-center gap-2">
-                          <div className="text-xs">
-                            <span className="font-medium">Progresso:</span> {delivery.progress}%
-                          </div>
-                          <div className="flex-1 bg-muted rounded-full h-1">
-                            <div
-                              className="h-1 rounded-full bg-primary"
-                              style={{ width: `${delivery.progress}%` }}
-                            />
-                          </div>
-                        </div>
-                        
-                        <div className="text-xs text-muted-foreground">
-                          <div><span className="font-medium">Início:</span> {format(delivery.startDate, "dd/MM/yyyy")}</div>
-                          <div><span className="font-medium">Fim:</span> {format(delivery.endDate, "dd/MM/yyyy")}</div>
-                        </div>
-                      </div>
-                    </TooltipContent>
-                  </Tooltip>
-
-                  {/* Sub-deliveries */}
-                  {delivery.subDeliveries.length > 0 && <div className="mt-2 ml-4 space-y-1">
-                      {delivery.subDeliveries.slice(0, 3).map(sub => {
-                  const subPosition = getSubDeliveryPosition(sub.startDate, sub.endDate);
-                  return <Tooltip key={sub.id}>
-                            <TooltipTrigger asChild>
-                              <div className="relative cursor-pointer">
-                                <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1">
-                                  <span className="truncate">{sub.title}</span>
-                                  <span>{sub.progress}%</span>
-                                </div>
-                                <div className="relative h-2 bg-muted/20 rounded">
-                                  <div className="absolute top-0 h-full rounded" style={{
-                            ...subPosition,
-                            backgroundColor: `${deliveryColor}60`
-                          }} />
-                                  <div className="absolute top-0 h-full rounded" style={{
-                            ...subPosition,
-                            backgroundColor: deliveryColor,
-                            width: `${parseFloat(subPosition.width.replace('%', '')) * sub.progress / 100}%`
-                          }} />
-                                </div>
-                              </div>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              <div className="space-y-1">
-                                <div className="font-medium">{sub.title}</div>
-                                <p className="text-xs text-muted-foreground">{sub.description}</p>
-                                <div className="flex flex-wrap gap-2 text-xs">
-                                  <span><strong>Time:</strong> {sub.team}</span>
-                                  <span><strong>Responsável:</strong> {sub.responsible}</span>
-                                  <span><strong>Status:</strong> {getStatusLabel(sub.status)}</span>
-                                  <span><strong>Progresso:</strong> {sub.progress}%</span>
-                                  <span><strong>Início:</strong> {format(sub.startDate, "dd/MM")}</span>
-                                  <span><strong>Fim:</strong> {format(sub.endDate, "dd/MM")}</span>
-                                  {sub.jiraLink && (
-                                    <a
-                                      href={sub.jiraLink}
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                      className="flex items-center gap-1 text-primary hover:underline"
-                                    >
-                                      <ExternalLink className="h-3 w-3" />
-                                      Tarefa
-                                    </a>
-                                  )}
-                                </div>
-                              </div>
-                            </TooltipContent>
-                          </Tooltip>;
-                })}
-                      {delivery.subDeliveries.length > 3 && <div className="text-xs text-muted-foreground">
-                          +{delivery.subDeliveries.length - 3} mais sub-entregas
-                        </div>}
-                    </div>}
-                 </div>;
-          })}
+                  {/* Phase Content */}
+                  {expandedPhases.has(phase) && (
+                    <div className="p-4 space-y-4">
+                      {phaseDeliveries.map((delivery) => renderDeliveryBar(delivery))}
+                    </div>
+                  )}
+                </div>
+              ))
+            ) : (
+              // Regular view
+              deliveries.map((delivery) => renderDeliveryBar(delivery))
+            )}
             </div>
           </div>
         </CardContent>

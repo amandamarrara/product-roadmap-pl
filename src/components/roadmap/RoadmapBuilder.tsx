@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, MapPin, List, Calendar, Filter } from "lucide-react";
+import { Plus, MapPin, List, Calendar, Filter, Layers } from "lucide-react";
 import { DeliveryForm } from "./DeliveryForm";
 import { DeliveryCard } from "./DeliveryCard";
 import { RoadmapTimeline } from "./RoadmapTimeline";
@@ -110,6 +110,7 @@ export function RoadmapBuilder({
   const [editingDelivery, setEditingDelivery] = useState<Delivery | undefined>();
   const [filterTeam, setFilterTeam] = useState<string>('all');
   const [filterPriority, setFilterPriority] = useState<string>('all');
+  const [groupByPhase, setGroupByPhase] = useState<boolean>(false);
   
   // Ref for form auto-scroll
   const formRef = useRef<HTMLDivElement>(null);
@@ -334,11 +335,25 @@ export function RoadmapBuilder({
                   <SelectItem value="critical">Crítica</SelectItem>
                 </SelectContent>
               </Select>
+
+              <Button
+                variant={groupByPhase ? "default" : "outline"}
+                size="sm"
+                onClick={() => setGroupByPhase(!groupByPhase)}
+                className="flex items-center gap-2"
+              >
+                <Layers className="h-4 w-4" />
+                Agrupar por Fase
+              </Button>
             </div>
           </div>
 
           <TabsContent value="timeline" className="space-y-6">
-            <RoadmapTimeline deliveries={filteredDeliveries} milestones={milestones} />
+            <RoadmapTimeline 
+              deliveries={filteredDeliveries} 
+              milestones={milestones} 
+              groupByPhase={groupByPhase}
+            />
           </TabsContent>
 
           <TabsContent value="list" className="space-y-6">
