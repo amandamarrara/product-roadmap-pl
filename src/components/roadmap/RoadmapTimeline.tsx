@@ -526,11 +526,11 @@ export function RoadmapTimeline({
                     <Tooltip key={milestone.id}>
                       <TooltipTrigger asChild>
                         <div
-                          className="absolute top-0 h-6 w-1 cursor-pointer z-10"
+                          className="absolute top-2 h-2 w-2 rounded-full cursor-pointer z-10 opacity-70"
                           style={{
                             left: getMilestonePosition(milestone),
                             backgroundColor: milestone.color || '#ef4444',
-                            transform: 'translateX(-0.5px)'
+                            transform: 'translateX(-4px)'
                           }}
                         />
                       </TooltipTrigger>
@@ -560,12 +560,11 @@ export function RoadmapTimeline({
                 {milestones.map(milestone => (
                   <div
                   key={`line-${milestone.id}`}
-                  className="absolute top-0 bottom-0 w-0.5 pointer-events-none z-10"
+                  className="absolute top-0 bottom-0 border-l-2 border-dashed pointer-events-none z-10 opacity-40"
                   style={{
                     left: getMilestonePosition(milestone),
-                    backgroundColor: milestone.color || '#ef4444',
-                    opacity: 0.8,
-                    transform: 'translateX(-0.5px)'
+                    borderColor: milestone.color || '#ef4444',
+                    transform: 'translateX(-1px)'
                   }}
                 />
               ))}
