@@ -12,7 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { CalendarIcon, Plus, X, Trash2, ExternalLink } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
 import { format } from "date-fns";
-import { cn } from "@/lib/utils";
+import { cn, generateColorFromPhase } from "@/lib/utils";
 import type { Delivery, Priority, Complexity, SubDelivery } from "@/types/roadmap";
 
 interface DeliveryFormProps {
@@ -28,7 +28,7 @@ export function DeliveryForm({ delivery, onSave, onCancel }: DeliveryFormProps) 
   const [endDate, setEndDate] = useState<Date | undefined>(delivery?.endDate);
   const [complexity, setComplexity] = useState<Complexity>(delivery?.complexity || 'medium');
   const [priority, setPriority] = useState<Priority>(delivery?.priority || 'medium');
-  const [deliveryColor, setDeliveryColor] = useState(delivery?.deliveryColor || generateColorFromString(delivery?.title || ''));
+  const [deliveryColor, setDeliveryColor] = useState(delivery?.deliveryColor || generateColorFromPhase(delivery?.deliveryPhase || ''));
   const [deliveryPhase, setDeliveryPhase] = useState(delivery?.deliveryPhase || '');
   const [responsible, setResponsible] = useState(delivery?.responsible || '');
   const [jiraLink, setJiraLink] = useState(delivery?.jiraLink || '');
@@ -175,10 +175,7 @@ export function DeliveryForm({ delivery, onSave, onCancel }: DeliveryFormProps) 
               <Input
                 id="title"
                 value={title}
-                onChange={(e) => {
-                  setTitle(e.target.value);
-                  setDeliveryColor(generateColorFromString(e.target.value));
-                }}
+                onChange={(e) => setTitle(e.target.value)}
                 placeholder="Ex: Implementar sistema de autenticação"
                 required
               />
@@ -221,7 +218,10 @@ export function DeliveryForm({ delivery, onSave, onCancel }: DeliveryFormProps) 
                 <Input
                   id="deliveryPhase"
                   value={deliveryPhase}
-                  onChange={(e) => setDeliveryPhase(e.target.value)}
+                  onChange={(e) => {
+                    setDeliveryPhase(e.target.value);
+                    setDeliveryColor(generateColorFromPhase(e.target.value));
+                  }}
                   placeholder="Ex: Descoberta, Desenvolvimento, Testes..."
                 />
               </div>

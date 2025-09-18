@@ -11,6 +11,7 @@ import { useRoadmaps, useDeleteRoadmap, useSaveRoadmap } from "@/hooks/useRoadma
 import { Roadmap } from "@/types/roadmap";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { UpdateColorsButton } from "@/components/roadmap/UpdateColorsButton";
 
 const RoadmapsList = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -92,12 +93,15 @@ const RoadmapsList = () => {
             Gerencie todos os seus roadmaps de produto
           </p>
         </div>
-        <Button asChild>
-          <Link to="/roadmap/new">
-            <Plus className="mr-2 h-4 w-4" />
-            Novo Roadmap
-          </Link>
-        </Button>
+        <div className="flex gap-2">
+          <UpdateColorsButton />
+          <Button asChild>
+            <Link to="/roadmap/new">
+              <Plus className="mr-2 h-4 w-4" />
+              Novo Roadmap
+            </Link>
+          </Button>
+        </div>
       </div>
 
       {/* Search */}

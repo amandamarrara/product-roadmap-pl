@@ -16,6 +16,7 @@ import { DroppablePhase } from './DroppablePhase';
 import { SortablePhase } from './SortablePhase';
 import { reorderDeliveries, moveDeliveryToPhase, groupDeliveriesByPhase, sortDeliveriesByStartDate, reorderPhases, isDragPhase, getPhaseFromDragId, type DragEndEvent } from '@/lib/dragUtils';
 import { useUpdateDeliveryOrder } from '@/hooks/useRoadmaps';
+import { PhaseColorLegend } from './PhaseColorLegend';
 
 interface RoadmapTimelineProps {
   deliveries: Delivery[];
@@ -561,6 +562,10 @@ export function RoadmapTimeline({
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
+            {/* Phase Color Legend */}
+            {groupByPhase && (
+              <PhaseColorLegend className="max-w-sm" />
+            )}
             {/* Timeline Header */}
             <div className="relative sticky top-0 bg-background z-30 shadow-sm">
                <div 

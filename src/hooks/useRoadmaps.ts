@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Roadmap, Delivery, SubDelivery, Milestone } from "@/types/roadmap";
 import { toast } from "sonner";
+import { generateColorFromPhase } from "@/lib/utils";
 
 export function useRoadmaps() {
   return useQuery({
@@ -370,6 +371,51 @@ export function useUpdateDeliveryOrder() {
     },
     onError: () => {
       toast.error("Erro ao reordenar entregas.");
+    }
+  });
+}
+
+export function useUpdateExistingDeliveryColors() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async () => {
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      if (userError || !user) {
+        throw new Error("Usuário não autenticado");
+      }
+
+      // Get all deliveries for the current user
+      const { data: deliveries, error: fetchError } = await supabase
+        .from("deliveries")
+        .select("id, delivery_phase, delivery_color")
+        .eq("user_id", user.id);
+
+      if (fetchError) throw fetchError;
+
+      // Update colors based on phases
+      for (const delivery of deliveries || []) {
+        if (delivery.delivery_phase) {
+          const newColor = generateColorFromPhase(delivery.delivery_phase);
+          
+          const { error: updateError } = await supabase
+            .from("deliveries")
+            .update({ delivery_color: newColor })
+            .eq("id", delivery.id)
+            .eq("user_id", user.id);
+            
+          if (updateError) throw updateError;
+        }
+      }
+
+      return deliveries?.length || 0;
+    },
+    onSuccess: (updatedCount) => {
+      queryClient.invalidateQueries({ queryKey: ["roadmaps"] });
+      toast.success(`${updatedCount} entregas atualizadas com as novas cores por fase!`);
+    },
+    onError: () => {
+      toast.error("Erro ao atualizar cores das entregas existentes.");
     }
   });
 }
