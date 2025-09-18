@@ -7,7 +7,7 @@ import { ptBR } from "date-fns/locale";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import type { Delivery, Milestone } from "@/types/roadmap";
 import { cn } from "@/lib/utils";
-import { useRef, useCallback, useState, useMemo } from "react";
+import { useRef, useCallback, useState, useMemo, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { DndContext, DragOverlay, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { sortableKeyboardCoordinates, SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
@@ -33,14 +33,14 @@ export function RoadmapTimeline({
   const headerRef = useRef<HTMLDivElement>(null);
   const bodyRef = useRef<HTMLDivElement>(null);
   const [expandedPhases, setExpandedPhases] = useState<Set<string>>(new Set());
-  const [localDeliveries, setLocalDeliveries] = useState<Delivery[]>(deliveries);
+  const [localDeliveries, setLocalDeliveries] = useState<Delivery[]>(sortDeliveriesByStartDate(deliveries));
   const [activeDelivery, setActiveDelivery] = useState<Delivery | null>(null);
   const [activePhase, setActivePhase] = useState<string | null>(null);
   
   // Update local deliveries when prop changes
-  useState(() => {
-    setLocalDeliveries(deliveries);
-  });
+  useEffect(() => {
+    setLocalDeliveries(sortDeliveriesByStartDate(deliveries));
+  }, [deliveries]);
 
   // Drag and drop sensors
   const sensors = useSensors(
