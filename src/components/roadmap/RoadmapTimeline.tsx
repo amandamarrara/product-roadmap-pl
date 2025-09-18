@@ -331,8 +331,8 @@ export function RoadmapTimeline({
           {/* Timeline Bar */}
           <Tooltip>
             <TooltipTrigger asChild>
-              <div className="relative h-8 bg-muted/20 rounded-lg overflow-hidden cursor-pointer">
-                <div className="absolute top-0 h-full rounded-lg flex items-center px-2 transition-all duration-300" style={{
+              <div className="relative h-8 bg-muted/20 rounded-lg overflow-hidden cursor-pointer z-20">
+                <div className="absolute top-0 h-full rounded-lg flex items-center px-2 transition-all duration-300 z-20" style={{
               ...position,
               backgroundColor: deliveryColor
             }}>
@@ -431,12 +431,12 @@ export function RoadmapTimeline({
                           <span className="truncate">{sub.title}</span>
                           <span>{sub.progress}%</span>
                         </div>
-                        <div className="relative h-2 bg-muted/20 rounded">
-                          <div className="absolute top-0 h-full rounded" style={{
+                        <div className="relative h-2 bg-muted/20 rounded z-20">
+                          <div className="absolute top-0 h-full rounded z-20" style={{
                     ...subPosition,
                     backgroundColor: `${deliveryColor}60`
                   }} />
-                          <div className="absolute top-0 h-full rounded" style={{
+                          <div className="absolute top-0 h-full rounded z-20" style={{
                     ...subPosition,
                     backgroundColor: deliveryColor,
                     width: `${parseFloat(subPosition.width.replace('%', '')) * sub.progress / 100}%`
@@ -560,7 +560,7 @@ export function RoadmapTimeline({
                 {milestones.map(milestone => (
                   <div
                   key={`line-${milestone.id}`}
-                  className="absolute top-0 bottom-0 w-0.5 pointer-events-none z-20"
+                  className="absolute top-0 bottom-0 w-0.5 pointer-events-none z-10"
                   style={{
                     left: getMilestonePosition(milestone),
                     backgroundColor: milestone.color || '#ef4444',
