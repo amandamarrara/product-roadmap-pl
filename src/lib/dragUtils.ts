@@ -32,6 +32,22 @@ export function moveDeliveryToPhase(
   );
 }
 
+export function sortDeliveriesByStartDate(deliveries: Delivery[]): Delivery[] {
+  return [...deliveries].sort((a, b) => {
+    // Handle deliveries without start date (put them at the end)
+    if (!a.startDate && !b.startDate) return a.title.localeCompare(b.title);
+    if (!a.startDate) return 1;
+    if (!b.startDate) return -1;
+    
+    // Sort by start date (ascending)
+    const dateComparison = a.startDate.getTime() - b.startDate.getTime();
+    if (dateComparison !== 0) return dateComparison;
+    
+    // If same date, sort alphabetically by title
+    return a.title.localeCompare(b.title);
+  });
+}
+
 export function groupDeliveriesByPhase(deliveries: Delivery[]): { [key: string]: Delivery[] } {
   const grouped: { [key: string]: Delivery[] } = {};
   
@@ -39,6 +55,11 @@ export function groupDeliveriesByPhase(deliveries: Delivery[]): { [key: string]:
     const phase = delivery.deliveryPhase || 'Sem Fase';
     if (!grouped[phase]) grouped[phase] = [];
     grouped[phase].push(delivery);
+  });
+  
+  // Sort deliveries within each phase by start date
+  Object.keys(grouped).forEach(phase => {
+    grouped[phase] = sortDeliveriesByStartDate(grouped[phase]);
   });
   
   return grouped;

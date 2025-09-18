@@ -14,7 +14,7 @@ import { sortableKeyboardCoordinates, SortableContext, verticalListSortingStrate
 import { DraggableDelivery } from './DraggableDelivery';
 import { DroppablePhase } from './DroppablePhase';
 import { SortablePhase } from './SortablePhase';
-import { reorderDeliveries, moveDeliveryToPhase, groupDeliveriesByPhase, reorderPhases, isDragPhase, getPhaseFromDragId, type DragEndEvent } from '@/lib/dragUtils';
+import { reorderDeliveries, moveDeliveryToPhase, groupDeliveriesByPhase, sortDeliveriesByStartDate, reorderPhases, isDragPhase, getPhaseFromDragId, type DragEndEvent } from '@/lib/dragUtils';
 import { useUpdateDeliveryOrder } from '@/hooks/useRoadmaps';
 
 interface RoadmapTimelineProps {
@@ -66,9 +66,11 @@ export function RoadmapTimeline({
     }
   }, []);
 
-  // Group deliveries by phase
+  // Group deliveries by phase and sort them
   const groupedDeliveries = useMemo(() => {
-    if (!groupByPhase) return { ungrouped: localDeliveries };
+    if (!groupByPhase) {
+      return { ungrouped: sortDeliveriesByStartDate(localDeliveries) };
+    }
     
     return groupDeliveriesByPhase(localDeliveries);
   }, [localDeliveries, groupByPhase]);
@@ -406,7 +408,21 @@ export function RoadmapTimeline({
 
           {/* Sub-deliveries */}
           {delivery.subDeliveries.length > 0 && <div className="mt-2 ml-4 space-y-1">
-              {delivery.subDeliveries.slice(0, 3).map(sub => {
+              {delivery.subDeliveries
+                .sort((a, b) => {
+                  // Handle sub-deliveries without start date (put them at the end)
+                  if (!a.startDate && !b.startDate) return a.title.localeCompare(b.title);
+                  if (!a.startDate) return 1;
+                  if (!b.startDate) return -1;
+                  
+                  // Sort by start date (ascending)
+                  const dateComparison = a.startDate.getTime() - b.startDate.getTime();
+                  if (dateComparison !== 0) return dateComparison;
+                  
+                  // If same date, sort alphabetically by title
+                  return a.title.localeCompare(b.title);
+                })
+                .slice(0, 3).map(sub => {
           const subPosition = getSubDeliveryPosition(sub.startDate, sub.endDate);
           return <Tooltip key={sub.id}>
                     <TooltipTrigger asChild>
