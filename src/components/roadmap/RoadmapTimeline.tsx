@@ -37,11 +37,27 @@ export function RoadmapTimeline({
   const [activeDelivery, setActiveDelivery] = useState<Delivery | null>(null);
   const [activePhase, setActivePhase] = useState<string | null>(null);
   const [isCompressed, setIsCompressed] = useState(false);
+  const [containerWidth, setContainerWidth] = useState(1200);
+  const containerRef = useRef<HTMLDivElement>(null);
   
   // Update local deliveries when prop changes
   useEffect(() => {
     setLocalDeliveries(sortDeliveriesByStartDate(deliveries));
   }, [deliveries]);
+
+  // Measure container width for dynamic compression
+  useEffect(() => {
+    const updateContainerWidth = () => {
+      if (containerRef.current) {
+        setContainerWidth(containerRef.current.clientWidth);
+      }
+    };
+
+    updateContainerWidth();
+    window.addEventListener('resize', updateContainerWidth);
+    
+    return () => window.removeEventListener('resize', updateContainerWidth);
+  }, []);
 
   // Drag and drop sensors
   const sensors = useSensors(
@@ -208,16 +224,27 @@ export function RoadmapTimeline({
   
   const totalUnits = Math.max(dateHeaders.length - 1, 1);
   
-  // Timeline constants - adjust width based on compression
-  const CELL_WIDTH = isCompressed ? 80 : 120;
+  // Timeline constants - dynamic width calculation for compression
+  const CELL_WIDTH = isCompressed 
+    ? Math.max(40, Math.floor((containerWidth - 64) / dateHeaders.length)) // 64px = padding
+    : 120;
   
-  // Calculate if scroll is needed based on content width
+  // Calculate if scroll is needed based on content width and compression state
   const contentWidth = dateHeaders.length * CELL_WIDTH;
-  const needsScroll = useDaily || contentWidth > 1200; // Enable scroll for daily view or when content is wide
+  const needsScroll = !isCompressed && (useDaily || contentWidth > containerWidth);
   
   const trackWidthStyle = needsScroll 
     ? { width: `${contentWidth}px`, minWidth: `${contentWidth}px` } 
     : { width: '100%', minWidth: '100%' };
+
+  // Dynamic date format based on cell width
+  const getDateFormat = () => {
+    if (isCompressed) {
+      if (CELL_WIDTH < 50) return useDaily ? "dd" : "dd";
+      if (CELL_WIDTH < 70) return useDaily ? "dd/MM" : "dd/MM";
+    }
+    return useDaily ? "dd/MM" : "dd MMM";
+  };
   
   const getDeliveryPosition = (delivery: Delivery) => {
     const startOffset = useDaily 
@@ -496,31 +523,41 @@ export function RoadmapTimeline({
         onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
       >
-        <Card className="shadow-card border-0">
+        <Card className="shadow-card border-0" ref={containerRef}>
           <CardHeader>
             <CardTitle className="flex items-center justify-between text-lg">
               <div className="flex items-center gap-2">
                 <CalendarDays className="h-4 w-4" />
                 Timeline do Roadmap
               </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setIsCompressed(!isCompressed)}
-                className="flex items-center gap-2"
-              >
-                {isCompressed ? (
-                  <>
-                    <ZoomIn className="h-4 w-4" />
-                    Expandir
-                  </>
-                ) : (
-                  <>
-                    <ZoomOut className="h-4 w-4" />
-                    Comprimir
-                  </>
-                )}
-              </Button>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setIsCompressed(!isCompressed)}
+                    className="flex items-center gap-2"
+                  >
+                    {isCompressed ? (
+                      <>
+                        <ZoomIn className="h-4 w-4" />
+                        Expandir
+                      </>
+                    ) : (
+                      <>
+                        <ZoomOut className="h-4 w-4" />
+                        Comprimir
+                      </>
+                    )}
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  {isCompressed 
+                    ? "Voltar à visualização normal com scroll"
+                    : "Comprimir para mostrar todo o timeline sem scroll"
+                  }
+                </TooltipContent>
+              </Tooltip>
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
@@ -534,18 +571,18 @@ export function RoadmapTimeline({
                  <div className="relative border-b pb-2 px-4" style={trackWidthStyle}>
                    <div className="flex">
                     {dateHeaders.map((date, index) => (
-                      <div 
-                        key={date.getTime()} 
-                        className="text-center text-sm text-muted-foreground flex-shrink-0 px-1" 
-                        style={{
-                          minWidth: needsScroll ? `${CELL_WIDTH}px` : `${100 / dateHeaders.length}%`,
-                          width: needsScroll ? `${CELL_WIDTH}px` : `${100 / dateHeaders.length}%`
-                        }}
-                      >
-                        {format(date, useDaily ? "dd/MM" : "dd MMM", {
-                          locale: ptBR
-                        })}
-                      </div>
+                       <div 
+                         key={date.getTime()} 
+                         className="text-center text-sm text-muted-foreground flex-shrink-0 px-1" 
+                         style={{
+                           minWidth: needsScroll ? `${CELL_WIDTH}px` : `${100 / dateHeaders.length}%`,
+                           width: needsScroll ? `${CELL_WIDTH}px` : `${100 / dateHeaders.length}%`
+                         }}
+                       >
+                         {format(date, getDateFormat(), {
+                           locale: ptBR
+                         })}
+                       </div>
                     ))}
                   </div>
                   
