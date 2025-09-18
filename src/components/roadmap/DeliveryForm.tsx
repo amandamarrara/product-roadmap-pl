@@ -30,6 +30,7 @@ export function DeliveryForm({ delivery, onSave, onCancel }: DeliveryFormProps) 
   const [priority, setPriority] = useState<Priority>(delivery?.priority || 'medium');
   const [deliveryColor, setDeliveryColor] = useState(delivery?.deliveryColor || generateColorFromString(delivery?.title || ''));
   const [deliveryPhase, setDeliveryPhase] = useState(delivery?.deliveryPhase || '');
+  const [responsible, setResponsible] = useState(delivery?.responsible || '');
   const [jiraLink, setJiraLink] = useState(delivery?.jiraLink || '');
   const [status, setStatus] = useState(delivery?.status || 'not-started');
   const [progress, setProgress] = useState(delivery?.progress || 0);
@@ -127,6 +128,7 @@ export function DeliveryForm({ delivery, onSave, onCancel }: DeliveryFormProps) 
       priority,
       deliveryColor,
       deliveryPhase,
+      responsible,
       jiraLink,
       subDeliveries: validSubDeliveries,
       progress,
@@ -225,26 +227,36 @@ export function DeliveryForm({ delivery, onSave, onCancel }: DeliveryFormProps) 
               </div>
 
               <div>
-                <Label htmlFor="jiraLink">Link do Jira (Épico)</Label>
-                <div className="relative">
-                  <Input
-                    id="jiraLink"
-                    value={jiraLink}
-                    onChange={(e) => setJiraLink(e.target.value)}
-                    placeholder="https://empresa.atlassian.net/browse/EPIC-123"
-                    type="url"
-                  />
-                  {jiraLink && (
-                    <a
-                      href={jiraLink}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="absolute right-2 top-1/2 -translate-y-1/2"
-                    >
-                      <ExternalLink className="h-4 w-4 text-muted-foreground hover:text-primary" />
-                    </a>
-                  )}
-                </div>
+                <Label htmlFor="responsible">Responsável</Label>
+                <Input
+                  id="responsible"
+                  value={responsible}
+                  onChange={(e) => setResponsible(e.target.value)}
+                  placeholder="Ex: João Silva, Equipe Frontend..."
+                />
+              </div>
+            </div>
+
+            <div>
+              <Label htmlFor="jiraLink">Link do Jira (Épico)</Label>
+              <div className="relative">
+                <Input
+                  id="jiraLink"
+                  value={jiraLink}
+                  onChange={(e) => setJiraLink(e.target.value)}
+                  placeholder="https://empresa.atlassian.net/browse/EPIC-123"
+                  type="url"
+                />
+                {jiraLink && (
+                  <a
+                    href={jiraLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="absolute right-2 top-1/2 -translate-y-1/2"
+                  >
+                    <ExternalLink className="h-4 w-4 text-muted-foreground hover:text-primary" />
+                  </a>
+                )}
               </div>
             </div>
 

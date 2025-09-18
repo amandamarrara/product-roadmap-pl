@@ -26,6 +26,7 @@ export type Database = {
           jira_link: string | null
           priority: string | null
           progress: number | null
+          responsible: string | null
           roadmap_id: string
           start_date: string | null
           status: string | null
@@ -43,6 +44,7 @@ export type Database = {
           jira_link?: string | null
           priority?: string | null
           progress?: number | null
+          responsible?: string | null
           roadmap_id: string
           start_date?: string | null
           status?: string | null
@@ -60,6 +62,7 @@ export type Database = {
           jira_link?: string | null
           priority?: string | null
           progress?: number | null
+          responsible?: string | null
           roadmap_id?: string
           start_date?: string | null
           status?: string | null

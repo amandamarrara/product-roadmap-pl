@@ -31,6 +31,7 @@ export function useRoadmaps() {
           endDate: delivery.end_date ? new Date(delivery.end_date) : new Date(),
           deliveryColor: delivery.delivery_color || undefined,
           deliveryPhase: delivery.delivery_phase || undefined,
+          responsible: delivery.responsible || undefined,
           jiraLink: delivery.jira_link || undefined,
           subDeliveries: delivery.sub_deliveries.map((sub: any) => ({
             ...sub,
@@ -79,6 +80,7 @@ export function useRoadmap(id: string) {
           endDate: delivery.end_date ? new Date(delivery.end_date) : new Date(),
           deliveryColor: delivery.delivery_color || undefined,
           deliveryPhase: delivery.delivery_phase || undefined,
+          responsible: delivery.responsible || undefined,
           jiraLink: delivery.jira_link || undefined,
           subDeliveries: delivery.sub_deliveries.map((sub: any) => ({
             ...sub,
@@ -233,6 +235,7 @@ export function useSaveRoadmap() {
           priority: delivery.priority || null,
           delivery_color: delivery.deliveryColor || null,
           delivery_phase: delivery.deliveryPhase || null,
+          responsible: delivery.responsible || null,
           jira_link: delivery.jiraLink || null,
           progress: delivery.progress || 0,
           status: delivery.status || 'not-started',

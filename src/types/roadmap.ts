@@ -39,6 +39,7 @@ export interface Delivery {
   priority: Priority;
   deliveryColor?: string;
   deliveryPhase?: string;
+  responsible?: string;
   jiraLink?: string;
   subDeliveries: SubDelivery[];
   progress: number;
