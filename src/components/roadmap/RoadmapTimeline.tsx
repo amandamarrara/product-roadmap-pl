@@ -497,7 +497,7 @@ export function RoadmapTimeline({
           </CardHeader>
           <CardContent className="space-y-6">
             {/* Timeline Header */}
-            <div className="relative">
+            <div className="relative sticky top-0 bg-background z-30 shadow-sm">
               <div 
                 ref={headerRef}
                 className={`${useDaily ? 'overflow-x-auto' : ''}`}
