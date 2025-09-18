@@ -570,20 +570,38 @@ export function RoadmapTimeline({
                >
                  <div className="relative border-b pb-2 px-4" style={trackWidthStyle}>
                    <div className="flex">
-                    {dateHeaders.map((date, index) => (
-                       <div 
-                         key={date.getTime()} 
-                         className="text-center text-sm text-muted-foreground flex-shrink-0 px-1" 
-                         style={{
-                           minWidth: needsScroll ? `${CELL_WIDTH}px` : `${100 / dateHeaders.length}%`,
-                           width: needsScroll ? `${CELL_WIDTH}px` : `${100 / dateHeaders.length}%`
-                         }}
-                       >
-                         {format(date, getDateFormat(), {
-                           locale: ptBR
-                         })}
-                       </div>
-                    ))}
+                     {dateHeaders.map((date, index) => {
+                        const dateCell = (
+                          <div 
+                            key={date.getTime()} 
+                            className="text-center text-sm text-muted-foreground flex-shrink-0 px-1" 
+                            style={{
+                              minWidth: needsScroll ? `${CELL_WIDTH}px` : `${100 / dateHeaders.length}%`,
+                              width: needsScroll ? `${CELL_WIDTH}px` : `${100 / dateHeaders.length}%`
+                            }}
+                          >
+                            {format(date, getDateFormat(), {
+                              locale: ptBR
+                            })}
+                          </div>
+                        );
+
+                        // Add tooltip with full date when compressed
+                        if (isCompressed) {
+                          return (
+                            <Tooltip key={date.getTime()}>
+                              <TooltipTrigger asChild>
+                                {dateCell}
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                {format(date, "dd/MM/yyyy", { locale: ptBR })}
+                              </TooltipContent>
+                            </Tooltip>
+                          );
+                        }
+
+                        return dateCell;
+                     })}
                   </div>
                   
                   {/* Milestone indicators in header */}
