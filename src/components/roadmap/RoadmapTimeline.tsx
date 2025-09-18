@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { CalendarDays, Users, MapPin, ExternalLink, ChevronDown, ChevronRight } from "lucide-react";
+import { CalendarDays, Users, MapPin, ExternalLink, ChevronDown, ChevronRight, ZoomOut, ZoomIn } from "lucide-react";
 import { format, startOfWeek, endOfWeek, eachWeekOfInterval, eachDayOfInterval, isSameWeek, differenceInDays, differenceInWeeks, startOfDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -36,6 +36,7 @@ export function RoadmapTimeline({
   const [localDeliveries, setLocalDeliveries] = useState<Delivery[]>(sortDeliveriesByStartDate(deliveries));
   const [activeDelivery, setActiveDelivery] = useState<Delivery | null>(null);
   const [activePhase, setActivePhase] = useState<string | null>(null);
+  const [isCompressed, setIsCompressed] = useState(false);
   
   // Update local deliveries when prop changes
   useEffect(() => {
@@ -194,8 +195,8 @@ export function RoadmapTimeline({
   const timelineEnd = startOfDay(maxDate);
   const totalDays = differenceInDays(timelineEnd, timelineStart);
   
-  // Determine granularity based on timeline length
-  const useDaily = totalDays <= 60;
+  // Determine granularity based on timeline length and user preference
+  const useDaily = !isCompressed && totalDays <= 60;
   
   // Generate date headers based on granularity
   const dateHeaders = useDaily 
@@ -207,8 +208,8 @@ export function RoadmapTimeline({
   
   const totalUnits = Math.max(dateHeaders.length - 1, 1);
   
-  // Timeline constants
-  const CELL_WIDTH = 120;
+  // Timeline constants - adjust width based on compression
+  const CELL_WIDTH = isCompressed ? 80 : 120;
   
   // Calculate if scroll is needed based on content width
   const contentWidth = dateHeaders.length * CELL_WIDTH;
@@ -497,9 +498,29 @@ export function RoadmapTimeline({
       >
         <Card className="shadow-card border-0">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-lg">
-              <CalendarDays className="h-4 w-4" />
-              Timeline do Roadmap
+            <CardTitle className="flex items-center justify-between text-lg">
+              <div className="flex items-center gap-2">
+                <CalendarDays className="h-4 w-4" />
+                Timeline do Roadmap
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setIsCompressed(!isCompressed)}
+                className="flex items-center gap-2"
+              >
+                {isCompressed ? (
+                  <>
+                    <ZoomIn className="h-4 w-4" />
+                    Expandir
+                  </>
+                ) : (
+                  <>
+                    <ZoomOut className="h-4 w-4" />
+                    Comprimir
+                  </>
+                )}
+              </Button>
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
