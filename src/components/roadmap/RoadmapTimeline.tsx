@@ -474,8 +474,8 @@ export function RoadmapTimeline({
       >
         <Card className="shadow-card border-0">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <CalendarDays className="h-5 w-5" />
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <CalendarDays className="h-4 w-4" />
               Timeline do Roadmap
             </CardTitle>
           </CardHeader>
