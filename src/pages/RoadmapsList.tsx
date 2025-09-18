@@ -11,7 +11,7 @@ import { useRoadmaps, useDeleteRoadmap, useSaveRoadmap } from "@/hooks/useRoadma
 import { Roadmap } from "@/types/roadmap";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { UpdateColorsButton } from "@/components/roadmap/UpdateColorsButton";
+
 
 const RoadmapsList = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -94,7 +94,6 @@ const RoadmapsList = () => {
           </p>
         </div>
         <div className="flex gap-2">
-          <UpdateColorsButton />
           <Button asChild>
             <Link to="/roadmap/new">
               <Plus className="mr-2 h-4 w-4" />
