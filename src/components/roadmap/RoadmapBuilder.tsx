@@ -354,6 +354,8 @@ export function RoadmapBuilder({
               milestones={milestones} 
               groupByPhase={groupByPhase}
               roadmapId={initialData ? '1' : undefined}
+              onEditDelivery={readOnly ? undefined : handleEditDelivery}
+              readOnly={readOnly}
             />
           </TabsContent>
 

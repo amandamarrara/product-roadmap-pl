@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { CalendarDays, Users, MapPin, ExternalLink, ChevronDown, ChevronRight, ZoomOut, ZoomIn } from "lucide-react";
+import { CalendarDays, Users, MapPin, ExternalLink, ChevronDown, ChevronRight, ZoomOut, ZoomIn, Edit } from "lucide-react";
 import { format, startOfWeek, endOfWeek, eachWeekOfInterval, eachDayOfInterval, isSameWeek, differenceInDays, differenceInWeeks, startOfDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -16,6 +16,7 @@ import { DroppablePhase } from './DroppablePhase';
 import { SortablePhase } from './SortablePhase';
 import { reorderDeliveries, moveDeliveryToPhase, groupDeliveriesByPhase, sortDeliveriesByStartDate, reorderPhases, isDragPhase, getPhaseFromDragId, type DragEndEvent } from '@/lib/dragUtils';
 import { useUpdateDeliveryOrder } from '@/hooks/useRoadmaps';
+import { QuickEditDeliveryDialog } from './QuickEditDeliveryDialog';
 
 
 interface RoadmapTimelineProps {
@@ -23,13 +24,17 @@ interface RoadmapTimelineProps {
   milestones?: Milestone[];
   groupByPhase?: boolean;
   roadmapId?: string;
+  onEditDelivery?: (delivery: Delivery) => void;
+  readOnly?: boolean;
 }
 
 export function RoadmapTimeline({
   deliveries,
   milestones = [],
   groupByPhase = false,
-  roadmapId
+  roadmapId,
+  onEditDelivery,
+  readOnly = false,
 }: RoadmapTimelineProps) {
   const headerRef = useRef<HTMLDivElement>(null);
   const bodyRef = useRef<HTMLDivElement>(null);
@@ -40,6 +45,8 @@ export function RoadmapTimeline({
   const [isCompressed, setIsCompressed] = useState(false);
   const [containerWidth, setContainerWidth] = useState(1200);
   const containerRef = useRef<HTMLDivElement>(null);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [editingDelivery, setEditingDelivery] = useState<Delivery | null>(null);
   
   // Update local deliveries when prop changes
   useEffect(() => {
@@ -163,6 +170,17 @@ export function RoadmapTimeline({
       setActivePhase(null);
     }
   }, [localDeliveries]);
+
+  const handleQuickEdit = (delivery: Delivery) => {
+    setEditingDelivery(delivery);
+    setEditDialogOpen(true);
+  };
+
+  const handleQuickSave = (updatedDelivery: Delivery) => {
+    onEditDelivery?.(updatedDelivery);
+    setEditDialogOpen(false);
+    setEditingDelivery(null);
+  };
 
   // Toggle phase expansion
   const togglePhase = (phase: string) => {
@@ -438,6 +456,24 @@ export function RoadmapTimeline({
                   <div><span className="font-medium">Início:</span> {format(delivery.startDate, "dd/MM/yyyy")}</div>
                   <div><span className="font-medium">Fim:</span> {format(delivery.endDate, "dd/MM/yyyy")}</div>
                 </div>
+                
+                {/* Quick Edit Button */}
+                {!readOnly && onEditDelivery && (
+                  <div className="flex justify-end pt-2 border-t">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleQuickEdit(delivery);
+                      }}
+                      className="h-7 text-xs"
+                    >
+                      <Edit className="h-3 w-3 mr-1" />
+                      Editar
+                    </Button>
+                  </div>
+                )}
               </div>
             </TooltipContent>
           </Tooltip>
@@ -699,5 +735,13 @@ export function RoadmapTimeline({
           ) : null}
         </DragOverlay>
       </DndContext>
+      
+      {/* Quick Edit Dialog */}
+      <QuickEditDeliveryDialog
+        delivery={editingDelivery}
+        open={editDialogOpen}
+        onOpenChange={setEditDialogOpen}
+        onSave={handleQuickSave}
+      />
     </TooltipProvider>;
 }
