@@ -500,7 +500,7 @@ export function RoadmapTimeline({
             <div className="relative">
               <div 
                 ref={headerRef}
-                className={`${useDaily ? 'overflow-x-auto' : ''}`}
+                className={`sticky top-0 bg-background z-30 shadow-sm ${useDaily ? 'overflow-x-auto' : ''}`}
                 onScroll={() => syncScroll('header')}
               >
                 <div className="relative border-b pb-2" style={trackWidthStyle}>
