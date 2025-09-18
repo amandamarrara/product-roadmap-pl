@@ -44,6 +44,14 @@ export function groupDeliveriesByPhase(deliveries: Delivery[]): { [key: string]:
   return grouped;
 }
 
+export function isDragPhase(id: string | number): boolean {
+  return String(id).startsWith('phase-');
+}
+
+export function getPhaseFromDragId(id: string | number): string {
+  return String(id).replace('phase-', '');
+}
+
 export function reorderPhases(
   groupedDeliveries: { [key: string]: Delivery[] },
   activePhase: string,

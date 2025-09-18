@@ -10,10 +10,11 @@ import { cn } from "@/lib/utils";
 import { useRef, useCallback, useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { DndContext, DragOverlay, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
-import { sortableKeyboardCoordinates } from '@dnd-kit/sortable';
+import { sortableKeyboardCoordinates, SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { DraggableDelivery } from './DraggableDelivery';
 import { DroppablePhase } from './DroppablePhase';
-import { reorderDeliveries, moveDeliveryToPhase, groupDeliveriesByPhase, type DragEndEvent } from '@/lib/dragUtils';
+import { SortablePhase } from './SortablePhase';
+import { reorderDeliveries, moveDeliveryToPhase, groupDeliveriesByPhase, reorderPhases, isDragPhase, getPhaseFromDragId, type DragEndEvent } from '@/lib/dragUtils';
 import { useUpdateDeliveryOrder } from '@/hooks/useRoadmaps';
 
 interface RoadmapTimelineProps {
@@ -34,6 +35,7 @@ export function RoadmapTimeline({
   const [expandedPhases, setExpandedPhases] = useState<Set<string>>(new Set());
   const [localDeliveries, setLocalDeliveries] = useState<Delivery[]>(deliveries);
   const [activeDelivery, setActiveDelivery] = useState<Delivery | null>(null);
+  const [activePhase, setActivePhase] = useState<string | null>(null);
   
   // Update local deliveries when prop changes
   useState(() => {
@@ -77,14 +79,32 @@ export function RoadmapTimeline({
     
     if (!over) {
       setActiveDelivery(null);
+      setActivePhase(null);
       return;
     }
 
     const activeId = active.id;
     const overId = over.id;
 
-    // Check if dragging to a different phase
-    if (String(overId).startsWith('phase-')) {
+    // Check if dragging phases
+    if (isDragPhase(activeId) && isDragPhase(overId)) {
+      const activePhaseKey = getPhaseFromDragId(activeId);
+      const overPhaseKey = getPhaseFromDragId(overId);
+      
+      if (activePhaseKey !== overPhaseKey) {
+        const reorderedGrouped = reorderPhases(groupedDeliveries, activePhaseKey, overPhaseKey);
+        // Flatten back to deliveries array with new phase order preserved
+        const reorderedDeliveries = Object.values(reorderedGrouped).flat();
+        setLocalDeliveries(reorderedDeliveries);
+        
+        // Update in database
+        if (roadmapId) {
+          updateDeliveryOrder.mutate({ roadmapId, deliveries: reorderedDeliveries });
+        }
+      }
+    } 
+    // Check if dragging delivery to a different phase
+    else if (String(overId).startsWith('phase-') && !isDragPhase(activeId)) {
       const targetPhase = String(overId).replace('phase-', '');
       const updatedDeliveries = moveDeliveryToPhase(localDeliveries, activeId, targetPhase);
       setLocalDeliveries(updatedDeliveries);
@@ -93,19 +113,35 @@ export function RoadmapTimeline({
       if (roadmapId) {
         updateDeliveryOrder.mutate({ roadmapId, deliveries: updatedDeliveries });
       }
-    } else if (activeId !== overId) {
-      // Reordering within same list
+    } 
+    // Regular delivery reordering
+    else if (activeId !== overId && !isDragPhase(activeId)) {
       const updatedDeliveries = reorderDeliveries(localDeliveries, activeId, overId);
       setLocalDeliveries(updatedDeliveries);
+      
+      // Update in database
+      if (roadmapId) {
+        updateDeliveryOrder.mutate({ roadmapId, deliveries: updatedDeliveries });
+      }
     }
     
     setActiveDelivery(null);
-  }, [localDeliveries, roadmapId, updateDeliveryOrder]);
+    setActivePhase(null);
+  }, [localDeliveries, groupedDeliveries, roadmapId, updateDeliveryOrder]);
 
   // Handle drag start
   const handleDragStart = useCallback((event: any) => {
-    const delivery = localDeliveries.find(d => d.id === String(event.active.id));
-    setActiveDelivery(delivery || null);
+    const activeId = event.active.id;
+    
+    if (isDragPhase(activeId)) {
+      const phase = getPhaseFromDragId(activeId);
+      setActivePhase(phase);
+      setActiveDelivery(null);
+    } else {
+      const delivery = localDeliveries.find(d => d.id === String(activeId));
+      setActiveDelivery(delivery || null);
+      setActivePhase(null);
+    }
   }, [localDeliveries]);
 
   // Toggle phase expansion
@@ -520,18 +556,23 @@ export function RoadmapTimeline({
             
                 {/* Render deliveries */}
                 {groupByPhase ? (
-                  // Grouped by phase with drag and drop
-                  Object.entries(groupedDeliveries).map(([phase, phaseDeliveries]) => (
-                    <DroppablePhase
-                      key={phase}
-                      phase={phase}
-                      deliveries={phaseDeliveries}
-                      isExpanded={expandedPhases.has(phase)}
-                      onToggle={() => togglePhase(phase)}
-                    >
-                      {phaseDeliveries.map(renderDeliveryBar)}
-                    </DroppablePhase>
-                  ))
+                  // Grouped by phase with drag and drop for both phases and deliveries
+                  <SortableContext 
+                    items={Object.keys(groupedDeliveries).map(phase => `phase-${phase}`)}
+                    strategy={verticalListSortingStrategy}
+                  >
+                    {Object.entries(groupedDeliveries).map(([phase, phaseDeliveries]) => (
+                      <SortablePhase
+                        key={phase}
+                        phase={phase}
+                        deliveries={phaseDeliveries}
+                        isExpanded={expandedPhases.has(phase)}
+                        onToggle={togglePhase}
+                      >
+                        {phaseDeliveries.map(renderDeliveryBar)}
+                      </SortablePhase>
+                    ))}
+                  </SortableContext>
                 ) : (
                   // Not grouped - show all deliveries with drag and drop
                   localDeliveries.map(renderDeliveryBar)
@@ -546,6 +587,16 @@ export function RoadmapTimeline({
             <DraggableDelivery delivery={activeDelivery} isDragOverlay>
               {renderDeliveryBar(activeDelivery)}
             </DraggableDelivery>
+          ) : activePhase ? (
+            <SortablePhase
+              phase={activePhase}
+              deliveries={groupedDeliveries[activePhase] || []}
+              isExpanded={expandedPhases.has(activePhase)}
+              onToggle={() => {}}
+              isDragOverlay
+            >
+              {(groupedDeliveries[activePhase] || []).map(renderDeliveryBar)}
+            </SortablePhase>
           ) : null}
         </DragOverlay>
       </DndContext>
