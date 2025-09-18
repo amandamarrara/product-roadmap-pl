@@ -208,7 +208,7 @@ export function RoadmapTimeline({
   const totalUnits = Math.max(dateHeaders.length - 1, 1);
   
   // Timeline constants
-  const CELL_WIDTH = 90;
+  const CELL_WIDTH = 120;
   const trackWidthStyle = useDaily ? { width: `${dateHeaders.length * CELL_WIDTH}px`, minWidth: `${dateHeaders.length * CELL_WIDTH}px` } : { width: '100%', minWidth: '100%' };
   
   const getDeliveryPosition = (delivery: Delivery) => {
@@ -500,20 +500,15 @@ export function RoadmapTimeline({
             <div className="relative sticky top-0 bg-background z-30 shadow-sm">
                <div 
                  ref={headerRef}
-                 className={`${useDaily ? 'overflow-x-auto scrollbar-thin' : ''}`}
+                 className={`${useDaily ? 'overflow-x-auto timeline-scrollbar scroll-shadow' : ''}`}
                  onScroll={() => syncScroll('header')}
-                 style={useDaily ? {
-                   scrollbarWidth: 'thin',
-                   scrollbarColor: 'hsl(var(--border)) transparent',
-                   boxShadow: 'inset -8px 0 8px -8px rgba(0,0,0,0.1), inset 8px 0 8px -8px rgba(0,0,0,0.1)'
-                 } : {}}
                >
                  <div className="relative border-b pb-2 px-4" style={trackWidthStyle}>
                    <div className="flex">
                     {dateHeaders.map((date, index) => (
                       <div 
                         key={date.getTime()} 
-                        className="text-center text-sm text-muted-foreground flex-shrink-0" 
+                        className="text-center text-sm text-muted-foreground flex-shrink-0 px-1" 
                         style={{
                           minWidth: useDaily ? `${CELL_WIDTH}px` : `${100 / dateHeaders.length}%`,
                           width: useDaily ? `${CELL_WIDTH}px` : `${100 / dateHeaders.length}%`
@@ -557,13 +552,8 @@ export function RoadmapTimeline({
             {/* Timeline Bars */}
              <div 
                ref={bodyRef}
-               className={`space-y-4 ${useDaily ? 'overflow-x-auto scrollbar-thin' : ''} pl-8`}
+               className={`space-y-4 ${useDaily ? 'overflow-x-auto timeline-scrollbar scroll-shadow' : ''} pl-8`}
                onScroll={() => syncScroll('body')}
-               style={useDaily ? {
-                 scrollbarWidth: 'thin',
-                 scrollbarColor: 'hsl(var(--border)) transparent',
-                 boxShadow: 'inset -8px 0 8px -8px rgba(0,0,0,0.1), inset 8px 0 8px -8px rgba(0,0,0,0.1)'
-               } : {}}
              >
               <div className="relative space-y-4 px-4" style={trackWidthStyle}>
                 {/* Milestone vertical lines */}
