@@ -209,7 +209,14 @@ export function RoadmapTimeline({
   
   // Timeline constants
   const CELL_WIDTH = 120;
-  const trackWidthStyle = useDaily ? { width: `${dateHeaders.length * CELL_WIDTH}px`, minWidth: `${dateHeaders.length * CELL_WIDTH}px` } : { width: '100%', minWidth: '100%' };
+  
+  // Calculate if scroll is needed based on content width
+  const contentWidth = dateHeaders.length * CELL_WIDTH;
+  const needsScroll = useDaily || contentWidth > 1200; // Enable scroll for daily view or when content is wide
+  
+  const trackWidthStyle = needsScroll 
+    ? { width: `${contentWidth}px`, minWidth: `${contentWidth}px` } 
+    : { width: '100%', minWidth: '100%' };
   
   const getDeliveryPosition = (delivery: Delivery) => {
     const startOffset = useDaily 
@@ -500,7 +507,7 @@ export function RoadmapTimeline({
             <div className="relative sticky top-0 bg-background z-30 shadow-sm">
                <div 
                  ref={headerRef}
-                 className={`${useDaily ? 'overflow-x-auto timeline-scrollbar scroll-shadow' : ''}`}
+                 className={`${needsScroll ? 'overflow-x-auto timeline-scrollbar scroll-shadow' : ''}`}
                  onScroll={() => syncScroll('header')}
                >
                  <div className="relative border-b pb-2 px-4" style={trackWidthStyle}>
@@ -510,8 +517,8 @@ export function RoadmapTimeline({
                         key={date.getTime()} 
                         className="text-center text-sm text-muted-foreground flex-shrink-0 px-1" 
                         style={{
-                          minWidth: useDaily ? `${CELL_WIDTH}px` : `${100 / dateHeaders.length}%`,
-                          width: useDaily ? `${CELL_WIDTH}px` : `${100 / dateHeaders.length}%`
+                          minWidth: needsScroll ? `${CELL_WIDTH}px` : `${100 / dateHeaders.length}%`,
+                          width: needsScroll ? `${CELL_WIDTH}px` : `${100 / dateHeaders.length}%`
                         }}
                       >
                         {format(date, useDaily ? "dd/MM" : "dd MMM", {
@@ -552,7 +559,7 @@ export function RoadmapTimeline({
             {/* Timeline Bars */}
              <div 
                ref={bodyRef}
-               className={`space-y-4 ${useDaily ? 'overflow-x-auto timeline-scrollbar scroll-shadow' : ''} pl-8`}
+               className={`space-y-4 ${needsScroll ? 'overflow-x-auto timeline-scrollbar scroll-shadow' : ''} pl-8`}
                onScroll={() => syncScroll('body')}
              >
               <div className="relative space-y-4 px-4" style={trackWidthStyle}>
