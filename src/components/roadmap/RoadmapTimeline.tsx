@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { CalendarDays, Users, MapPin, ExternalLink, ChevronDown, ChevronRight, ZoomOut, ZoomIn, Edit } from "lucide-react";
+import { CalendarDays, Users, MapPin, ExternalLink, ChevronDown, ChevronRight, ZoomOut, ZoomIn, Edit, MessageCircle } from "lucide-react";
 import { format, startOfWeek, endOfWeek, eachWeekOfInterval, eachDayOfInterval, isSameWeek, differenceInDays, differenceInWeeks, startOfDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -17,6 +17,7 @@ import { SortablePhase } from './SortablePhase';
 import { reorderDeliveries, moveDeliveryToPhase, groupDeliveriesByPhase, sortDeliveriesByStartDate, reorderPhases, isDragPhase, getPhaseFromDragId, type DragEndEvent } from '@/lib/dragUtils';
 import { useUpdateDeliveryOrder } from '@/hooks/useRoadmaps';
 import { QuickEditDeliveryDialog } from './QuickEditDeliveryDialog';
+import { CommentsDialog } from './CommentsDialog';
 
 
 interface RoadmapTimelineProps {
@@ -47,6 +48,8 @@ export function RoadmapTimeline({
   const containerRef = useRef<HTMLDivElement>(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editingDelivery, setEditingDelivery] = useState<Delivery | null>(null);
+  const [commentsDialogOpen, setCommentsDialogOpen] = useState(false);
+  const [commentsTarget, setCommentsTarget] = useState<{delivery?: Delivery, subDelivery?: any, title: string} | null>(null);
   
   // Update local deliveries when prop changes
   useEffect(() => {
@@ -180,6 +183,15 @@ export function RoadmapTimeline({
     onEditDelivery?.(updatedDelivery);
     setEditDialogOpen(false);
     setEditingDelivery(null);
+  };
+
+  const handleComments = (delivery: Delivery, subDelivery?: any) => {
+    setCommentsTarget({
+      delivery: subDelivery ? undefined : delivery,
+      subDelivery,
+      title: subDelivery ? subDelivery.title : delivery.title
+    });
+    setCommentsDialogOpen(true);
   };
 
   // Toggle phase expansion
@@ -457,9 +469,21 @@ export function RoadmapTimeline({
                   <div><span className="font-medium">Fim:</span> {format(delivery.endDate, "dd/MM/yyyy")}</div>
                 </div>
                 
-                {/* Quick Edit Button */}
-                {!readOnly && onEditDelivery && (
-                  <div className="flex justify-end pt-2 border-t">
+                {/* Action Buttons */}
+                <div className="flex justify-end gap-2 pt-2 border-t">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleComments(delivery);
+                    }}
+                    className="h-7 text-xs"
+                  >
+                    <MessageCircle className="h-3 w-3 mr-1" />
+                    Comentários
+                  </Button>
+                  {!readOnly && onEditDelivery && (
                     <Button
                       size="sm"
                       variant="outline"
@@ -472,8 +496,8 @@ export function RoadmapTimeline({
                       <Edit className="h-3 w-3 mr-1" />
                       Editar
                     </Button>
-                  </div>
-                )}
+                  )}
+                </div>
               </div>
             </TooltipContent>
           </Tooltip>
@@ -538,6 +562,22 @@ export function RoadmapTimeline({
                               Tarefa
                             </a>
                           )}
+                        </div>
+                        
+                        {/* Sub-delivery Comments Button */}
+                        <div className="flex justify-end pt-2 border-t">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleComments(delivery, sub);
+                            }}
+                            className="h-6 text-xs"
+                          >
+                            <MessageCircle className="h-3 w-3 mr-1" />
+                            Comentários
+                          </Button>
                         </div>
                       </div>
                     </TooltipContent>
@@ -742,6 +782,15 @@ export function RoadmapTimeline({
         open={editDialogOpen}
         onOpenChange={setEditDialogOpen}
         onSave={handleQuickSave}
+      />
+      
+      {/* Comments Dialog */}
+      <CommentsDialog
+        open={commentsDialogOpen}
+        onOpenChange={setCommentsDialogOpen}
+        deliveryId={commentsTarget?.delivery?.id}
+        subDeliveryId={commentsTarget?.subDelivery?.id}
+        title={commentsTarget?.title || ""}
       />
     </TooltipProvider>;
 }

@@ -1,6 +1,16 @@
 export type Priority = 'low' | 'medium' | 'high' | 'critical';
 export type Complexity = 'simple' | 'medium' | 'complex' | 'very-complex';
 
+export interface Comment {
+  id: string;
+  deliveryId?: string;
+  subDeliveryId?: string;
+  userId: string;
+  comment: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 export interface TeamMember {
   id: string;
   name: string;
@@ -27,6 +37,7 @@ export interface SubDelivery {
   progress: number;
   status: 'not-started' | 'in-progress' | 'completed' | 'blocked';
   jiraLink?: string;
+  comments?: Comment[];
 }
 
 export interface Delivery {
@@ -44,6 +55,7 @@ export interface Delivery {
   subDeliveries: SubDelivery[];
   progress: number;
   status: 'not-started' | 'in-progress' | 'completed' | 'blocked';
+  comments?: Comment[];
 }
 
 export interface Milestone {

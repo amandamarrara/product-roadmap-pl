@@ -9,7 +9,8 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { CalendarIcon } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { cn } from "@/lib/utils";
+import { cn, generateColorFromPhase } from "@/lib/utils";
+import { ColorPicker } from "./ColorPicker";
 import type { Delivery } from "@/types/roadmap";
 
 interface QuickEditDeliveryDialogProps {
@@ -31,6 +32,7 @@ export function QuickEditDeliveryDialog({
   const [responsible, setResponsible] = useState("");
   const [deliveryPhase, setDeliveryPhase] = useState("");
   const [jiraLink, setJiraLink] = useState("");
+  const [deliveryColor, setDeliveryColor] = useState("");
 
   useEffect(() => {
     if (delivery) {
@@ -40,6 +42,7 @@ export function QuickEditDeliveryDialog({
       setResponsible(delivery.responsible || "");
       setDeliveryPhase(delivery.deliveryPhase || "");
       setJiraLink(delivery.jiraLink || "");
+      setDeliveryColor(delivery.deliveryColor || generateColorFromPhase(delivery.deliveryPhase || ""));
     }
   }, [delivery]);
 
@@ -54,6 +57,7 @@ export function QuickEditDeliveryDialog({
       responsible,
       deliveryPhase,
       jiraLink,
+      deliveryColor,
     };
 
     onSave(updatedDelivery);
@@ -177,6 +181,14 @@ export function QuickEditDeliveryDialog({
               value={jiraLink}
               onChange={(e) => setJiraLink(e.target.value)}
               placeholder="https://..."
+            />
+          </div>
+
+          <div>
+            <Label>Cor da Entrega</Label>
+            <ColorPicker 
+              value={deliveryColor} 
+              onChange={setDeliveryColor} 
             />
           </div>
 

@@ -79,6 +79,51 @@ export type Database = {
           },
         ]
       }
+      delivery_comments: {
+        Row: {
+          comment: string
+          created_at: string
+          delivery_id: string | null
+          id: string
+          sub_delivery_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          comment: string
+          created_at?: string
+          delivery_id?: string | null
+          id?: string
+          sub_delivery_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          comment?: string
+          created_at?: string
+          delivery_id?: string | null
+          id?: string
+          sub_delivery_id?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "delivery_comments_delivery_id_fkey"
+            columns: ["delivery_id"]
+            isOneToOne: false
+            referencedRelation: "deliveries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "delivery_comments_sub_delivery_id_fkey"
+            columns: ["sub_delivery_id"]
+            isOneToOne: false
+            referencedRelation: "sub_deliveries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       milestones: {
         Row: {
           color: string | null
