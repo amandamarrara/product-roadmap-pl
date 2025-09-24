@@ -16,8 +16,10 @@ import { DroppablePhase } from './DroppablePhase';
 import { SortablePhase } from './SortablePhase';
 import { reorderDeliveries, moveDeliveryToPhase, groupDeliveriesByPhase, sortDeliveriesByStartDate, reorderPhases, isDragPhase, getPhaseFromDragId, type DragEndEvent } from '@/lib/dragUtils';
 import { useUpdateDeliveryOrder } from '@/hooks/useRoadmaps';
-import { QuickEditDeliveryDialog } from './QuickEditDeliveryDialog';
+import { EditDeliveryDialog } from './EditDeliveryDialog';
+import { EditSubDeliveryDialog } from './EditSubDeliveryDialog';
 import { CommentsDialog } from './CommentsDialog';
+import { useUpdateDelivery, useDeleteDelivery, useUpdateSubDelivery, useDeleteSubDelivery } from '@/hooks/useDeliveryActions';
 
 
 interface RoadmapTimelineProps {
@@ -48,8 +50,16 @@ export function RoadmapTimeline({
   const containerRef = useRef<HTMLDivElement>(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editingDelivery, setEditingDelivery] = useState<Delivery | null>(null);
+  const [subEditDialogOpen, setSubEditDialogOpen] = useState(false);
+  const [editingSubDelivery, setEditingSubDelivery] = useState<any | null>(null);
   const [commentsDialogOpen, setCommentsDialogOpen] = useState(false);
   const [commentsTarget, setCommentsTarget] = useState<{delivery?: Delivery, subDelivery?: any, title: string} | null>(null);
+  
+  // Mutations for editing
+  const updateDelivery = useUpdateDelivery();
+  const deleteDelivery = useDeleteDelivery();
+  const updateSubDelivery = useUpdateSubDelivery();
+  const deleteSubDelivery = useDeleteSubDelivery();
   
   // Update local deliveries when prop changes
   useEffect(() => {
@@ -180,9 +190,39 @@ export function RoadmapTimeline({
   };
 
   const handleQuickSave = (updatedDelivery: Delivery) => {
-    onEditDelivery?.(updatedDelivery);
+    if (roadmapId) {
+      updateDelivery.mutate({ roadmapId, delivery: updatedDelivery });
+    }
     setEditDialogOpen(false);
     setEditingDelivery(null);
+  };
+
+  const handleDeleteDelivery = (deliveryId: string) => {
+    if (roadmapId) {
+      deleteDelivery.mutate({ roadmapId, deliveryId });
+    }
+  };
+
+  const handleEditSubDelivery = (subDelivery: any) => {
+    setEditingSubDelivery(subDelivery);
+    setSubEditDialogOpen(true);
+  };
+
+  const handleSaveSubDelivery = (updatedSubDelivery: any) => {
+    if (roadmapId) {
+      const deliveryId = localDeliveries.find(d => 
+        d.subDeliveries.some(sub => sub.id === updatedSubDelivery.id)
+      )?.id;
+      if (deliveryId) {
+        updateSubDelivery.mutate({ roadmapId, deliveryId, subDelivery: updatedSubDelivery });
+      }
+    }
+    setSubEditDialogOpen(false);
+    setEditingSubDelivery(null);
+  };
+
+  const handleDeleteSubDelivery = (subDeliveryId: string) => {
+    deleteSubDelivery.mutate({ subDeliveryId });
   };
 
   const handleComments = (delivery: Delivery, subDelivery?: any) => {
@@ -776,12 +816,22 @@ export function RoadmapTimeline({
         </DragOverlay>
       </DndContext>
       
-      {/* Quick Edit Dialog */}
-      <QuickEditDeliveryDialog
+      {/* Edit Dialogs */}
+      <EditDeliveryDialog
         delivery={editingDelivery}
         open={editDialogOpen}
         onOpenChange={setEditDialogOpen}
         onSave={handleQuickSave}
+        onDelete={handleDeleteDelivery}
+        onEditSubDelivery={handleEditSubDelivery}
+      />
+      
+      <EditSubDeliveryDialog
+        subDelivery={editingSubDelivery}
+        open={subEditDialogOpen}
+        onOpenChange={setSubEditDialogOpen}
+        onSave={handleSaveSubDelivery}
+        onDelete={handleDeleteSubDelivery}
       />
       
       {/* Comments Dialog */}
