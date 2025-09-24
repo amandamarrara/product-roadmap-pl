@@ -1,0 +1,118 @@
+# Cloud Run optimized .dockerignore
+
+# Dependencies - will be installed in container
+node_modules
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Build outputs - will be generated in container
+dist
+build
+.next
+out
+
+# Development files
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.env.example
+
+# IDE and editor files
+.vscode
+.idea
+*.swp
+*.swo
+.vimrc
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# Version control
+.git
+.gitignore
+.gitattributes
+
+# Docker files (avoid recursive copying)
+Dockerfile*
+.dockerignore*
+docker-compose*.yml
+docker-compose*.yaml
+
+# CI/CD and deployment
+.github
+.gitlab-ci.yml
+.travis.yml
+.circleci
+.jenkins
+.vercel
+.netlify
+
+# Logs and runtime data
+logs
+*.log
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage and testing
+coverage
+.coverage
+.nyc_output
+.jest
+test-results
+playwright-report
+
+# Temporary folders and cache
+tmp
+temp
+.cache
+.parcel-cache
+.next
+.nuxt
+.vuepress/dist
+
+# Package manager files
+.pnpm-store
+.yarn/cache
+.yarn/unplugged
+.yarn/build-state.yml
+.yarn/install-state.gz
+
+# Supabase local development
+supabase/.temp
+supabase/.branches
+.supabase
+
+# Documentation
+README.md
+CHANGELOG.md
+LICENSE
+docs/
+*.md
+
+# Configuration files not needed in production
+.editorconfig
+.eslintrc*
+.prettierrc*
+.stylelintrc*
+jest.config.*
+vitest.config.*
+playwright.config.*
+
+# TypeScript
+*.tsbuildinfo
+
+# Storybook
+.storybook
+storybook-static

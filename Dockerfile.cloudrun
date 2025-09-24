@@ -1,0 +1,37 @@
+# Multi-stage build otimizado para Google Cloud Run
+FROM node:18-alpine AS builder
+
+# Set working directory
+WORKDIR /app
+
+# Copy package files
+COPY package*.json ./
+
+# Install dependencies with legacy peer deps and clean cache
+RUN npm ci --legacy-peer-deps --only=production && npm cache clean --force
+
+# Copy source code
+COPY . .
+
+# Build the application
+RUN npm run build
+
+# Production stage with nginx
+FROM nginx:alpine AS production
+
+# Copy custom nginx configuration template for Cloud Run
+COPY nginx.cloudrun.conf /etc/nginx/templates/default.conf.template
+
+# Copy built application from builder stage
+COPY --from=builder /app/dist /usr/share/nginx/html
+
+# Add runtime environment variable substitution script
+COPY docker-entrypoint.cloudrun.sh /docker-entrypoint.sh
+RUN chmod +x /docker-entrypoint.sh
+
+# Cloud Run will set the PORT environment variable
+EXPOSE $PORT
+
+# Use custom entrypoint that handles Cloud Run specifics
+ENTRYPOINT ["/docker-entrypoint.sh"]
+CMD ["nginx", "-g", "daemon off;"]
