@@ -20,6 +20,7 @@ import { EditDeliveryDialog } from './EditDeliveryDialog';
 import { EditSubDeliveryDialog } from './EditSubDeliveryDialog';
 import { CommentsDialog } from './CommentsDialog';
 import { useUpdateDelivery, useDeleteDelivery, useUpdateSubDelivery, useDeleteSubDelivery } from '@/hooks/useDeliveryActions';
+import { ResponsibleFilter } from './ResponsibleFilter';
 
 
 interface RoadmapTimelineProps {
@@ -54,6 +55,7 @@ export function RoadmapTimeline({
   const [editingSubDelivery, setEditingSubDelivery] = useState<any | null>(null);
   const [commentsDialogOpen, setCommentsDialogOpen] = useState(false);
   const [commentsTarget, setCommentsTarget] = useState<{delivery?: Delivery, subDelivery?: any, title: string} | null>(null);
+  const [selectedResponsibles, setSelectedResponsibles] = useState<string[]>([]);
   
   // Mutations for editing
   const updateDelivery = useUpdateDelivery();
@@ -104,14 +106,56 @@ export function RoadmapTimeline({
     }
   }, []);
 
+  // Get unique responsibles from deliveries and sub-deliveries
+  const uniqueResponsibles = useMemo(() => {
+    const responsibles = new Set<string>();
+    
+    localDeliveries.forEach(delivery => {
+      if (delivery.responsible?.trim()) {
+        responsibles.add(delivery.responsible.trim());
+      }
+      
+      delivery.subDeliveries.forEach(sub => {
+        if (sub.responsible?.trim()) {
+          responsibles.add(sub.responsible.trim());
+        }
+      });
+    });
+    
+    return Array.from(responsibles).sort();
+  }, [localDeliveries]);
+
+  // Filter deliveries by selected responsibles
+  const filteredDeliveries = useMemo(() => {
+    if (selectedResponsibles.length === 0 || selectedResponsibles.length === uniqueResponsibles.length) {
+      return localDeliveries;
+    }
+    
+    const includesNoResponsible = selectedResponsibles.includes('Sem responsável');
+    
+    return localDeliveries.filter(delivery => {
+      // Check delivery responsible
+      const deliveryMatches = selectedResponsibles.includes(delivery.responsible || '') ||
+        (includesNoResponsible && !delivery.responsible?.trim());
+      
+      // Check sub-deliveries responsibles
+      const subDeliveryMatches = delivery.subDeliveries.some(sub => 
+        selectedResponsibles.includes(sub.responsible || '') ||
+        (includesNoResponsible && !sub.responsible?.trim())
+      );
+      
+      return deliveryMatches || subDeliveryMatches;
+    });
+  }, [localDeliveries, selectedResponsibles, uniqueResponsibles.length]);
+
   // Group deliveries by phase and sort them
   const groupedDeliveries = useMemo(() => {
     if (!groupByPhase) {
-      return { ungrouped: sortDeliveriesByStartDate(localDeliveries) };
+      return { ungrouped: sortDeliveriesByStartDate(filteredDeliveries) };
     }
     
-    return groupDeliveriesByPhase(localDeliveries);
-  }, [localDeliveries, groupByPhase]);
+    return groupDeliveriesByPhase(filteredDeliveries);
+  }, [filteredDeliveries, groupByPhase]);
 
   // Handle drag end
   const handleDragEnd = useCallback((event: DragEndEvent) => {
@@ -361,6 +405,26 @@ export function RoadmapTimeline({
       const weekOffset = dayOffset / 7;
       return `${Math.max(0, Math.min(weekOffset / (dateHeaders.length - 1) * 100, 100))}%`;
     }
+  };
+
+  // Get current date position
+  const getCurrentDatePosition = () => {
+    const currentDate = startOfDay(new Date());
+    
+    if (useDaily) {
+      const dayOffset = differenceInDays(currentDate, timelineStart);
+      return `${Math.max(0, Math.min(dayOffset / (dateHeaders.length - 1) * 100, 100))}%`;
+    } else {
+      const dayOffset = differenceInDays(currentDate, timelineStart);
+      const weekOffset = dayOffset / 7;
+      return `${Math.max(0, Math.min(weekOffset / (dateHeaders.length - 1) * 100, 100))}%`;
+    }
+  };
+
+  // Check if current date is within timeline range
+  const isCurrentDateInRange = () => {
+    const currentDate = startOfDay(new Date());
+    return currentDate >= timelineStart && currentDate <= timelineEnd;
   };
 
   const getComplexityLabel = (complexity: string) => {
@@ -647,34 +711,43 @@ export function RoadmapTimeline({
                 <CalendarDays className="h-4 w-4" />
                 Timeline do Roadmap
               </div>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setIsCompressed(!isCompressed)}
-                    className="flex items-center gap-2"
-                  >
-                    {isCompressed ? (
-                      <>
-                        <ZoomIn className="h-4 w-4" />
-                        Expandir
-                      </>
-                    ) : (
-                      <>
-                        <ZoomOut className="h-4 w-4" />
-                        Comprimir
-                      </>
-                    )}
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  {isCompressed 
-                    ? "Voltar à visualização normal com scroll"
-                    : "Comprimir para mostrar todo o timeline sem scroll"
-                  }
-                </TooltipContent>
-              </Tooltip>
+              <div className="flex items-center gap-2">
+                {uniqueResponsibles.length > 0 && (
+                  <ResponsibleFilter
+                    responsibles={uniqueResponsibles}
+                    selectedResponsibles={selectedResponsibles}
+                    onSelectionChange={setSelectedResponsibles}
+                  />
+                )}
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setIsCompressed(!isCompressed)}
+                      className="flex items-center gap-2"
+                    >
+                      {isCompressed ? (
+                        <>
+                          <ZoomIn className="h-4 w-4" />
+                          Expandir
+                        </>
+                      ) : (
+                        <>
+                          <ZoomOut className="h-4 w-4" />
+                          Comprimir
+                        </>
+                      )}
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    {isCompressed 
+                      ? "Voltar à visualização normal com scroll"
+                      : "Comprimir para mostrar todo o timeline sem scroll"
+                    }
+                  </TooltipContent>
+                </Tooltip>
+              </div>
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
@@ -721,30 +794,52 @@ export function RoadmapTimeline({
                      })}
                   </div>
                   
-                  {/* Milestone indicators in header */}
-                  {milestones.map(milestone => (
-                    <Tooltip key={milestone.id}>
-                      <TooltipTrigger asChild>
-                        <div
-                          className="absolute top-2 h-2 w-2 rounded-full cursor-pointer z-10 opacity-70"
-                          style={{
-                            left: getMilestonePosition(milestone),
-                            backgroundColor: milestone.color || '#ef4444',
-                            transform: 'translateX(-4px)'
-                          }}
-                        />
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <div className="space-y-1">
-                          <div className="font-medium">{milestone.title}</div>
-                          <div className="text-xs">{format(milestone.date, "dd/MM/yyyy", { locale: ptBR })}</div>
-                          {milestone.description && (
-                            <p className="text-xs text-muted-foreground">{milestone.description}</p>
-                          )}
-                        </div>
-                      </TooltipContent>
-                    </Tooltip>
-                  ))}
+                   {/* Current date indicator in header */}
+                   {isCurrentDateInRange() && (
+                     <Tooltip>
+                       <TooltipTrigger asChild>
+                         <div
+                           className="absolute top-2 h-2 w-2 rounded-full cursor-pointer z-10 border border-muted-foreground/60"
+                           style={{
+                             left: getCurrentDatePosition(),
+                             backgroundColor: 'hsl(var(--muted-foreground) / 0.6)',
+                             transform: 'translateX(-4px)'
+                           }}
+                         />
+                       </TooltipTrigger>
+                       <TooltipContent>
+                         <div className="space-y-1">
+                           <div className="font-medium">Hoje</div>
+                           <div className="text-xs">{format(new Date(), "dd/MM/yyyy", { locale: ptBR })}</div>
+                         </div>
+                       </TooltipContent>
+                     </Tooltip>
+                   )}
+                   
+                   {/* Milestone indicators in header */}
+                   {milestones.map(milestone => (
+                     <Tooltip key={milestone.id}>
+                       <TooltipTrigger asChild>
+                         <div
+                           className="absolute top-2 h-2 w-2 rounded-full cursor-pointer z-10 opacity-70"
+                           style={{
+                             left: getMilestonePosition(milestone),
+                             backgroundColor: milestone.color || '#ef4444',
+                             transform: 'translateX(-4px)'
+                           }}
+                         />
+                       </TooltipTrigger>
+                       <TooltipContent>
+                         <div className="space-y-1">
+                           <div className="font-medium">{milestone.title}</div>
+                           <div className="text-xs">{format(milestone.date, "dd/MM/yyyy", { locale: ptBR })}</div>
+                           {milestone.description && (
+                             <p className="text-xs text-muted-foreground">{milestone.description}</p>
+                           )}
+                         </div>
+                       </TooltipContent>
+                     </Tooltip>
+                   ))}
                 </div>
               </div>
             </div>
@@ -755,19 +850,31 @@ export function RoadmapTimeline({
                className={`space-y-4 ${needsScroll ? 'overflow-x-auto timeline-scrollbar scroll-shadow' : ''} pl-8`}
                onScroll={() => syncScroll('body')}
              >
-              <div className="relative space-y-4 px-4" style={trackWidthStyle}>
-                {/* Milestone vertical lines */}
-                {milestones.map(milestone => (
-                  <div
-                  key={`line-${milestone.id}`}
-                  className="absolute top-0 bottom-0 border-l-2 border-dashed pointer-events-none z-10 opacity-40"
-                  style={{
-                    left: getMilestonePosition(milestone),
-                    borderColor: milestone.color || '#ef4444',
-                    transform: 'translateX(-1px)'
-                  }}
-                />
-              ))}
+               <div className="relative space-y-4 px-4" style={trackWidthStyle}>
+                 {/* Current date vertical line */}
+                 {isCurrentDateInRange() && (
+                   <div
+                     className="absolute top-0 bottom-0 border-l border-solid pointer-events-none z-15 opacity-60"
+                     style={{
+                       left: getCurrentDatePosition(),
+                       borderColor: 'hsl(var(--muted-foreground) / 0.6)',
+                       transform: 'translateX(-0.5px)'
+                     }}
+                   />
+                 )}
+                 
+                 {/* Milestone vertical lines */}
+                 {milestones.map(milestone => (
+                   <div
+                   key={`line-${milestone.id}`}
+                   className="absolute top-0 bottom-0 border-l-2 border-dashed pointer-events-none z-10 opacity-40"
+                   style={{
+                     left: getMilestonePosition(milestone),
+                     borderColor: milestone.color || '#ef4444',
+                     transform: 'translateX(-1px)'
+                   }}
+                 />
+               ))}
             
                 {/* Render deliveries */}
                 {groupByPhase ? (
@@ -788,10 +895,10 @@ export function RoadmapTimeline({
                       </SortablePhase>
                     ))}
                   </SortableContext>
-                ) : (
-                  // Not grouped - show all deliveries with drag and drop
-                  localDeliveries.map(renderDeliveryBar)
-                )}
+                 ) : (
+                   // Not grouped - show all deliveries with drag and drop
+                   filteredDeliveries.map(renderDeliveryBar)
+                 )}
               </div>
             </div>
           </CardContent>
