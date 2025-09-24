@@ -27,6 +27,7 @@ export function useUpdateDelivery() {
           jira_link: delivery.jiraLink,
           status: delivery.status,
           progress: delivery.progress,
+          user_id: user.user.id,
           updated_at: new Date().toISOString()
         })
         .eq('id', delivery.id)
@@ -50,14 +51,15 @@ export function useUpdateDelivery() {
               delivery_id: delivery.id,
               title: sub.title,
               description: sub.description,
-              start_date: sub.startDate.toISOString().split('T')[0],
-              end_date: sub.endDate.toISOString().split('T')[0],
+              start_date: sub.startDate ? sub.startDate.toISOString().split('T')[0] : null,
+              end_date: sub.endDate ? sub.endDate.toISOString().split('T')[0] : null,
               team: sub.team,
               responsible: sub.responsible,
               completed: sub.completed,
               progress: sub.progress,
               status: sub.status,
-              jira_link: sub.jiraLink
+              jira_link: sub.jiraLink,
+              user_id: user.user.id
             }))
           );
 
@@ -94,14 +96,15 @@ export function useUpdateSubDelivery() {
         .update({
           title: subDelivery.title,
           description: subDelivery.description,
-          start_date: subDelivery.startDate.toISOString().split('T')[0],
-          end_date: subDelivery.endDate.toISOString().split('T')[0],
+          start_date: subDelivery.startDate ? subDelivery.startDate.toISOString().split('T')[0] : null,
+          end_date: subDelivery.endDate ? subDelivery.endDate.toISOString().split('T')[0] : null,
           team: subDelivery.team,
           responsible: subDelivery.responsible,
           completed: subDelivery.completed,
           progress: subDelivery.progress,
           status: subDelivery.status,
           jira_link: subDelivery.jiraLink,
+          user_id: user.user.id,
           updated_at: new Date().toISOString()
         })
         .eq('id', subDelivery.id)
