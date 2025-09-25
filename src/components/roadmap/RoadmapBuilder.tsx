@@ -86,13 +86,15 @@ interface RoadmapBuilderProps {
   onDataChange?: (data: { title: string; subtitle: string; deliveries: Delivery[]; milestones: Milestone[] }) => void;
   readOnly?: boolean;
   isEmbedded?: boolean;
+  roadmapId?: string;
 }
 
 export function RoadmapBuilder({ 
   initialData, 
   onDataChange, 
   readOnly = false,
-  isEmbedded = false 
+  isEmbedded = false,
+  roadmapId 
 }: RoadmapBuilderProps) {
   const [roadmapTitle, setRoadmapTitle] = useState(
     initialData?.title || ''
@@ -353,7 +355,7 @@ export function RoadmapBuilder({
               deliveries={filteredDeliveries} 
               milestones={milestones} 
               groupByPhase={groupByPhase}
-              roadmapId={initialData ? '1' : undefined}
+              roadmapId={roadmapId}
               onEditDelivery={readOnly ? undefined : handleEditDelivery}
               readOnly={readOnly}
             />

@@ -114,12 +114,26 @@ const RoadmapView = () => {
 
       {/* Content */}
       <div className="container mx-auto py-6" id="roadmap-timeline">
-        {isEditing && editingData ? <RoadmapBuilder initialData={editingData} onDataChange={setEditingData} isEmbedded={true} /> : <RoadmapBuilder initialData={{
-        title: roadmap.title,
-        subtitle: roadmap.subtitle || "",
-        deliveries: roadmap.deliveries,
-        milestones: roadmap.milestones || []
-      }} readOnly={true} isEmbedded={true} />}
+        {isEditing && editingData ? (
+          <RoadmapBuilder 
+            initialData={editingData} 
+            onDataChange={setEditingData} 
+            isEmbedded={true} 
+            roadmapId={roadmap.id}
+          />
+        ) : (
+          <RoadmapBuilder 
+            initialData={{
+              title: roadmap.title,
+              subtitle: roadmap.subtitle || "",
+              deliveries: roadmap.deliveries,
+              milestones: roadmap.milestones || []
+            }} 
+            readOnly={true} 
+            isEmbedded={true}
+            roadmapId={roadmap.id}
+          />
+        )}
       </div>
     </div>;
 };
