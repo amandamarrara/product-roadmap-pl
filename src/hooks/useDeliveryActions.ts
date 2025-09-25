@@ -8,8 +8,12 @@ export function useUpdateDelivery() {
 
   return useMutation({
     mutationFn: async ({ roadmapId, delivery }: { roadmapId: string; delivery: Delivery }) => {
+      console.log('Iniciando atualização da entrega:', { roadmapId, deliveryId: delivery.id });
+      
       const { data: user } = await supabase.auth.getUser();
       if (!user.user) throw new Error('User not authenticated');
+      
+      console.log('Usuário autenticado:', user.user.id);
 
       // Update delivery
       const { error: deliveryError } = await supabase
@@ -27,8 +31,7 @@ export function useUpdateDelivery() {
           jira_link: delivery.jiraLink,
           status: delivery.status,
           progress: delivery.progress,
-          user_id: user.user.id,
-          updated_at: new Date().toISOString()
+          user_id: user.user.id
         })
         .eq('id', delivery.id)
         .eq('roadmap_id', roadmapId);
@@ -73,8 +76,10 @@ export function useUpdateDelivery() {
       toast.success('Entrega atualizada com sucesso!');
     },
     onError: (error) => {
-      console.error('Error updating delivery:', error);
-      toast.error('Erro ao atualizar entrega. Tente novamente.');
+      console.error('Erro detalhado ao atualizar entrega:', error);
+      console.error('Error message:', error.message);
+      console.error('Error details:', error);
+      toast.error(`Erro ao atualizar entrega: ${error.message || 'Tente novamente.'}`);
     }
   });
 }
@@ -104,8 +109,7 @@ export function useUpdateSubDelivery() {
           progress: subDelivery.progress,
           status: subDelivery.status,
           jira_link: subDelivery.jiraLink,
-          user_id: user.user.id,
-          updated_at: new Date().toISOString()
+          user_id: user.user.id
         })
         .eq('id', subDelivery.id)
         .eq('delivery_id', deliveryId);

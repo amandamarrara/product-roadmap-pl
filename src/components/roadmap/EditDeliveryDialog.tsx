@@ -405,7 +405,9 @@ export function EditDeliveryDialog({
                           <span><strong>Time:</strong> {sub.team}</span>
                           <span><strong>Responsável:</strong> {sub.responsible}</span>
                           <span><strong>Status:</strong> {getStatusLabel(sub.status)}</span>
-                          <span><strong>Período:</strong> {format(sub.startDate, "dd/MM", { locale: ptBR })} - {format(sub.endDate, "dd/MM", { locale: ptBR })}</span>
+                          {sub.startDate && sub.endDate && (
+                            <span><strong>Período:</strong> {format(sub.startDate, "dd/MM", { locale: ptBR })} - {format(sub.endDate, "dd/MM", { locale: ptBR })}</span>
+                          )}
                         </div>
                       </div>
                     </div>
