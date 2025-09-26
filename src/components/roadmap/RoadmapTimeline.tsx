@@ -532,6 +532,11 @@ export function RoadmapTimeline({
                       {delivery.deliveryPhase}
                     </div>
                   )}
+                  {delivery.responsible && (
+                    <div className="text-xs">
+                      <span className="font-medium">Responsável:</span> {delivery.responsible}
+                    </div>
+                  )}
                   <div className="text-xs">
                     <span className="font-medium">Prioridade:</span> {getPriorityLabel(delivery.priority)}
                   </div>

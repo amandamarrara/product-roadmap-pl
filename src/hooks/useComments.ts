@@ -59,8 +59,17 @@ export function useComments(deliveryId?: string, subDeliveryId?: string) {
 
   const addCommentMutation = useMutation({
     mutationFn: async (commentText: string) => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('User not authenticated');
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      
+      if (authError) {
+        console.error('Auth error:', authError);
+        throw new Error('Erro de autenticação');
+      }
+      
+      if (!user) {
+        console.error('No user found');
+        throw new Error('Usuário não autenticado. Faça login para adicionar comentários.');
+      }
 
       const newComment = {
         delivery_id: deliveryId || null,
@@ -75,7 +84,10 @@ export function useComments(deliveryId?: string, subDeliveryId?: string) {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Insert error:', error);
+        throw error;
+      }
       return data;
     },
     onSuccess: () => {
