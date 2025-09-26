@@ -337,7 +337,9 @@ export function RoadmapTimeline({
         end: endOfWeek(timelineEnd, { locale: ptBR })
       }).map(d => startOfDay(d));
   
-  const totalUnits = Math.max(dateHeaders.length - 1, 1);
+  // ALWAYS use total days for positioning calculations to maintain consistency
+  // regardless of compression state - this prevents positioning errors when switching views
+  const totalUnits = Math.max(totalDays, 1);
   
   // Timeline constants - dynamic width calculation for compression
   const CELL_WIDTH = isCompressed 
@@ -362,12 +364,9 @@ export function RoadmapTimeline({
   };
   
   const getDeliveryPosition = (delivery: Delivery) => {
-    const startOffset = useDaily 
-      ? differenceInDays(delivery.startDate, timelineStart)
-      : differenceInWeeks(delivery.startDate, startOfWeek(timelineStart, { locale: ptBR }));
-    const duration = useDaily
-      ? differenceInDays(delivery.endDate, delivery.startDate) + 1
-      : differenceInWeeks(delivery.endDate, delivery.startDate);
+    // Always use days for positioning calculation to maintain consistency
+    const startOffset = differenceInDays(delivery.startDate, timelineStart);
+    const duration = differenceInDays(delivery.endDate, delivery.startDate) + 1;
     
     return {
       left: `${startOffset / totalUnits * 100}%`,
@@ -376,16 +375,13 @@ export function RoadmapTimeline({
   };
 
   const getSubDeliveryPosition = (startDate: Date, endDate: Date) => {
-    const startOffset = useDaily 
-      ? differenceInDays(startDate, timelineStart)
-      : differenceInWeeks(startDate, startOfWeek(timelineStart, { locale: ptBR }));
-    const duration = useDaily
-      ? differenceInDays(endDate, startDate) + 1
-      : differenceInWeeks(endDate, startDate);
+    // Always use days for positioning calculation to maintain consistency
+    const startOffset = differenceInDays(startDate, timelineStart);
+    const duration = differenceInDays(endDate, startDate) + 1;
     
     return {
       left: `${startOffset / totalUnits * 100}%`,
-      width: `${Math.max(duration / totalUnits * 100, useDaily ? 2 : 1)}%`
+      width: `${Math.max(duration / totalUnits * 100, 2)}%`
     };
   };
 
@@ -395,30 +391,17 @@ export function RoadmapTimeline({
 
   const getMilestonePosition = (milestone: Milestone) => {
     const normalizedMilestoneDate = startOfDay(milestone.date);
-    
-    if (useDaily) {
-      const dayOffset = differenceInDays(normalizedMilestoneDate, timelineStart);
-      return `${Math.max(0, Math.min(dayOffset / (dateHeaders.length - 1) * 100, 100))}%`;
-    } else {
-      // For weekly view, calculate exact day position and convert to fractional week position
-      const dayOffset = differenceInDays(normalizedMilestoneDate, timelineStart);
-      const weekOffset = dayOffset / 7;
-      return `${Math.max(0, Math.min(weekOffset / (dateHeaders.length - 1) * 100, 100))}%`;
-    }
+    // Always use day-based calculation for consistency
+    const dayOffset = differenceInDays(normalizedMilestoneDate, timelineStart);
+    return `${Math.max(0, Math.min(dayOffset / totalUnits * 100, 100))}%`;
   };
 
   // Get current date position
   const getCurrentDatePosition = () => {
     const currentDate = startOfDay(new Date());
-    
-    if (useDaily) {
-      const dayOffset = differenceInDays(currentDate, timelineStart);
-      return `${Math.max(0, Math.min(dayOffset / (dateHeaders.length - 1) * 100, 100))}%`;
-    } else {
-      const dayOffset = differenceInDays(currentDate, timelineStart);
-      const weekOffset = dayOffset / 7;
-      return `${Math.max(0, Math.min(weekOffset / (dateHeaders.length - 1) * 100, 100))}%`;
-    }
+    // Always use day-based calculation for consistency
+    const dayOffset = differenceInDays(currentDate, timelineStart);
+    return `${Math.max(0, Math.min(dayOffset / totalUnits * 100, 100))}%`;
   };
 
   // Check if current date is within timeline range
