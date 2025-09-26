@@ -67,8 +67,11 @@ export function EditDeliveryDialog({
 
   useEffect(() => {
     if (delivery) {
+      console.log('EditDeliveryDialog - Loading delivery:', delivery);
+      console.log('EditDeliveryDialog - Description value:', delivery.description);
+      
       setTitle(delivery.title);
-      setDescription(delivery.description);
+      setDescription(delivery.description || '');
       setStartDate(delivery.startDate);
       setEndDate(delivery.endDate);
       setResponsible(delivery.responsible || '');
@@ -79,6 +82,8 @@ export function EditDeliveryDialog({
       setComplexity(delivery.complexity);
       setStatus(delivery.status);
       setProgress(delivery.progress);
+      
+      console.log('EditDeliveryDialog - Description state set to:', delivery.description || '');
     }
   }, [delivery]);
 
@@ -170,9 +175,17 @@ export function EditDeliveryDialog({
                 id="description"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                placeholder="Descrição da entrega"
+                placeholder={description ? "Descrição da entrega" : "Nenhuma descrição cadastrada - Adicione uma descrição para aparecer no tooltip"}
                 rows={3}
+                className={cn(
+                  !description && "text-muted-foreground"
+                )}
               />
+              {!description && (
+                <p className="text-xs text-muted-foreground mt-1">
+                  💡 Adicione uma descrição para que ela apareça no tooltip da timeline
+                </p>
+              )}
             </div>
           </div>
 
@@ -400,10 +413,10 @@ export function EditDeliveryDialog({
                       </div>
                       
                       <div className="text-xs text-muted-foreground space-y-1">
-                        <p>{sub.description}</p>
+                        <p>{sub.description || 'Sem descrição'}</p>
                         <div className="flex flex-wrap gap-4">
-                          <span><strong>Time:</strong> {sub.team}</span>
-                          <span><strong>Responsável:</strong> {sub.responsible}</span>
+                          <span><strong>Time:</strong> {sub.team || 'Não definido'}</span>
+                          <span><strong>Responsável:</strong> {sub.responsible || 'Não definido'}</span>
                           <span><strong>Status:</strong> {getStatusLabel(sub.status)}</span>
                           {sub.startDate && sub.endDate && (
                             <span><strong>Período:</strong> {format(sub.startDate, "dd/MM", { locale: ptBR })} - {format(sub.endDate, "dd/MM", { locale: ptBR })}</span>

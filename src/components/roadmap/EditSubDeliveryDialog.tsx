@@ -42,8 +42,11 @@ export function EditSubDeliveryDialog({
 
   useEffect(() => {
     if (subDelivery) {
+      console.log('EditSubDeliveryDialog - Loading subDelivery:', subDelivery);
+      console.log('EditSubDeliveryDialog - Description value:', subDelivery.description);
+      
       setTitle(subDelivery.title);
-      setDescription(subDelivery.description);
+      setDescription(subDelivery.description || '');
       setStartDate(subDelivery.startDate);
       setEndDate(subDelivery.endDate);
       setTeam(subDelivery.team);
@@ -51,6 +54,8 @@ export function EditSubDeliveryDialog({
       setStatus(subDelivery.status);
       setProgress(subDelivery.progress);
       setJiraLink(subDelivery.jiraLink || '');
+      
+      console.log('EditSubDeliveryDialog - Description state set to:', subDelivery.description || '');
     }
   }, [subDelivery]);
 
@@ -120,9 +125,17 @@ export function EditSubDeliveryDialog({
                 id="description"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                placeholder="Descrição da sub-entrega"
+                placeholder={description ? "Descrição da sub-entrega" : "Nenhuma descrição cadastrada - Adicione uma descrição"}
                 rows={3}
+                className={cn(
+                  !description && "text-muted-foreground"
+                )}
               />
+              {!description && (
+                <p className="text-xs text-muted-foreground mt-1">
+                  💡 Adicione uma descrição para mais detalhes sobre esta sub-entrega
+                </p>
+              )}
             </div>
           </div>
 
