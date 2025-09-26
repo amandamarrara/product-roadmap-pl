@@ -234,6 +234,11 @@ export function RoadmapTimeline({
   };
 
   const handleQuickSave = (updatedDelivery: Delivery) => {
+    // Optimistic update - immediately update local state
+    setLocalDeliveries(prev => 
+      prev.map(d => d.id === updatedDelivery.id ? updatedDelivery : d)
+    );
+    
     if (roadmapId) {
       updateDelivery.mutate({ roadmapId, delivery: updatedDelivery });
     }
@@ -253,6 +258,16 @@ export function RoadmapTimeline({
   };
 
   const handleSaveSubDelivery = (updatedSubDelivery: any) => {
+    // Optimistic update - immediately update local state
+    setLocalDeliveries(prev => 
+      prev.map(delivery => ({
+        ...delivery,
+        subDeliveries: delivery.subDeliveries.map(sub => 
+          sub.id === updatedSubDelivery.id ? updatedSubDelivery : sub
+        )
+      }))
+    );
+    
     if (roadmapId) {
       const deliveryId = localDeliveries.find(d => 
         d.subDeliveries.some(sub => sub.id === updatedSubDelivery.id)
