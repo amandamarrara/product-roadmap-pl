@@ -33,14 +33,18 @@ export function MilestoneForm({ milestone, open, onSave, onCancel }: MilestoneFo
     if (isPeriod && !endDate) return;
     if (isPeriod && endDate && endDate < date) return;
 
-    onSave({
+    const milestoneToSave = {
       title: title.trim(),
       description: description.trim() || undefined,
       date,
       endDate: isPeriod ? endDate : undefined,
       isPeriod,
       color
-    });
+    };
+
+    console.log('📝 MilestoneForm: Saving milestone:', milestoneToSave);
+
+    onSave(milestoneToSave);
 
     // Reset form
     setTitle('');

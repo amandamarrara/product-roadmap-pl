@@ -39,27 +39,49 @@ export function useSaveMilestone() {
         throw new Error("Usuário não autenticado");
       }
 
+      const milestoneData = {
+        roadmap_id: roadmapId,
+        user_id: user.id,
+        title: milestone.title,
+        description: milestone.description,
+        date: milestone.date.toISOString().split('T')[0],
+        end_date: milestone.endDate ? milestone.endDate.toISOString().split('T')[0] : null,
+        is_period: milestone.isPeriod || false,
+        color: milestone.color || '#ef4444',
+      };
+
+      console.log('🔄 Creating milestone:', milestoneData);
+
       const { data, error } = await supabase
         .from("milestones")
-        .insert({
-          roadmap_id: roadmapId,
-          user_id: user.id,
-          title: milestone.title,
-          description: milestone.description,
-          date: milestone.date.toISOString().split('T')[0],
-          end_date: milestone.endDate ? milestone.endDate.toISOString().split('T')[0] : null,
-          is_period: milestone.isPeriod || false,
-          color: milestone.color || '#ef4444',
-        })
+        .insert(milestoneData)
         .select()
         .single();
 
       if (error) throw error;
+      
+      console.log('✅ Milestone created successfully:', data);
+      
+      // Validate that is_period and end_date were saved correctly
+      if (milestone.isPeriod && !data.is_period) {
+        console.error('⚠️ WARNING: is_period was not saved correctly!', {
+          sent: milestone.isPeriod,
+          received: data.is_period
+        });
+      }
+      
       return data;
     },
-    onSuccess: (_, { roadmapId }) => {
-      queryClient.invalidateQueries({ queryKey: ["milestones", roadmapId] });
-      queryClient.invalidateQueries({ queryKey: ["roadmap", roadmapId] });
+    onSuccess: async (_, { roadmapId }) => {
+      console.log('🔄 Invalidating milestone queries...');
+      await queryClient.invalidateQueries({ queryKey: ["milestones", roadmapId] });
+      await queryClient.invalidateQueries({ queryKey: ["roadmap", roadmapId] });
+      
+      await new Promise(resolve => setTimeout(resolve, 100));
+      await queryClient.refetchQueries({ queryKey: ["milestones", roadmapId] });
+      await queryClient.refetchQueries({ queryKey: ["roadmap", roadmapId] });
+      
+      console.log('✅ Milestone queries refetched');
       toast({
         title: "Marco criado",
         description: "Marco adicionado com sucesso.",
@@ -87,27 +109,56 @@ export function useUpdateMilestone() {
         throw new Error("Usuário não autenticado");
       }
 
+      const updateData = {
+        title: milestone.title,
+        description: milestone.description,
+        date: milestone.date.toISOString().split('T')[0],
+        end_date: milestone.endDate ? milestone.endDate.toISOString().split('T')[0] : null,
+        is_period: milestone.isPeriod || false,
+        color: milestone.color || '#ef4444',
+      };
+
+      console.log('🔄 Updating milestone:', {
+        id: milestone.id,
+        ...updateData
+      });
+
       const { data, error } = await supabase
         .from("milestones")
-        .update({
-          title: milestone.title,
-          description: milestone.description,
-          date: milestone.date.toISOString().split('T')[0],
-          end_date: milestone.endDate ? milestone.endDate.toISOString().split('T')[0] : null,
-          is_period: milestone.isPeriod || false,
-          color: milestone.color || '#ef4444',
-        })
+        .update(updateData)
         .eq("id", milestone.id)
         .eq("user_id", user.id)
         .select()
         .single();
 
       if (error) throw error;
+      
+      if (!data) {
+        throw new Error("Nenhum marco foi atualizado. Verifique as permissões.");
+      }
+      
+      console.log('✅ Milestone updated successfully:', data);
+      
+      // Validate that is_period and end_date were saved correctly
+      if (milestone.isPeriod && !data.is_period) {
+        console.error('⚠️ WARNING: is_period was not saved correctly!', {
+          sent: milestone.isPeriod,
+          received: data.is_period
+        });
+      }
+      
       return data;
     },
-    onSuccess: (_, { roadmapId }) => {
-      queryClient.invalidateQueries({ queryKey: ["milestones", roadmapId] });
-      queryClient.invalidateQueries({ queryKey: ["roadmap", roadmapId] });
+    onSuccess: async (_, { roadmapId }) => {
+      console.log('🔄 Invalidating milestone queries after update...');
+      await queryClient.invalidateQueries({ queryKey: ["milestones", roadmapId] });
+      await queryClient.invalidateQueries({ queryKey: ["roadmap", roadmapId] });
+      
+      await new Promise(resolve => setTimeout(resolve, 100));
+      await queryClient.refetchQueries({ queryKey: ["milestones", roadmapId] });
+      await queryClient.refetchQueries({ queryKey: ["roadmap", roadmapId] });
+      
+      console.log('✅ Milestone update queries refetched');
       toast({
         title: "Marco atualizado",
         description: "Marco atualizado com sucesso.",

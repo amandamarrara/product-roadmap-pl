@@ -8,15 +8,18 @@ export function useUpdateDelivery() {
 
   return useMutation({
     mutationFn: async ({ roadmapId, delivery }: { roadmapId: string; delivery: Delivery }) => {
-      console.log('Iniciando atualização da entrega:', { roadmapId, deliveryId: delivery.id });
-      
       const { data: user } = await supabase.auth.getUser();
       if (!user.user) throw new Error('User not authenticated');
-      
-      console.log('Usuário autenticado:', user.user.id);
 
-      // Update delivery
-      const { error: deliveryError } = await supabase
+      console.log('🔄 Updating delivery:', {
+        id: delivery.id,
+        startDate: delivery.startDate.toISOString().split('T')[0],
+        endDate: delivery.endDate.toISOString().split('T')[0],
+        title: delivery.title
+      });
+
+      // Update delivery with .select() to confirm
+      const { data: updatedDelivery, error: deliveryError } = await supabase
         .from('deliveries')
         .update({
           title: delivery.title,
@@ -34,9 +37,17 @@ export function useUpdateDelivery() {
           user_id: user.user.id
         })
         .eq('id', delivery.id)
-        .eq('roadmap_id', roadmapId);
+        .eq('roadmap_id', roadmapId)
+        .select()
+        .single();
 
       if (deliveryError) throw deliveryError;
+      
+      if (!updatedDelivery) {
+        throw new Error("Nenhuma entrega foi atualizada. Verifique as permissões.");
+      }
+      
+      console.log('✅ Delivery updated successfully:', updatedDelivery);
 
       // Delete existing sub-deliveries
       await supabase
@@ -72,9 +83,15 @@ export function useUpdateDelivery() {
       return delivery;
     },
     onSuccess: async (_data, variables) => {
+      console.log('🔄 Invalidating queries and refetching...');
       await queryClient.invalidateQueries({ queryKey: ['roadmaps'] });
       await queryClient.invalidateQueries({ queryKey: ['roadmap', variables.roadmapId] });
+      
+      // Add small delay to ensure DB processed the update
+      await new Promise(resolve => setTimeout(resolve, 100));
       await queryClient.refetchQueries({ queryKey: ['roadmap', variables.roadmapId] });
+      
+      console.log('✅ Queries refetched successfully');
       toast.success('Entrega atualizada com sucesso!');
     },
     onError: (error) => {
@@ -98,7 +115,14 @@ export function useUpdateSubDelivery() {
       const { data: user } = await supabase.auth.getUser();
       if (!user.user) throw new Error('User not authenticated');
 
-      const { error } = await supabase
+      console.log('🔄 Updating sub-delivery:', {
+        id: subDelivery.id,
+        startDate: subDelivery.startDate ? subDelivery.startDate.toISOString().split('T')[0] : null,
+        endDate: subDelivery.endDate ? subDelivery.endDate.toISOString().split('T')[0] : null,
+        title: subDelivery.title
+      });
+
+      const { data: updated, error } = await supabase
         .from('sub_deliveries')
         .update({
           title: subDelivery.title,
@@ -114,16 +138,29 @@ export function useUpdateSubDelivery() {
           user_id: user.user.id
         })
         .eq('id', subDelivery.id)
-        .eq('delivery_id', deliveryId);
+        .eq('delivery_id', deliveryId)
+        .select()
+        .single();
 
       if (error) throw error;
+      
+      if (!updated) {
+        throw new Error("Nenhuma sub-entrega foi atualizada. Verifique as permissões.");
+      }
+      
+      console.log('✅ Sub-delivery updated successfully:', updated);
 
       return subDelivery;
     },
     onSuccess: async (_data, variables) => {
+      console.log('🔄 Invalidating queries and refetching sub-delivery...');
       await queryClient.invalidateQueries({ queryKey: ['roadmaps'] });
       await queryClient.invalidateQueries({ queryKey: ['roadmap', variables.roadmapId] });
+      
+      await new Promise(resolve => setTimeout(resolve, 100));
       await queryClient.refetchQueries({ queryKey: ['roadmap', variables.roadmapId] });
+      
+      console.log('✅ Sub-delivery queries refetched successfully');
       toast.success('Sub-entrega atualizada com sucesso!');
     },
     onError: (error) => {
