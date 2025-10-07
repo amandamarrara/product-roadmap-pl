@@ -129,9 +129,9 @@ export function RoadmapBuilder({
     }
   }, [roadmapTitle, roadmapSubtitle, deliveries, milestones, onDataChange]);
 
-  // Update local state when initialData changes (only once on mount)
+  // Update local state when initialData changes
   useEffect(() => {
-    if (initialData && roadmapTitle === '' && roadmapSubtitle === '' && deliveries.length === 0) {
+    if (initialData) {
       setRoadmapTitle(initialData.title || '');
       setRoadmapSubtitle(initialData.subtitle || '');
       setDeliveries(initialData.deliveries || []);

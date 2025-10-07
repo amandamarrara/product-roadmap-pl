@@ -74,6 +74,7 @@ export function useUpdateDelivery() {
     onSuccess: async (_data, variables) => {
       await queryClient.invalidateQueries({ queryKey: ['roadmaps'] });
       await queryClient.invalidateQueries({ queryKey: ['roadmap', variables.roadmapId] });
+      await queryClient.refetchQueries({ queryKey: ['roadmap', variables.roadmapId] });
       toast.success('Entrega atualizada com sucesso!');
     },
     onError: (error) => {
@@ -122,6 +123,7 @@ export function useUpdateSubDelivery() {
     onSuccess: async (_data, variables) => {
       await queryClient.invalidateQueries({ queryKey: ['roadmaps'] });
       await queryClient.invalidateQueries({ queryKey: ['roadmap', variables.roadmapId] });
+      await queryClient.refetchQueries({ queryKey: ['roadmap', variables.roadmapId] });
       toast.success('Sub-entrega atualizada com sucesso!');
     },
     onError: (error) => {

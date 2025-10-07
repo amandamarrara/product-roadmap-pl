@@ -123,7 +123,7 @@ const RoadmapView = () => {
           />
         ) : (
           <RoadmapBuilder 
-            key={`roadmap-${roadmap.updatedAt || Date.now()}`}
+            key={`roadmap-${roadmap.deliveries.map(d => `${d.id}-${d.startDate}-${d.endDate}`).join('|')}`}
             initialData={{
               title: roadmap.title,
               subtitle: roadmap.subtitle || "",
