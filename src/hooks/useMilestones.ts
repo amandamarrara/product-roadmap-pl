@@ -20,6 +20,8 @@ export function useMilestones(roadmapId?: string) {
       return data.map(milestone => ({
         ...milestone,
         date: new Date(milestone.date),
+        endDate: milestone.end_date ? new Date(milestone.end_date) : undefined,
+        isPeriod: milestone.is_period || false,
       })) as Milestone[];
     },
     enabled: !!roadmapId
@@ -45,6 +47,8 @@ export function useSaveMilestone() {
           title: milestone.title,
           description: milestone.description,
           date: milestone.date.toISOString().split('T')[0],
+          end_date: milestone.endDate ? milestone.endDate.toISOString().split('T')[0] : null,
+          is_period: milestone.isPeriod || false,
           color: milestone.color || '#ef4444',
         })
         .select()
@@ -89,6 +93,8 @@ export function useUpdateMilestone() {
           title: milestone.title,
           description: milestone.description,
           date: milestone.date.toISOString().split('T')[0],
+          end_date: milestone.endDate ? milestone.endDate.toISOString().split('T')[0] : null,
+          is_period: milestone.isPeriod || false,
           color: milestone.color || '#ef4444',
         })
         .eq("id", milestone.id)

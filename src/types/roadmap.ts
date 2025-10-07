@@ -63,6 +63,8 @@ export interface Milestone {
   title: string;
   description?: string;
   date: Date;
+  endDate?: Date;
+  isPeriod?: boolean;
   color?: string;
 }
 

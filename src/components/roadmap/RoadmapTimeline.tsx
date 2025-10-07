@@ -819,30 +819,37 @@ export function RoadmapTimeline({
                      </Tooltip>
                    )}
                    
-                   {/* Milestone indicators in header */}
-                   {milestones.map(milestone => (
-                     <Tooltip key={milestone.id}>
-                       <TooltipTrigger asChild>
-                         <div
-                           className="absolute top-2 h-2 w-2 rounded-full cursor-pointer z-10 opacity-70"
-                           style={{
-                             left: getMilestonePosition(milestone),
-                             backgroundColor: milestone.color || '#ef4444',
-                             transform: 'translateX(-4px)'
-                           }}
-                         />
-                       </TooltipTrigger>
-                       <TooltipContent>
-                         <div className="space-y-1">
-                           <div className="font-medium">{milestone.title}</div>
-                           <div className="text-xs">{format(milestone.date, "dd/MM/yyyy", { locale: ptBR })}</div>
-                           {milestone.description && (
-                             <p className="text-xs text-muted-foreground">{milestone.description}</p>
-                           )}
-                         </div>
-                       </TooltipContent>
-                     </Tooltip>
-                   ))}
+                    {/* Milestone indicators in header */}
+                    {milestones.map(milestone => (
+                      <Tooltip key={milestone.id}>
+                        <TooltipTrigger asChild>
+                          <div
+                            className="absolute top-2 h-2 w-2 rounded-full cursor-pointer z-10 opacity-70"
+                            style={{
+                              left: getMilestonePosition(milestone),
+                              backgroundColor: milestone.color || '#ef4444',
+                              transform: 'translateX(-4px)'
+                            }}
+                          />
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <div className="space-y-1">
+                            <div className="font-medium">{milestone.title}</div>
+                            <div className="text-xs">
+                              {milestone.isPeriod && milestone.endDate
+                                ? `${format(milestone.date, "dd/MM/yyyy", { locale: ptBR })} - ${format(milestone.endDate, "dd/MM/yyyy", { locale: ptBR })}`
+                                : format(milestone.date, "dd/MM/yyyy", { locale: ptBR })}
+                            </div>
+                            {milestone.isPeriod && (
+                              <div className="text-xs text-muted-foreground">Período</div>
+                            )}
+                            {milestone.description && (
+                              <p className="text-xs text-muted-foreground">{milestone.description}</p>
+                            )}
+                          </div>
+                        </TooltipContent>
+                      </Tooltip>
+                    ))}
                 </div>
               </div>
             </div>
@@ -866,18 +873,40 @@ export function RoadmapTimeline({
                    />
                  )}
                  
-                 {/* Milestone vertical lines */}
-                 {milestones.map(milestone => (
-                   <div
-                   key={`line-${milestone.id}`}
-                   className="absolute top-0 bottom-0 border-l-2 border-dashed pointer-events-none z-10 opacity-40"
-                   style={{
-                     left: getMilestonePosition(milestone),
-                     borderColor: milestone.color || '#ef4444',
-                     transform: 'translateX(-1px)'
-                   }}
-                 />
-               ))}
+                  {/* Milestone vertical lines and period bands */}
+                  {milestones.map(milestone => {
+                    if (milestone.isPeriod && milestone.endDate) {
+                      // Render period as semi-transparent band
+                      const startPos = getMilestonePosition(milestone);
+                      const endPos = getMilestonePosition({ ...milestone, date: milestone.endDate });
+                      
+                      return (
+                        <div
+                          key={`period-${milestone.id}`}
+                          className="absolute top-0 bottom-0 border-l-2 border-r-2 pointer-events-none z-5"
+                          style={{
+                            left: startPos,
+                            width: `calc(${endPos} - ${startPos})`,
+                            backgroundColor: `${milestone.color}15`,
+                            borderColor: `${milestone.color}40`,
+                          }}
+                        />
+                      );
+                    } else {
+                      // Render single date milestone as vertical line
+                      return (
+                        <div
+                          key={`line-${milestone.id}`}
+                          className="absolute top-0 bottom-0 border-l-2 border-dashed pointer-events-none z-10 opacity-40"
+                          style={{
+                            left: getMilestonePosition(milestone),
+                            borderColor: milestone.color || '#ef4444',
+                            transform: 'translateX(-1px)'
+                          }}
+                        />
+                      );
+                    }
+                  })}
             
                 {/* Render deliveries */}
                 {groupByPhase ? (

@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
 import { CalendarDays, Save, X } from "lucide-react";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -22,23 +23,31 @@ interface MilestoneFormProps {
 export function MilestoneForm({ milestone, open, onSave, onCancel }: MilestoneFormProps) {
   const [title, setTitle] = useState(milestone?.title || '');
   const [description, setDescription] = useState(milestone?.description || '');
+  const [isPeriod, setIsPeriod] = useState(milestone?.isPeriod || false);
   const [date, setDate] = useState<Date | undefined>(milestone?.date || undefined);
+  const [endDate, setEndDate] = useState<Date | undefined>(milestone?.endDate || undefined);
   const [color, setColor] = useState(milestone?.color || '#ef4444');
 
   const handleSave = () => {
     if (!title.trim() || !date) return;
+    if (isPeriod && !endDate) return;
+    if (isPeriod && endDate && endDate < date) return;
 
     onSave({
       title: title.trim(),
       description: description.trim() || undefined,
       date,
+      endDate: isPeriod ? endDate : undefined,
+      isPeriod,
       color
     });
 
     // Reset form
     setTitle('');
     setDescription('');
+    setIsPeriod(false);
     setDate(undefined);
+    setEndDate(undefined);
     setColor('#ef4444');
   };
 
@@ -85,8 +94,19 @@ export function MilestoneForm({ milestone, open, onSave, onCancel }: MilestoneFo
             />
           </div>
 
+          <div className="flex items-center space-x-2">
+            <Switch
+              id="is-period"
+              checked={isPeriod}
+              onCheckedChange={setIsPeriod}
+            />
+            <Label htmlFor="is-period" className="cursor-pointer">
+              Este marco representa um período
+            </Label>
+          </div>
+
           <div className="space-y-2">
-            <Label>Data *</Label>
+            <Label>{isPeriod ? 'Data Inicial *' : 'Data *'}</Label>
             <Popover>
               <PopoverTrigger asChild>
                 <Button
@@ -107,10 +127,45 @@ export function MilestoneForm({ milestone, open, onSave, onCancel }: MilestoneFo
                   onSelect={setDate}
                   locale={ptBR}
                   initialFocus
+                  className="pointer-events-auto"
                 />
               </PopoverContent>
             </Popover>
           </div>
+
+          {isPeriod && (
+            <div className="space-y-2">
+              <Label>Data Final *</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "w-full justify-start text-left font-normal",
+                      !endDate && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarDays className="mr-2 h-4 w-4" />
+                    {endDate ? format(endDate, "dd/MM/yyyy", { locale: ptBR }) : "Selecionar data final"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={endDate}
+                    onSelect={setEndDate}
+                    locale={ptBR}
+                    disabled={(date) => !date || (!!date && !!date && date < date)}
+                    initialFocus
+                    className="pointer-events-auto"
+                  />
+                </PopoverContent>
+              </Popover>
+              {endDate && date && endDate < date && (
+                <p className="text-sm text-destructive">A data final deve ser posterior à data inicial</p>
+              )}
+            </div>
+          )}
 
           <div className="space-y-2">
             <Label>Cor</Label>
@@ -138,7 +193,7 @@ export function MilestoneForm({ milestone, open, onSave, onCancel }: MilestoneFo
           </Button>
           <Button 
             onClick={handleSave}
-            disabled={!title.trim() || !date}
+            disabled={!title.trim() || !date || (isPeriod && (!endDate || endDate < date))}
             className="bg-gradient-primary"
           >
             <Save className="h-4 w-4 mr-2" />

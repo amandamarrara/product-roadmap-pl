@@ -89,7 +89,9 @@ export function MilestoneManager({
                 />
                 <span className="text-xs font-medium text-foreground">{milestone.title}</span>
                 <span className="text-xs text-muted-foreground">
-                  {format(milestone.date, 'dd/MM')}
+                  {milestone.isPeriod && milestone.endDate
+                    ? `${format(milestone.date, 'dd/MM')} - ${format(milestone.endDate, 'dd/MM')}`
+                    : format(milestone.date, 'dd/MM')}
                 </span>
                 {!readOnly && (
                   <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -192,8 +194,15 @@ export function MilestoneManager({
                     <div className="flex items-center gap-2 mb-1">
                       <span className="font-medium truncate">{milestone.title}</span>
                       <Badge variant="outline" className="text-xs">
-                        {format(milestone.date, "dd/MM/yyyy", { locale: ptBR })}
+                        {milestone.isPeriod && milestone.endDate
+                          ? `${format(milestone.date, "dd/MM/yyyy", { locale: ptBR })} - ${format(milestone.endDate, "dd/MM/yyyy", { locale: ptBR })}`
+                          : format(milestone.date, "dd/MM/yyyy", { locale: ptBR })}
                       </Badge>
+                      {milestone.isPeriod && (
+                        <Badge variant="secondary" className="text-xs">
+                          Período
+                        </Badge>
+                      )}
                     </div>
                     {milestone.description && (
                       <p className="text-sm text-muted-foreground truncate">

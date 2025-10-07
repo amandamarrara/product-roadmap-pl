@@ -130,7 +130,9 @@ export type Database = {
           created_at: string
           date: string
           description: string | null
+          end_date: string | null
           id: string
+          is_period: boolean | null
           roadmap_id: string
           title: string
           updated_at: string
@@ -141,7 +143,9 @@ export type Database = {
           created_at?: string
           date: string
           description?: string | null
+          end_date?: string | null
           id?: string
+          is_period?: boolean | null
           roadmap_id: string
           title: string
           updated_at?: string
@@ -152,7 +156,9 @@ export type Database = {
           created_at?: string
           date?: string
           description?: string | null
+          end_date?: string | null
           id?: string
+          is_period?: boolean | null
           roadmap_id?: string
           title?: string
           updated_at?: string
