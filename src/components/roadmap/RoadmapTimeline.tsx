@@ -820,36 +820,61 @@ export function RoadmapTimeline({
                    )}
                    
                     {/* Milestone indicators in header */}
-                    {milestones.map(milestone => (
-                      <Tooltip key={milestone.id}>
-                        <TooltipTrigger asChild>
-                          <div
-                            className="absolute top-2 h-2 w-2 rounded-full cursor-pointer z-10 opacity-70"
-                            style={{
-                              left: getMilestonePosition(milestone),
-                              backgroundColor: milestone.color || '#ef4444',
-                              transform: 'translateX(-4px)'
-                            }}
-                          />
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <div className="space-y-1">
-                            <div className="font-medium">{milestone.title}</div>
-                            <div className="text-xs">
-                              {milestone.isPeriod && milestone.endDate
-                                ? `${format(milestone.date, "dd/MM/yyyy", { locale: ptBR })} - ${format(milestone.endDate, "dd/MM/yyyy", { locale: ptBR })}`
-                                : format(milestone.date, "dd/MM/yyyy", { locale: ptBR })}
+                    {milestones.map(milestone => {
+                      const isPeriod = milestone.isPeriod && milestone.endDate;
+                      const startPosition = getMilestonePosition(milestone);
+                      
+                      let milestoneStyle;
+                      if (isPeriod) {
+                        // Calculate width for period milestones
+                        const startOffset = differenceInDays(startOfDay(milestone.date), timelineStart);
+                        const endOffset = differenceInDays(startOfDay(milestone.endDate!), timelineStart);
+                        const duration = endOffset - startOffset + 1;
+                        
+                        milestoneStyle = {
+                          left: `${Math.max(0, Math.min(startOffset / totalUnits * 100, 100))}%`,
+                          width: `${Math.max(duration / totalUnits * 100, 0.5)}%`,
+                          backgroundColor: milestone.color || '#ef4444',
+                        };
+                      } else {
+                        // Single point for non-period milestones
+                        milestoneStyle = {
+                          left: startPosition,
+                          backgroundColor: milestone.color || '#ef4444',
+                          transform: 'translateX(-4px)'
+                        };
+                      }
+                      
+                      return (
+                        <Tooltip key={milestone.id}>
+                          <TooltipTrigger asChild>
+                            <div
+                              className={cn(
+                                "absolute top-2 cursor-pointer z-10 opacity-70",
+                                isPeriod ? "h-2 rounded" : "h-2 w-2 rounded-full"
+                              )}
+                              style={milestoneStyle}
+                            />
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <div className="space-y-1">
+                              <div className="font-medium">{milestone.title}</div>
+                              <div className="text-xs">
+                                {isPeriod
+                                  ? `${format(milestone.date, "dd/MM/yyyy", { locale: ptBR })} - ${format(milestone.endDate!, "dd/MM/yyyy", { locale: ptBR })}`
+                                  : format(milestone.date, "dd/MM/yyyy", { locale: ptBR })}
+                              </div>
+                              {isPeriod && (
+                                <div className="text-xs text-muted-foreground">Período</div>
+                              )}
+                              {milestone.description && (
+                                <p className="text-xs text-muted-foreground">{milestone.description}</p>
+                              )}
                             </div>
-                            {milestone.isPeriod && (
-                              <div className="text-xs text-muted-foreground">Período</div>
-                            )}
-                            {milestone.description && (
-                              <p className="text-xs text-muted-foreground">{milestone.description}</p>
-                            )}
-                          </div>
-                        </TooltipContent>
-                      </Tooltip>
-                    ))}
+                          </TooltipContent>
+                        </Tooltip>
+                      );
+                    })}
                 </div>
               </div>
             </div>
@@ -877,16 +902,17 @@ export function RoadmapTimeline({
                   {milestones.map(milestone => {
                     if (milestone.isPeriod && milestone.endDate) {
                       // Render period as semi-transparent band
-                      const startPos = getMilestonePosition(milestone);
-                      const endPos = getMilestonePosition({ ...milestone, date: milestone.endDate });
+                      const startOffset = differenceInDays(startOfDay(milestone.date), timelineStart);
+                      const endOffset = differenceInDays(startOfDay(milestone.endDate), timelineStart);
+                      const duration = endOffset - startOffset + 1;
                       
                       return (
                         <div
                           key={`period-${milestone.id}`}
                           className="absolute top-0 bottom-0 border-l-2 border-r-2 pointer-events-none z-5"
                           style={{
-                            left: startPos,
-                            width: `calc(${endPos} - ${startPos})`,
+                            left: `${Math.max(0, Math.min(startOffset / totalUnits * 100, 100))}%`,
+                            width: `${Math.max(duration / totalUnits * 100, 0.5)}%`,
                             backgroundColor: `${milestone.color}15`,
                             borderColor: `${milestone.color}40`,
                           }}
