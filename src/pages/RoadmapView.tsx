@@ -1,55 +1,20 @@
-import { useParams, Link, useNavigate } from "react-router-dom";
-import { ArrowLeft, Edit, Save, Loader2 } from "lucide-react";
+import { useParams, Link } from "react-router-dom";
+import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useRoadmap, useSaveRoadmap } from "@/hooks/useRoadmaps";
+import { useRoadmap } from "@/hooks/useRoadmaps";
 import { RoadmapBuilder } from "@/components/roadmap/RoadmapBuilder";
 import { ExportButton } from "@/components/roadmap/ExportButton";
-import { useState } from "react";
-import { Delivery } from "@/types/roadmap";
 const RoadmapView = () => {
-  const {
-    id
-  } = useParams<{
-    id: string;
-  }>();
-  const navigate = useNavigate();
-  const [isEditing, setIsEditing] = useState(false);
-  const [editingData, setEditingData] = useState<{
-    title: string;
-    subtitle: string;
-    deliveries: Delivery[];
-    milestones: any[];
-  } | null>(null);
-  const {
-    data: roadmap,
-    isLoading,
-    error
-  } = useRoadmap(id!);
-  const saveRoadmap = useSaveRoadmap();
-  const handleSave = async () => {
-    if (!editingData || !roadmap) return;
-    try {
-      await saveRoadmap.mutateAsync({
-        id: roadmap.id,
-        title: editingData.title,
-        subtitle: editingData.subtitle,
-        description: roadmap.description,
-        deliveries: editingData.deliveries,
-        milestones: editingData.milestones || roadmap.milestones || []
-      });
-      setIsEditing(false);
-      setEditingData(null);
-    } catch (error) {
-      console.error("Error saving roadmap:", error);
-    }
-  };
+  const { id } = useParams<{ id: string }>();
+  const { data: roadmap, isLoading, error } = useRoadmap(id!);
   if (isLoading) {
-    return <div className="container mx-auto py-8 flex items-center justify-center min-h-[400px]">
+    return (
+      <div className="container mx-auto py-8 flex items-center justify-center min-h-[400px]">
         <div className="flex items-center gap-2">
-          <Loader2 className="h-6 w-6 animate-spin" />
           <span>Carregando roadmap...</span>
         </div>
-      </div>;
+      </div>
+    );
   }
   if (error || !roadmap) {
     return <div className="container mx-auto py-8">
@@ -83,30 +48,7 @@ const RoadmapView = () => {
             </div>
             
             <div className="flex items-center gap-2">
-              {!isEditing && <ExportButton roadmapTitle={roadmap.title} timelineElementId="roadmap-timeline" />}
-              {isEditing ? <>
-                  <Button variant="outline" size="sm" onClick={() => {
-                setIsEditing(false);
-                setEditingData(null);
-              }}>
-                    Cancelar
-                  </Button>
-                  <Button size="sm" onClick={handleSave} disabled={saveRoadmap.isPending}>
-                    {saveRoadmap.isPending ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
-                    Salvar
-                  </Button>
-                </> : <Button size="sm" onClick={() => {
-              setIsEditing(true);
-              setEditingData({
-                title: roadmap.title,
-                subtitle: roadmap.subtitle || "",
-                deliveries: roadmap.deliveries,
-                milestones: roadmap.milestones || []
-              });
-            }}>
-                  <Edit className="h-4 w-4 mr-2" />
-                  Editar
-                </Button>}
+              <ExportButton roadmapTitle={roadmap.title} timelineElementId="roadmap-timeline" />
             </div>
           </div>
         </div>
@@ -114,27 +56,17 @@ const RoadmapView = () => {
 
       {/* Content */}
       <div className="container mx-auto py-6" id="roadmap-timeline">
-        {isEditing && editingData ? (
-          <RoadmapBuilder 
-            initialData={editingData} 
-            onDataChange={setEditingData} 
-            isEmbedded={true} 
-            roadmapId={roadmap.id}
-          />
-        ) : (
-          <RoadmapBuilder 
-            key={`roadmap-${roadmap.deliveries.map(d => `${d.id}-${d.startDate}-${d.endDate}`).join('|')}`}
-            initialData={{
-              title: roadmap.title,
-              subtitle: roadmap.subtitle || "",
-              deliveries: roadmap.deliveries,
-              milestones: roadmap.milestones || []
-            }} 
-            readOnly={true} 
-            isEmbedded={true}
-            roadmapId={roadmap.id}
-          />
-        )}
+        <RoadmapBuilder 
+          key={`roadmap-${roadmap.deliveries.map(d => `${d.id}-${d.startDate}-${d.endDate}`).join('|')}`}
+          initialData={{
+            title: roadmap.title,
+            subtitle: roadmap.subtitle || "",
+            deliveries: roadmap.deliveries,
+            milestones: roadmap.milestones || []
+          }} 
+          isEmbedded={true}
+          roadmapId={roadmap.id}
+        />
       </div>
     </div>;
 };

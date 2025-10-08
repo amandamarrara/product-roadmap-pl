@@ -12,6 +12,8 @@ import { MilestoneManager } from "./MilestoneManager";
 import type { Delivery, Team, TeamMember, Milestone } from "@/types/roadmap";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import { useUpdateDelivery, useDeleteDelivery } from "@/hooks/useDeliveryActions";
+import { useQueryClient } from "@tanstack/react-query";
 
 // Mock data for teams and members
 const mockTeams: Team[] = [{
@@ -96,6 +98,10 @@ export function RoadmapBuilder({
   isEmbedded = false,
   roadmapId 
 }: RoadmapBuilderProps) {
+  const queryClient = useQueryClient();
+  const updateDelivery = useUpdateDelivery();
+  const deleteDelivery = useDeleteDelivery();
+  
   const [roadmapTitle, setRoadmapTitle] = useState(
     initialData?.title || ''
   );
@@ -139,23 +145,34 @@ export function RoadmapBuilder({
     }
   }, [initialData]);
 
-  const handleSaveDelivery = (deliveryData: Omit<Delivery, 'id'>) => {
+  const handleSaveDelivery = async (deliveryData: Omit<Delivery, 'id'>) => {
     console.log('💾 RoadmapBuilder: Received delivery data from form:', deliveryData);
     
-    if (editingDelivery) {
-      console.log('✏️ RoadmapBuilder: Updating existing delivery:', editingDelivery.id);
-      setDeliveries(prev => prev.map(d => d.id === editingDelivery.id ? {
+    if (editingDelivery && roadmapId) {
+      // Update existing delivery in database
+      console.log('✏️ RoadmapBuilder: Updating existing delivery in DB:', editingDelivery.id);
+      const fullDelivery: Delivery = {
         ...deliveryData,
         id: editingDelivery.id
-      } : d));
-    } else {
-      console.log('➕ RoadmapBuilder: Adding new delivery');
+      } as Delivery;
+      await updateDelivery.mutateAsync({ roadmapId, delivery: fullDelivery });
+    } else if (roadmapId) {
+      // For new deliveries when roadmapId exists, we still update local state
+      // The actual creation will happen when saving the roadmap
+      console.log('➕ RoadmapBuilder: Adding new delivery to local state');
       const newDelivery: Delivery = {
         ...deliveryData,
         id: Date.now().toString()
       };
       setDeliveries(prev => [...prev, newDelivery]);
-      console.log('✅ RoadmapBuilder: New delivery added:', newDelivery.id);
+    } else {
+      // No roadmapId - just update local state (creating new roadmap)
+      console.log('➕ RoadmapBuilder: Adding new delivery (no roadmapId)');
+      const newDelivery: Delivery = {
+        ...deliveryData,
+        id: Date.now().toString()
+      };
+      setDeliveries(prev => [...prev, newDelivery]);
     }
     setShowForm(false);
     setEditingDelivery(undefined);
@@ -174,8 +191,15 @@ export function RoadmapBuilder({
     }, 100);
   };
 
-  const handleDeleteDelivery = (id: string) => {
-    setDeliveries(prev => prev.filter(d => d.id !== id));
+  const handleDeleteDelivery = async (id: string) => {
+    if (roadmapId) {
+      // Delete from database
+      console.log('🗑️ RoadmapBuilder: Deleting delivery from DB:', id);
+      await deleteDelivery.mutateAsync({ roadmapId, deliveryId: id });
+    } else {
+      // Just update local state
+      setDeliveries(prev => prev.filter(d => d.id !== id));
+    }
   };
 
   const handleCancelForm = () => {

@@ -43,7 +43,6 @@ export function RoadmapTimeline({
   const headerRef = useRef<HTMLDivElement>(null);
   const bodyRef = useRef<HTMLDivElement>(null);
   const [expandedPhases, setExpandedPhases] = useState<Set<string>>(new Set());
-  const [localDeliveries, setLocalDeliveries] = useState<Delivery[]>(sortDeliveriesByStartDate(deliveries));
   const [activeDelivery, setActiveDelivery] = useState<Delivery | null>(null);
   const [activePhase, setActivePhase] = useState<string | null>(null);
   const [isCompressed, setIsCompressed] = useState(false);
@@ -63,10 +62,8 @@ export function RoadmapTimeline({
   const updateSubDelivery = useUpdateSubDelivery();
   const deleteSubDelivery = useDeleteSubDelivery();
   
-  // Update local deliveries when prop changes
-  useEffect(() => {
-    setLocalDeliveries(sortDeliveriesByStartDate(deliveries));
-  }, [deliveries]);
+  // Use deliveries directly from props (sorted)
+  const localDeliveries = useMemo(() => sortDeliveriesByStartDate(deliveries), [deliveries]);
 
   // Measure container width for dynamic compression
   useEffect(() => {
@@ -179,7 +176,6 @@ export function RoadmapTimeline({
         const reorderedGrouped = reorderPhases(groupedDeliveries, activePhaseKey, overPhaseKey);
         // Flatten back to deliveries array with new phase order preserved
         const reorderedDeliveries = Object.values(reorderedGrouped).flat();
-        setLocalDeliveries(reorderedDeliveries);
         
         // Update in database
         if (roadmapId) {
@@ -191,7 +187,6 @@ export function RoadmapTimeline({
     else if (String(overId).startsWith('phase-') && !isDragPhase(activeId)) {
       const targetPhase = String(overId).replace('phase-', '');
       const updatedDeliveries = moveDeliveryToPhase(localDeliveries, activeId, targetPhase);
-      setLocalDeliveries(updatedDeliveries);
       
       // Update in database
       if (roadmapId) {
@@ -201,7 +196,6 @@ export function RoadmapTimeline({
     // Regular delivery reordering
     else if (activeId !== overId && !isDragPhase(activeId)) {
       const updatedDeliveries = reorderDeliveries(localDeliveries, activeId, overId);
-      setLocalDeliveries(updatedDeliveries);
       
       // Update in database
       if (roadmapId) {
@@ -234,11 +228,6 @@ export function RoadmapTimeline({
   };
 
   const handleQuickSave = (updatedDelivery: Delivery) => {
-    // Optimistic update - immediately update local state
-    setLocalDeliveries(prev => 
-      prev.map(d => d.id === updatedDelivery.id ? updatedDelivery : d)
-    );
-    
     if (roadmapId) {
       updateDelivery.mutate({ roadmapId, delivery: updatedDelivery });
     }
@@ -258,16 +247,6 @@ export function RoadmapTimeline({
   };
 
   const handleSaveSubDelivery = (updatedSubDelivery: any) => {
-    // Optimistic update - immediately update local state
-    setLocalDeliveries(prev => 
-      prev.map(delivery => ({
-        ...delivery,
-        subDeliveries: delivery.subDeliveries.map(sub => 
-          sub.id === updatedSubDelivery.id ? updatedSubDelivery : sub
-        )
-      }))
-    );
-    
     if (roadmapId) {
       const deliveryId = localDeliveries.find(d => 
         d.subDeliveries.some(sub => sub.id === updatedSubDelivery.id)
