@@ -195,6 +195,50 @@ export type Database = {
         }
         Relationships: []
       }
+      roadmap_shares: {
+        Row: {
+          created_at: string | null
+          id: string
+          invite_token: string
+          permission: string
+          roadmap_id: string
+          shared_by_user_id: string
+          shared_with_email: string
+          shared_with_user_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          invite_token: string
+          permission: string
+          roadmap_id: string
+          shared_by_user_id: string
+          shared_with_email: string
+          shared_with_user_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          invite_token?: string
+          permission?: string
+          roadmap_id?: string
+          shared_by_user_id?: string
+          shared_with_email?: string
+          shared_with_user_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "roadmap_shares_roadmap_id_fkey"
+            columns: ["roadmap_id"]
+            isOneToOne: false
+            referencedRelation: "roadmaps"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       roadmaps: {
         Row: {
           created_at: string
@@ -289,7 +333,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_user_roadmap_role: {
+        Args: { _roadmap_id: string; _user_id: string }
+        Returns: string
+      }
     }
     Enums: {
       [_ in never]: never

@@ -78,3 +78,23 @@ export interface Roadmap {
   createdAt: Date;
   updatedAt: Date;
 }
+
+export type RoadmapPermission = 'viewer' | 'editor' | 'owner';
+
+export interface RoadmapShare {
+  id: string;
+  roadmapId: string;
+  sharedWithEmail: string;
+  sharedWithUserId?: string;
+  permission: 'viewer' | 'editor';
+  sharedByUserId: string;
+  inviteToken: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface RoadmapWithRole extends Roadmap {
+  userRole: RoadmapPermission | 'none';
+  isShared: boolean;
+  sharedBy?: string;
+}

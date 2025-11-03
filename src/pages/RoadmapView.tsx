@@ -1,13 +1,35 @@
-import { useParams, Link } from "react-router-dom";
-import { ArrowLeft } from "lucide-react";
+import { useParams, Link, useSearchParams, useNavigate } from "react-router-dom";
+import { useEffect } from "react";
+import { ArrowLeft, Eye, Edit } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { useRoadmap } from "@/hooks/useRoadmaps";
 import { RoadmapBuilder } from "@/components/roadmap/RoadmapBuilder";
 import { ExportButton } from "@/components/roadmap/ExportButton";
+import { ShareDialog } from "@/components/roadmap/ShareDialog";
+import { useRoadmapRole, useProcessInviteToken } from "@/hooks/useRoadmapSharing";
 const RoadmapView = () => {
   const { id } = useParams<{ id: string }>();
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const inviteToken = searchParams.get('invite');
+  
   const { data: roadmap, isLoading, error } = useRoadmap(id!);
-  if (isLoading) {
+  const { data: userRole, isLoading: roleLoading } = useRoadmapRole(id!);
+  const processInvite = useProcessInviteToken();
+
+  // Process invite token if present
+  useEffect(() => {
+    if (inviteToken && !processInvite.isPending) {
+      processInvite.mutate(inviteToken, {
+        onSuccess: () => {
+          // Remove token from URL
+          navigate(`/roadmap/${id}`, { replace: true });
+        },
+      });
+    }
+  }, [inviteToken, id, navigate, processInvite]);
+  if (isLoading || roleLoading) {
     return (
       <div className="container mx-auto py-8 flex items-center justify-center min-h-[400px]">
         <div className="flex items-center gap-2">
@@ -32,6 +54,10 @@ const RoadmapView = () => {
         </div>
       </div>;
   }
+
+  const isReadOnly = userRole === 'viewer';
+  const isOwner = userRole === 'owner';
+  
   return <div className="min-h-screen bg-background">
       {/* Header */}
       <div className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -48,6 +74,21 @@ const RoadmapView = () => {
             </div>
             
             <div className="flex items-center gap-2">
+              {userRole === 'viewer' && (
+                <Badge variant="secondary" className="mr-2">
+                  <Eye className="h-3 w-3 mr-1" />
+                  Visualização
+                </Badge>
+              )}
+              {userRole === 'editor' && (
+                <Badge variant="secondary" className="mr-2">
+                  <Edit className="h-3 w-3 mr-1" />
+                  Editor
+                </Badge>
+              )}
+              {isOwner && (
+                <ShareDialog roadmapId={roadmap.id} roadmapTitle={roadmap.title} />
+              )}
               <ExportButton roadmapTitle={roadmap.title} timelineElementId="roadmap-timeline" />
             </div>
           </div>
@@ -66,6 +107,8 @@ const RoadmapView = () => {
           }} 
           isEmbedded={true}
           roadmapId={roadmap.id}
+          readOnly={isReadOnly}
+          userRole={userRole}
         />
       </div>
     </div>;

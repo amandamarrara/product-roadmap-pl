@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Roadmap, Delivery, SubDelivery, Milestone } from "@/types/roadmap";
+import { Roadmap, Delivery, SubDelivery, Milestone, RoadmapWithRole } from "@/types/roadmap";
 import { toast } from "sonner";
 import { generateColorFromPhase } from "@/lib/utils";
 import { parseISO } from "date-fns";
@@ -423,5 +423,45 @@ export function useDeleteRoadmap() {
     onError: () => {
       toast.error("Não foi possível excluir o roadmap.");
     }
+  });
+}
+
+export function useSharedRoadmaps() {
+  return useQuery({
+    queryKey: ["shared-roadmaps"],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return [];
+
+      const { data, error } = await supabase
+        .from("roadmap_shares")
+        .select(`
+          *,
+          roadmap:roadmaps(
+            *,
+            deliveries:deliveries(*),
+            milestones:milestones(*)
+          )
+        `)
+        .or(`shared_with_user_id.eq.${user.id},shared_with_email.eq.${user.email}`)
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+      
+      return (data || []).map((share: any) => {
+        const roadmap = share.roadmap;
+        if (!roadmap) return null;
+        
+        return {
+          ...roadmap,
+          createdAt: new Date(roadmap.created_at),
+          updatedAt: new Date(roadmap.updated_at),
+          deliveries: roadmap.deliveries || [],
+          milestones: roadmap.milestones || [],
+          userRole: share.permission,
+          isShared: true,
+        };
+      }).filter(Boolean);
+    },
   });
 }

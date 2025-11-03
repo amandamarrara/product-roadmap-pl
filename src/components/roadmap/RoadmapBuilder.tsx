@@ -4,7 +4,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, MapPin, List, Calendar, Filter, Layers } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Plus, MapPin, List, Calendar, Filter, Layers, Eye } from "lucide-react";
 import { DeliveryForm } from "./DeliveryForm";
 import { DeliveryCard } from "./DeliveryCard";
 import { RoadmapTimeline } from "./RoadmapTimeline";
@@ -90,6 +91,7 @@ interface RoadmapBuilderProps {
   readOnly?: boolean;
   isEmbedded?: boolean;
   roadmapId?: string;
+  userRole?: 'owner' | 'editor' | 'viewer' | 'none';
 }
 
 export function RoadmapBuilder({ 
@@ -97,7 +99,8 @@ export function RoadmapBuilder({
   onDataChange, 
   readOnly = false,
   isEmbedded = false,
-  roadmapId 
+  roadmapId,
+  userRole = 'none'
 }: RoadmapBuilderProps) {
   const queryClient = useQueryClient();
   const updateDelivery = useUpdateDelivery();
@@ -292,6 +295,16 @@ export function RoadmapBuilder({
   return (
     <div className={`${isEmbedded ? '' : 'min-h-screen bg-background p-4 md:p-6 lg:p-8'}`}>
       <div className={`${isEmbedded ? '' : 'max-w-7xl mx-auto'} space-y-6`}>
+        {/* Read-only alert */}
+        {readOnly && userRole === 'viewer' && (
+          <Alert>
+            <Eye className="h-4 w-4" />
+            <AlertDescription>
+              Você está visualizando este roadmap. Não é possível fazer alterações.
+            </AlertDescription>
+          </Alert>
+        )}
+        
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div className="space-y-2 flex-1">

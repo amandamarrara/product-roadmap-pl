@@ -1,13 +1,14 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Plus, Calendar, Users, Search, MoreVertical, Trash2, Copy, Eye } from "lucide-react";
+import { Plus, Calendar, Users, Search, MoreVertical, Trash2, Copy, Eye, Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { useRoadmaps, useDeleteRoadmap, useSaveRoadmap } from "@/hooks/useRoadmaps";
+import { useRoadmaps, useDeleteRoadmap, useSaveRoadmap, useSharedRoadmaps } from "@/hooks/useRoadmaps";
 import { Roadmap } from "@/types/roadmap";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -16,7 +17,9 @@ import { useDateAlerts } from "@/hooks/useDateAlerts";
 
 const RoadmapsList = () => {
   const [searchTerm, setSearchTerm] = useState("");
+  const [activeTab, setActiveTab] = useState("mine");
   const { data: roadmaps = [], isLoading } = useRoadmaps();
+  const { data: sharedRoadmaps = [], isLoading: sharedLoading } = useSharedRoadmaps();
   const deleteRoadmap = useDeleteRoadmap();
   const saveRoadmap = useSaveRoadmap();
 
@@ -24,6 +27,14 @@ const RoadmapsList = () => {
     roadmap.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
     roadmap.description?.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  const filteredSharedRoadmaps = sharedRoadmaps.filter(roadmap =>
+    roadmap.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    roadmap.description?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const currentRoadmaps = activeTab === "mine" ? filteredRoadmaps : filteredSharedRoadmaps;
+  const currentLoading = activeTab === "mine" ? isLoading : sharedLoading;
 
   const handleDuplicate = async (roadmap: Roadmap) => {
     const duplicatedRoadmap = {
@@ -61,7 +72,7 @@ const RoadmapsList = () => {
     return `${completed}/${total} concluídas`;
   };
 
-  if (isLoading) {
+  if (isLoading || sharedLoading) {
     return (
       <div className="container mx-auto py-8">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -104,6 +115,29 @@ const RoadmapsList = () => {
         </div>
       </div>
 
+      {/* Tabs */}
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-6">
+        <TabsList>
+          <TabsTrigger value="mine">
+            Meus Roadmaps
+            {roadmaps.length > 0 && (
+              <Badge variant="secondary" className="ml-2">
+                {roadmaps.length}
+              </Badge>
+            )}
+          </TabsTrigger>
+          <TabsTrigger value="shared">
+            <Share2 className="h-4 w-4 mr-2" />
+            Compartilhados Comigo
+            {sharedRoadmaps.length > 0 && (
+              <Badge variant="secondary" className="ml-2">
+                {sharedRoadmaps.length}
+              </Badge>
+            )}
+          </TabsTrigger>
+        </TabsList>
+      </Tabs>
+
       {/* Search */}
       <div className="relative mb-6">
         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
@@ -116,21 +150,28 @@ const RoadmapsList = () => {
       </div>
 
       {/* Empty State */}
-      {filteredRoadmaps.length === 0 && !isLoading && (
+      {currentRoadmaps.length === 0 && !currentLoading && (
         <div className="text-center py-12">
           <div className="w-24 h-24 mx-auto mb-4 bg-muted rounded-full flex items-center justify-center">
             <Calendar className="h-12 w-12 text-muted-foreground" />
           </div>
           <h3 className="text-xl font-semibold mb-2">
-            {searchTerm ? "Nenhum roadmap encontrado" : "Nenhum roadmap criado ainda"}
+            {searchTerm 
+              ? "Nenhum roadmap encontrado" 
+              : activeTab === "mine" 
+                ? "Nenhum roadmap criado ainda"
+                : "Nenhum roadmap compartilhado"
+            }
           </h3>
           <p className="text-muted-foreground mb-6">
             {searchTerm 
               ? "Tente ajustar os termos de busca"
-              : "Comece criando seu primeiro roadmap de produto"
+              : activeTab === "mine"
+                ? "Comece criando seu primeiro roadmap de produto"
+                : "Roadmaps compartilhados com você aparecerão aqui"
             }
           </p>
-          {!searchTerm && (
+          {!searchTerm && activeTab === "mine" && (
             <Button asChild>
               <Link to="/roadmap/new">
                 <Plus className="mr-2 h-4 w-4" />
@@ -143,13 +184,19 @@ const RoadmapsList = () => {
 
       {/* Roadmaps Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredRoadmaps.map((roadmap) => (
+        {currentRoadmaps.map((roadmap: any) => (
           <Card key={roadmap.id} className="hover:shadow-md transition-shadow">
             <CardHeader className="pb-3">
               <div className="flex justify-between items-start">
                 <div className="flex-1">
                   <div className="flex items-start gap-2">
                     <CardTitle className="text-lg line-clamp-2 flex-1">{roadmap.title}</CardTitle>
+                    {roadmap.isShared && (
+                      <Badge variant="outline" className="shrink-0">
+                        <Share2 className="h-3 w-3 mr-1" />
+                        Compartilhado
+                      </Badge>
+                    )}
                     {(() => {
                       const alerts = useDateAlerts(roadmap.deliveries, roadmap.milestones);
                       const urgentCount = alerts.criticalCount + alerts.highCount;
