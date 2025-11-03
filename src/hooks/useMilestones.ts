@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Milestone } from "@/types/roadmap";
 import { useToast } from "@/hooks/use-toast";
+import { parseISO } from "date-fns";
 
 export function useMilestones(roadmapId?: string) {
   return useQuery({
@@ -19,8 +20,8 @@ export function useMilestones(roadmapId?: string) {
 
       return data.map(milestone => ({
         ...milestone,
-        date: new Date(milestone.date),
-        endDate: milestone.end_date ? new Date(milestone.end_date) : undefined,
+        date: parseISO(milestone.date),
+        endDate: milestone.end_date ? parseISO(milestone.end_date) : undefined,
         isPeriod: milestone.is_period || false,
       })) as Milestone[];
     },

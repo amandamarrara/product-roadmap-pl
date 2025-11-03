@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Roadmap, Delivery, SubDelivery, Milestone } from "@/types/roadmap";
 import { toast } from "sonner";
 import { generateColorFromPhase } from "@/lib/utils";
+import { parseISO } from "date-fns";
 
 export function useRoadmaps() {
   return useQuery({
@@ -27,9 +28,9 @@ export function useRoadmaps() {
         createdAt: new Date(roadmap.created_at),
         updatedAt: new Date(roadmap.updated_at),
         deliveries: roadmap.deliveries.map((delivery: any) => ({
-          ...delivery,
-          startDate: delivery.start_date ? new Date(delivery.start_date) : new Date(),
-          endDate: delivery.end_date ? new Date(delivery.end_date) : new Date(),
+            ...delivery,
+            startDate: delivery.start_date ? parseISO(delivery.start_date) : new Date(),
+            endDate: delivery.end_date ? parseISO(delivery.end_date) : new Date(),
           deliveryColor: delivery.delivery_color || undefined,
           deliveryPhase: delivery.delivery_phase || undefined,
           responsible: delivery.responsible || undefined,
@@ -43,8 +44,8 @@ export function useRoadmaps() {
         })),
         milestones: Array.isArray(roadmap.milestones) 
           ? roadmap.milestones.map((milestone: any) => ({
-              ...milestone,
-              date: new Date(milestone.date),
+            ...milestone,
+            date: parseISO(milestone.date),
             }))
           : []
       })) as Roadmap[];
@@ -76,9 +77,9 @@ export function useRoadmap(id: string) {
         createdAt: new Date(data.created_at),
         updatedAt: new Date(data.updated_at),
         deliveries: data.deliveries.map((delivery: any) => ({
-          ...delivery,
-          startDate: delivery.start_date ? new Date(delivery.start_date) : new Date(),
-          endDate: delivery.end_date ? new Date(delivery.end_date) : new Date(),
+            ...delivery,
+            startDate: delivery.start_date ? parseISO(delivery.start_date) : new Date(),
+            endDate: delivery.end_date ? parseISO(delivery.end_date) : new Date(),
           deliveryColor: delivery.delivery_color || undefined,
           deliveryPhase: delivery.delivery_phase || undefined,
           responsible: delivery.responsible || undefined,
@@ -92,8 +93,8 @@ export function useRoadmap(id: string) {
         })),
         milestones: Array.isArray(data.milestones) 
           ? data.milestones.map((milestone: any) => ({
-              ...milestone,
-              date: new Date(milestone.date),
+            ...milestone,
+            date: parseISO(milestone.date),
             }))
           : []
       } as Roadmap;
