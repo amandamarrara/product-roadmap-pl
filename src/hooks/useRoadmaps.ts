@@ -9,6 +9,9 @@ export function useRoadmaps() {
   return useQuery({
     queryKey: ["roadmaps"],
     queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return [];
+
       const { data, error } = await supabase
         .from("roadmaps")
         .select(`
@@ -19,6 +22,7 @@ export function useRoadmaps() {
           ),
           milestones:milestones(*)
         `)
+        .eq("user_id", user.id)
         .order("created_at", { ascending: false });
 
       if (error) throw error;
