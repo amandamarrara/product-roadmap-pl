@@ -18,6 +18,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   useRoadmapShares,
   useShareRoadmap,
@@ -134,105 +135,107 @@ export function ShareDialog({ roadmapId, roadmapTitle }: ShareDialogProps) {
           {/* People with access */}
           <div className="space-y-3">
             <h3 className="text-sm font-medium">Pessoas com acesso</h3>
-            <div className="border rounded-lg divide-y">
-              {/* Owner */}
-              <div className="p-3 bg-muted/30">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-sm font-medium">
-                      {user?.email?.[0].toUpperCase()}
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium">{user?.email}</p>
-                      <Badge variant="secondary" className="mt-1">Proprietário</Badge>
+            <ScrollArea className="max-h-[400px]">
+              <div className="border rounded-lg divide-y">
+                {/* Owner */}
+                <div className="p-3 bg-muted/30">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-sm font-medium">
+                        {user?.email?.[0].toUpperCase()}
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium">{user?.email}</p>
+                        <Badge variant="secondary" className="mt-1">Proprietário</Badge>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
 
-              {/* Shared users */}
-              {isLoading ? (
-                <div className="p-4 text-sm text-muted-foreground text-center">
-                  Carregando...
-                </div>
-              ) : shares.length === 0 ? (
-                <div className="p-4 text-sm text-muted-foreground text-center">
-                  Nenhum compartilhamento ainda
-                </div>
-              ) : (
-                shares.map((share) => (
-                  <div key={share.id} className="p-3">
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center gap-2">
-                        <div className="h-8 w-8 rounded-full bg-secondary/50 flex items-center justify-center text-sm font-medium">
-                          {share.sharedWithEmail[0].toUpperCase()}
+                {/* Shared users */}
+                {isLoading ? (
+                  <div className="p-4 text-sm text-muted-foreground text-center">
+                    Carregando...
+                  </div>
+                ) : shares.length === 0 ? (
+                  <div className="p-4 text-sm text-muted-foreground text-center">
+                    Nenhum compartilhamento ainda
+                  </div>
+                ) : (
+                  shares.map((share) => (
+                    <div key={share.id} className="p-3">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          <div className="h-8 w-8 rounded-full bg-secondary/50 flex items-center justify-center text-sm font-medium">
+                            {share.sharedWithEmail[0].toUpperCase()}
+                          </div>
+                          <div>
+                            <p className="text-sm font-medium">{share.sharedWithEmail}</p>
+                            {!share.sharedWithUserId && (
+                              <Badge variant="outline" className="mt-1 text-xs">
+                                Pendente
+                              </Badge>
+                            )}
+                          </div>
                         </div>
-                        <div>
-                          <p className="text-sm font-medium">{share.sharedWithEmail}</p>
-                          {!share.sharedWithUserId && (
-                            <Badge variant="outline" className="mt-1 text-xs">
-                              Pendente
-                            </Badge>
-                          )}
+                        <div className="flex items-center gap-2">
+                          <Select
+                            value={share.permission}
+                            onValueChange={(v) => handleUpdatePermission(share.id, v as 'viewer' | 'editor')}
+                          >
+                            <SelectTrigger className="w-[130px] h-8">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="viewer">
+                                <div className="flex items-center gap-2">
+                                  <Eye className="h-3 w-3" />
+                                  Visualizador
+                                </div>
+                              </SelectItem>
+                              <SelectItem value="editor">
+                                <div className="flex items-center gap-2">
+                                  <Edit className="h-3 w-3" />
+                                  Editor
+                                </div>
+                              </SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8"
+                            onClick={() => handleRemoveShare(share.id)}
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
                         </div>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <Select
-                          value={share.permission}
-                          onValueChange={(v) => handleUpdatePermission(share.id, v as 'viewer' | 'editor')}
-                        >
-                          <SelectTrigger className="w-[130px] h-8">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="viewer">
-                              <div className="flex items-center gap-2">
-                                <Eye className="h-3 w-3" />
-                                Visualizador
-                              </div>
-                            </SelectItem>
-                            <SelectItem value="editor">
-                              <div className="flex items-center gap-2">
-                                <Edit className="h-3 w-3" />
-                                Editor
-                              </div>
-                            </SelectItem>
-                          </SelectContent>
-                        </Select>
+                      <div className="flex items-center gap-2 mt-2">
                         <Button
                           variant="ghost"
-                          size="icon"
-                          className="h-8 w-8"
-                          onClick={() => handleRemoveShare(share.id)}
+                          size="sm"
+                          className="h-7 text-xs"
+                          onClick={() => handleCopyLink(share.inviteToken)}
                         >
-                          <X className="h-4 w-4" />
+                          {copiedToken === share.inviteToken ? (
+                            <>
+                              <Check className="h-3 w-3 mr-1" />
+                              Copiado!
+                            </>
+                          ) : (
+                            <>
+                              <Copy className="h-3 w-3 mr-1" />
+                              Copiar link de convite
+                            </>
+                          )}
                         </Button>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2 mt-2">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-7 text-xs"
-                        onClick={() => handleCopyLink(share.inviteToken)}
-                      >
-                        {copiedToken === share.inviteToken ? (
-                          <>
-                            <Check className="h-3 w-3 mr-1" />
-                            Copiado!
-                          </>
-                        ) : (
-                          <>
-                            <Copy className="h-3 w-3 mr-1" />
-                            Copiar link de convite
-                          </>
-                        )}
-                      </Button>
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
+                  ))
+                )}
+              </div>
+            </ScrollArea>
           </div>
 
           {/* Info alert */}
