@@ -21,6 +21,8 @@ import { EditSubDeliveryDialog } from './EditSubDeliveryDialog';
 import { CommentsDialog } from './CommentsDialog';
 import { useUpdateDelivery, useDeleteDelivery, useUpdateSubDelivery, useDeleteSubDelivery } from '@/hooks/useDeliveryActions';
 import { ResponsibleFilter } from './ResponsibleFilter';
+import { AlertsSummary } from './AlertsSummary';
+import { useDateAlerts } from '@/hooks/useDateAlerts';
 
 
 interface RoadmapTimelineProps {
@@ -67,6 +69,9 @@ export function RoadmapTimeline({
   
   // Use deliveries directly from props (sorted)
   const localDeliveries = useMemo(() => sortDeliveriesByStartDate(deliveries), [deliveries]);
+
+  // Calculate date alerts
+  const dateAlerts = useDateAlerts(localDeliveries, milestones);
 
   // Persist compression state to localStorage
   useEffect(() => {
@@ -702,6 +707,14 @@ export function RoadmapTimeline({
                 Timeline do Roadmap
               </div>
               <div className="flex items-center gap-2">
+                <AlertsSummary 
+                  alerts={dateAlerts.alerts}
+                  criticalCount={dateAlerts.criticalCount}
+                  highCount={dateAlerts.highCount}
+                  mediumCount={dateAlerts.mediumCount}
+                  lowCount={dateAlerts.lowCount}
+                  totalCount={dateAlerts.totalCount}
+                />
                 {uniqueResponsibles.length > 0 && (
                   <ResponsibleFilter
                     responsibles={uniqueResponsibles}

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Plus, Calendar, Users, Search, MoreVertical, Trash2, Copy, Eye } from "lucide-react";
+import { Plus, Calendar, Users, Search, MoreVertical, Trash2, Copy, Eye, Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -11,6 +11,7 @@ import { useRoadmaps, useDeleteRoadmap, useSaveRoadmap } from "@/hooks/useRoadma
 import { Roadmap } from "@/types/roadmap";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { useDateAlerts } from "@/hooks/useDateAlerts";
 
 
 const RoadmapsList = () => {
@@ -147,7 +148,24 @@ const RoadmapsList = () => {
             <CardHeader className="pb-3">
               <div className="flex justify-between items-start">
                 <div className="flex-1">
-                  <CardTitle className="text-lg line-clamp-2">{roadmap.title}</CardTitle>
+                  <div className="flex items-start gap-2">
+                    <CardTitle className="text-lg line-clamp-2 flex-1">{roadmap.title}</CardTitle>
+                    {(() => {
+                      const alerts = useDateAlerts(roadmap.deliveries, roadmap.milestones);
+                      if (alerts.totalCount > 0) {
+                        return (
+                          <Badge 
+                            variant={alerts.criticalCount > 0 ? "destructive" : "secondary"}
+                            className="flex items-center gap-1"
+                          >
+                            <Bell className="h-3 w-3" />
+                            {alerts.totalCount}
+                          </Badge>
+                        );
+                      }
+                      return null;
+                    })()}
+                  </div>
                   {roadmap.subtitle && (
                     <CardDescription className="line-clamp-1">{roadmap.subtitle}</CardDescription>
                   )}
