@@ -333,9 +333,22 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_user_email: { Args: { _user_id: string }; Returns: string }
       get_user_roadmap_role: {
         Args: { _roadmap_id: string; _user_id: string }
         Returns: string
+      }
+      has_editor_access: {
+        Args: { _roadmap_id: string; _user_id: string }
+        Returns: boolean
+      }
+      has_roadmap_access: {
+        Args: { _roadmap_id: string; _user_id: string }
+        Returns: boolean
+      }
+      is_roadmap_owner: {
+        Args: { _roadmap_id: string; _user_id: string }
+        Returns: boolean
       }
     }
     Enums: {
