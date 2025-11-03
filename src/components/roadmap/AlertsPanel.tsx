@@ -55,6 +55,13 @@ export function AlertsPanel({
     return alerts.filter(a => a.urgency === urgency);
   };
 
+  const filterAlertsByType = (alerts: DateAlert[], type: 'milestone' | 'delivery') => {
+    if (type === 'milestone') {
+      return alerts.filter(a => a.type === 'milestone');
+    }
+    return alerts.filter(a => a.type === 'delivery' || a.type === 'sub-delivery');
+  };
+
   const renderAlertCard = (alert: DateAlert) => (
     <Card 
       key={alert.id} 
@@ -95,6 +102,27 @@ export function AlertsPanel({
       </CardContent>
     </Card>
   );
+
+  const renderAlertsSection = (alerts: DateAlert[], sectionTitle: string, icon: React.ReactNode) => {
+    if (alerts.length === 0) return null;
+    
+    return (
+      <div className="mb-4 last:mb-0">
+        <div className="flex items-center gap-2 mb-2 px-1">
+          {icon}
+          <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+            {sectionTitle}
+          </h4>
+          <Badge variant="outline" className="text-xs h-5">
+            {alerts.length}
+          </Badge>
+        </div>
+        <div className="space-y-2">
+          {alerts.map(renderAlertCard)}
+        </div>
+      </div>
+    );
+  };
 
   if (alerts.length === 0) {
     return (
@@ -161,64 +189,125 @@ export function AlertsPanel({
         
         <TabsContent value="all" className="flex-1 m-0">
           <ScrollArea className="h-[280px]">
-            <div className="p-3 space-y-2">
-              {alerts.map(renderAlertCard)}
+            <div className="p-3">
+              {renderAlertsSection(
+                filterAlertsByType(alerts, 'milestone'),
+                'Marcos',
+                <Flag className="h-3.5 w-3.5 text-muted-foreground" />
+              )}
+              {renderAlertsSection(
+                filterAlertsByType(alerts, 'delivery'),
+                'Entregas',
+                <Package className="h-3.5 w-3.5 text-muted-foreground" />
+              )}
             </div>
           </ScrollArea>
         </TabsContent>
         
         <TabsContent value="critical" className="flex-1 m-0">
           <ScrollArea className="h-[280px]">
-            <div className="p-3 space-y-2">
-                {filterAlertsByUrgency('critical').length > 0 ? (
-                  filterAlertsByUrgency('critical').map(renderAlertCard)
-                ) : (
-                  <p className="text-center text-muted-foreground py-8 text-sm">
-                    Nenhum alerta crítico
-                  </p>
-                )}
-              </div>
-            </ScrollArea>
-          </TabsContent>
+            <div className="p-3">
+              {(() => {
+                const filteredAlerts = filterAlertsByUrgency('critical');
+                const milestoneAlerts = filterAlertsByType(filteredAlerts, 'milestone');
+                const deliveryAlerts = filterAlertsByType(filteredAlerts, 'delivery');
+                
+                if (filteredAlerts.length === 0) {
+                  return (
+                    <p className="text-center text-muted-foreground py-8 text-sm">
+                      Nenhum alerta crítico
+                    </p>
+                  );
+                }
+                
+                return (
+                  <>
+                    {renderAlertsSection(milestoneAlerts, 'Marcos', <Flag className="h-3.5 w-3.5 text-muted-foreground" />)}
+                    {renderAlertsSection(deliveryAlerts, 'Entregas', <Package className="h-3.5 w-3.5 text-muted-foreground" />)}
+                  </>
+                );
+              })()}
+            </div>
+          </ScrollArea>
+        </TabsContent>
           
           <TabsContent value="high" className="flex-1 m-0">
             <ScrollArea className="h-[280px]">
-              <div className="p-3 space-y-2">
-                {filterAlertsByUrgency('high').length > 0 ? (
-                  filterAlertsByUrgency('high').map(renderAlertCard)
-                ) : (
-                  <p className="text-center text-muted-foreground py-8 text-sm">
-                    Nenhum alerta urgente
-                  </p>
-                )}
+              <div className="p-3">
+                {(() => {
+                  const filteredAlerts = filterAlertsByUrgency('high');
+                  const milestoneAlerts = filterAlertsByType(filteredAlerts, 'milestone');
+                  const deliveryAlerts = filterAlertsByType(filteredAlerts, 'delivery');
+                  
+                  if (filteredAlerts.length === 0) {
+                    return (
+                      <p className="text-center text-muted-foreground py-8 text-sm">
+                        Nenhum alerta urgente
+                      </p>
+                    );
+                  }
+                  
+                  return (
+                    <>
+                      {renderAlertsSection(milestoneAlerts, 'Marcos', <Flag className="h-3.5 w-3.5 text-muted-foreground" />)}
+                      {renderAlertsSection(deliveryAlerts, 'Entregas', <Package className="h-3.5 w-3.5 text-muted-foreground" />)}
+                    </>
+                  );
+                })()}
               </div>
             </ScrollArea>
           </TabsContent>
           
           <TabsContent value="medium" className="flex-1 m-0">
             <ScrollArea className="h-[280px]">
-              <div className="p-3 space-y-2">
-                {filterAlertsByUrgency('medium').length > 0 ? (
-                  filterAlertsByUrgency('medium').map(renderAlertCard)
-                ) : (
-                  <p className="text-center text-muted-foreground py-8 text-sm">
-                    Nenhum alerta médio
-                  </p>
-                )}
+              <div className="p-3">
+                {(() => {
+                  const filteredAlerts = filterAlertsByUrgency('medium');
+                  const milestoneAlerts = filterAlertsByType(filteredAlerts, 'milestone');
+                  const deliveryAlerts = filterAlertsByType(filteredAlerts, 'delivery');
+                  
+                  if (filteredAlerts.length === 0) {
+                    return (
+                      <p className="text-center text-muted-foreground py-8 text-sm">
+                        Nenhum alerta médio
+                      </p>
+                    );
+                  }
+                  
+                  return (
+                    <>
+                      {renderAlertsSection(milestoneAlerts, 'Marcos', <Flag className="h-3.5 w-3.5 text-muted-foreground" />)}
+                      {renderAlertsSection(deliveryAlerts, 'Entregas', <Package className="h-3.5 w-3.5 text-muted-foreground" />)}
+                    </>
+                  );
+                })()}
               </div>
             </ScrollArea>
           </TabsContent>
           
           <TabsContent value="low" className="flex-1 m-0">
             <ScrollArea className="h-[280px]">
-              <div className="p-3 space-y-2">
-                {filterAlertsByUrgency('low').length > 0 ? (
-                  filterAlertsByUrgency('low').map(renderAlertCard)
-                ) : (
-                  <p className="text-center text-muted-foreground py-8 text-sm">
-                    Nenhum alerta futuro
-                  </p>
-                )}
+              <div className="p-3">
+                {(() => {
+                  const filteredAlerts = filterAlertsByUrgency('low');
+                  const milestoneAlerts = filterAlertsByType(filteredAlerts, 'milestone');
+                  const deliveryAlerts = filterAlertsByType(filteredAlerts, 'delivery');
+                  
+                  if (filteredAlerts.length === 0) {
+                    return (
+                      <p className="text-center text-muted-foreground py-8 text-sm">
+                        Nenhum alerta futuro
+                      </p>
+                    );
+                  }
+                  
+                  return (
+                    <>
+                      {renderAlertsSection(milestoneAlerts, 'Marcos', <Flag className="h-3.5 w-3.5 text-muted-foreground" />)}
+                      {renderAlertsSection(deliveryAlerts, 'Entregas', <Package className="h-3.5 w-3.5 text-muted-foreground" />)}
+                    </>
+                  );
+                })()}
               </div>
             </ScrollArea>
           </TabsContent>
