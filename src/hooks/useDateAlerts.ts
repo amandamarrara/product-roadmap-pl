@@ -14,8 +14,15 @@ export interface DateAlert {
   status?: string;
 }
 
-export function useDateAlerts(deliveries: Delivery[], milestones: Milestone[] = []) {
-  const alerts = useMemo(() => {
+function getUrgency(daysUntil: number): 'critical' | 'high' | 'medium' | 'low' {
+  if (daysUntil <= 3) return 'critical';
+  if (daysUntil <= 7) return 'high';
+  if (daysUntil <= 14) return 'medium';
+  return 'low';
+}
+
+// Pure function to calculate alerts without using hooks
+export function calculateDateAlerts(deliveries: Delivery[], milestones: Milestone[] = []) {
     const now = startOfDay(new Date());
     const allAlerts: DateAlert[] = [];
 
@@ -81,33 +88,30 @@ export function useDateAlerts(deliveries: Delivery[], milestones: Milestone[] = 
       });
     });
 
-    // Sort by urgency first, then by days until
-    return allAlerts.sort((a, b) => {
-      const urgencyOrder = { critical: 0, high: 1, medium: 2, low: 3 };
-      const urgencyDiff = urgencyOrder[a.urgency] - urgencyOrder[b.urgency];
-      if (urgencyDiff !== 0) return urgencyDiff;
-      return a.daysUntil - b.daysUntil;
-    });
-  }, [deliveries, milestones]);
+  // Sort by urgency first, then by days until
+  const sortedAlerts = allAlerts.sort((a, b) => {
+    const urgencyOrder = { critical: 0, high: 1, medium: 2, low: 3 };
+    const urgencyDiff = urgencyOrder[a.urgency] - urgencyOrder[b.urgency];
+    if (urgencyDiff !== 0) return urgencyDiff;
+    return a.daysUntil - b.daysUntil;
+  });
 
-  const criticalCount = alerts.filter(a => a.urgency === 'critical').length;
-  const highCount = alerts.filter(a => a.urgency === 'high').length;
-  const mediumCount = alerts.filter(a => a.urgency === 'medium').length;
-  const lowCount = alerts.filter(a => a.urgency === 'low').length;
+  const criticalCount = sortedAlerts.filter(a => a.urgency === 'critical').length;
+  const highCount = sortedAlerts.filter(a => a.urgency === 'high').length;
+  const mediumCount = sortedAlerts.filter(a => a.urgency === 'medium').length;
+  const lowCount = sortedAlerts.filter(a => a.urgency === 'low').length;
 
   return {
-    alerts,
+    alerts: sortedAlerts,
     criticalCount,
     highCount,
     mediumCount,
     lowCount,
-    totalCount: alerts.length,
+    totalCount: sortedAlerts.length,
   };
 }
 
-function getUrgency(daysUntil: number): 'critical' | 'high' | 'medium' | 'low' {
-  if (daysUntil <= 3) return 'critical';
-  if (daysUntil <= 7) return 'high';
-  if (daysUntil <= 14) return 'medium';
-  return 'low';
+// Hook wrapper that uses useMemo for optimization
+export function useDateAlerts(deliveries: Delivery[], milestones: Milestone[] = []) {
+  return useMemo(() => calculateDateAlerts(deliveries, milestones), [deliveries, milestones]);
 }

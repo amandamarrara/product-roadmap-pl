@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { Plus, Calendar, Users, Search, MoreVertical, Trash2, Copy, Eye, Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -12,7 +12,7 @@ import { useRoadmaps, useDeleteRoadmap, useSaveRoadmap, useSharedRoadmaps } from
 import { Roadmap } from "@/types/roadmap";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { useDateAlerts } from "@/hooks/useDateAlerts";
+import { calculateDateAlerts } from "@/hooks/useDateAlerts";
 
 
 const RoadmapsList = () => {
@@ -35,6 +35,19 @@ const RoadmapsList = () => {
 
   const currentRoadmaps = activeTab === "mine" ? filteredRoadmaps : filteredSharedRoadmaps;
   const currentLoading = activeTab === "mine" ? isLoading : sharedLoading;
+
+  // Calculate alerts for all roadmaps at once (using pure function, not hooks in loops)
+  const roadmapAlerts = useMemo(() => {
+    const alertsMap = new Map();
+    const allRoadmaps = [...roadmaps, ...sharedRoadmaps];
+    
+    allRoadmaps.forEach((roadmap: any) => {
+      const alerts = calculateDateAlerts(roadmap.deliveries || [], roadmap.milestones || []);
+      alertsMap.set(roadmap.id, alerts);
+    });
+    
+    return alertsMap;
+  }, [roadmaps, sharedRoadmaps]);
 
   const handleDuplicate = async (roadmap: Roadmap) => {
     const duplicatedRoadmap = {
@@ -198,7 +211,9 @@ const RoadmapsList = () => {
                       </Badge>
                     )}
                     {(() => {
-                      const alerts = useDateAlerts(roadmap.deliveries, roadmap.milestones);
+                      const alerts = roadmapAlerts.get(roadmap.id);
+                      if (!alerts) return null;
+                      
                       const urgentCount = alerts.criticalCount + alerts.highCount;
                       
                       if (urgentCount > 0) {
