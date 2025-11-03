@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Plus, Calendar, Users, Search, MoreVertical, Trash2, Copy, Eye, Bell } from "lucide-react";
+import { Plus, Calendar, Users, Search, MoreVertical, Trash2, Copy, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -152,14 +152,15 @@ const RoadmapsList = () => {
                     <CardTitle className="text-lg line-clamp-2 flex-1">{roadmap.title}</CardTitle>
                     {(() => {
                       const alerts = useDateAlerts(roadmap.deliveries, roadmap.milestones);
-                      if (alerts.totalCount > 0) {
+                      const urgentCount = alerts.criticalCount + alerts.highCount;
+                      
+                      if (urgentCount > 0) {
                         return (
                           <Badge 
-                            variant={alerts.criticalCount > 0 ? "destructive" : "secondary"}
-                            className="flex items-center gap-1"
+                            variant="outline" 
+                            className="text-xs bg-orange-500/10 text-orange-700 dark:text-orange-400 border-orange-300/30"
                           >
-                            <Bell className="h-3 w-3" />
-                            {alerts.totalCount}
+                            {urgentCount}
                           </Badge>
                         );
                       }

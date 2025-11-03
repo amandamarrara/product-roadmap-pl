@@ -98,114 +98,131 @@ export function AlertsPanel({
 
   if (alerts.length === 0) {
     return (
-      <Card>
-        <CardContent className="flex flex-col items-center justify-center py-8">
-          <Calendar className="h-12 w-12 text-muted-foreground mb-2" />
-          <p className="text-muted-foreground text-center">
-            Nenhum alerta próximo
-          </p>
-        </CardContent>
-      </Card>
+      <div className="flex flex-col items-center justify-center py-8 px-4">
+        <Calendar className="h-12 w-12 text-muted-foreground mb-2" />
+        <p className="text-muted-foreground text-center text-sm">
+          Nenhum alerta próximo
+        </p>
+      </div>
     );
   }
 
   return (
-    <Card className="shadow-lg">
-      <CardHeader className="pb-3">
-        <CardTitle className="text-lg flex items-center gap-2">
-          <AlertTriangle className="h-5 w-5" />
-          Alertas de Prazos
-        </CardTitle>
-        <div className="flex gap-2 flex-wrap mt-2">
-          {criticalCount > 0 && (
-            <Badge variant="destructive" className="text-xs">
-              {criticalCount} crítico{criticalCount > 1 ? 's' : ''}
-            </Badge>
-          )}
-          {highCount > 0 && (
-            <Badge className="bg-orange-500 text-white text-xs">
-              {highCount} urgente{highCount > 1 ? 's' : ''}
-            </Badge>
-          )}
-          {mediumCount > 0 && (
-            <Badge className="bg-yellow-500 text-white text-xs">
-              {mediumCount} próximo{mediumCount > 1 ? 's' : ''}
-            </Badge>
-          )}
-          {lowCount > 0 && (
-            <Badge className="bg-green-500 text-white text-xs">
-              {lowCount} futuro{lowCount > 1 ? 's' : ''}
-            </Badge>
-          )}
+    <div className="flex flex-col h-full max-h-[400px]">
+      {/* Header */}
+      <div className="p-3 border-b">
+        <div className="flex items-center justify-between">
+          <h3 className="text-sm font-semibold">Alertas de Prazos</h3>
+          <div className="flex gap-1 text-xs text-muted-foreground">
+            {criticalCount > 0 && (
+              <span className="text-red-600 dark:text-red-400">{criticalCount}</span>
+            )}
+            {highCount > 0 && (
+              <span className="text-orange-600 dark:text-orange-400">+{highCount}</span>
+            )}
+          </div>
         </div>
-      </CardHeader>
-      <CardContent>
-        <Tabs defaultValue="all" className="w-full">
-          <TabsList className="grid w-full grid-cols-5">
-            <TabsTrigger value="all" className="text-xs">
-              Todos
-            </TabsTrigger>
-            <TabsTrigger value="critical" className="text-xs">
-              Crítico
-            </TabsTrigger>
-            <TabsTrigger value="high" className="text-xs">
-              Alto
-            </TabsTrigger>
-            <TabsTrigger value="medium" className="text-xs">
-              Médio
-            </TabsTrigger>
-            <TabsTrigger value="low" className="text-xs">
-              Baixo
-            </TabsTrigger>
-          </TabsList>
-          
-          <ScrollArea className="h-[400px] mt-4">
-            <TabsContent value="all" className="mt-0">
+      </div>
+
+      {/* Tabs */}
+      <Tabs defaultValue="all" className="flex-1 flex flex-col">
+        <TabsList className="w-full justify-start rounded-none border-b bg-transparent p-0 h-auto">
+          <TabsTrigger 
+            value="all" 
+            className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent text-xs px-3 py-2"
+          >
+            Todos ({alerts.length})
+          </TabsTrigger>
+          <TabsTrigger 
+            value="critical" 
+            className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent text-xs px-3 py-2"
+          >
+            Crítico ({criticalCount})
+          </TabsTrigger>
+          <TabsTrigger 
+            value="high" 
+            className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent text-xs px-3 py-2"
+          >
+            Alto ({highCount})
+          </TabsTrigger>
+          <TabsTrigger 
+            value="medium" 
+            className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent text-xs px-3 py-2"
+          >
+            Médio ({mediumCount})
+          </TabsTrigger>
+          <TabsTrigger 
+            value="low" 
+            className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent text-xs px-3 py-2"
+          >
+            Baixo ({lowCount})
+          </TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="all" className="flex-1 m-0">
+          <ScrollArea className="h-[280px]">
+            <div className="p-3 space-y-2">
               {alerts.map(renderAlertCard)}
-            </TabsContent>
-            
-            <TabsContent value="critical" className="mt-0">
-              {filterAlertsByUrgency('critical').length > 0 ? (
-                filterAlertsByUrgency('critical').map(renderAlertCard)
-              ) : (
-                <p className="text-center text-muted-foreground py-8 text-sm">
-                  Nenhum alerta crítico
-                </p>
-              )}
-            </TabsContent>
-            
-            <TabsContent value="high" className="mt-0">
-              {filterAlertsByUrgency('high').length > 0 ? (
-                filterAlertsByUrgency('high').map(renderAlertCard)
-              ) : (
-                <p className="text-center text-muted-foreground py-8 text-sm">
-                  Nenhum alerta urgente
-                </p>
-              )}
-            </TabsContent>
-            
-            <TabsContent value="medium" className="mt-0">
-              {filterAlertsByUrgency('medium').length > 0 ? (
-                filterAlertsByUrgency('medium').map(renderAlertCard)
-              ) : (
-                <p className="text-center text-muted-foreground py-8 text-sm">
-                  Nenhum alerta médio
-                </p>
-              )}
-            </TabsContent>
-            
-            <TabsContent value="low" className="mt-0">
-              {filterAlertsByUrgency('low').length > 0 ? (
-                filterAlertsByUrgency('low').map(renderAlertCard)
-              ) : (
-                <p className="text-center text-muted-foreground py-8 text-sm">
-                  Nenhum alerta futuro
-                </p>
-              )}
-            </TabsContent>
+            </div>
           </ScrollArea>
+        </TabsContent>
+        
+        <TabsContent value="critical" className="flex-1 m-0">
+          <ScrollArea className="h-[280px]">
+            <div className="p-3 space-y-2">
+                {filterAlertsByUrgency('critical').length > 0 ? (
+                  filterAlertsByUrgency('critical').map(renderAlertCard)
+                ) : (
+                  <p className="text-center text-muted-foreground py-8 text-sm">
+                    Nenhum alerta crítico
+                  </p>
+                )}
+              </div>
+            </ScrollArea>
+          </TabsContent>
+          
+          <TabsContent value="high" className="flex-1 m-0">
+            <ScrollArea className="h-[280px]">
+              <div className="p-3 space-y-2">
+                {filterAlertsByUrgency('high').length > 0 ? (
+                  filterAlertsByUrgency('high').map(renderAlertCard)
+                ) : (
+                  <p className="text-center text-muted-foreground py-8 text-sm">
+                    Nenhum alerta urgente
+                  </p>
+                )}
+              </div>
+            </ScrollArea>
+          </TabsContent>
+          
+          <TabsContent value="medium" className="flex-1 m-0">
+            <ScrollArea className="h-[280px]">
+              <div className="p-3 space-y-2">
+                {filterAlertsByUrgency('medium').length > 0 ? (
+                  filterAlertsByUrgency('medium').map(renderAlertCard)
+                ) : (
+                  <p className="text-center text-muted-foreground py-8 text-sm">
+                    Nenhum alerta médio
+                  </p>
+                )}
+              </div>
+            </ScrollArea>
+          </TabsContent>
+          
+          <TabsContent value="low" className="flex-1 m-0">
+            <ScrollArea className="h-[280px]">
+              <div className="p-3 space-y-2">
+                {filterAlertsByUrgency('low').length > 0 ? (
+                  filterAlertsByUrgency('low').map(renderAlertCard)
+                ) : (
+                  <p className="text-center text-muted-foreground py-8 text-sm">
+                    Nenhum alerta futuro
+                  </p>
+                )}
+              </div>
+            </ScrollArea>
+          </TabsContent>
         </Tabs>
-      </CardContent>
-    </Card>
-  );
+      </div>
+    );
 }

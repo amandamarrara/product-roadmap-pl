@@ -13,15 +13,15 @@ export function DateAlertBadge({ daysUntil, urgency, className, showIcon = true 
   const getUrgencyColor = () => {
     switch (urgency) {
       case 'critical':
-        return 'bg-red-500 text-white hover:bg-red-600';
+        return 'bg-red-500/20 text-red-700 dark:text-red-400 border-red-300/30';
       case 'high':
-        return 'bg-orange-500 text-white hover:bg-orange-600';
+        return 'bg-orange-500/20 text-orange-700 dark:text-orange-400 border-orange-300/30';
       case 'medium':
-        return 'bg-yellow-500 text-white hover:bg-yellow-600';
+        return 'bg-yellow-500/20 text-yellow-700 dark:text-yellow-400 border-yellow-300/30';
       case 'low':
-        return 'bg-green-500 text-white hover:bg-green-600';
+        return 'bg-green-500/20 text-green-700 dark:text-green-400 border-green-300/30';
       default:
-        return 'bg-gray-500 text-white';
+        return 'bg-muted text-muted-foreground border-border';
     }
   };
 
@@ -36,7 +36,8 @@ export function DateAlertBadge({ daysUntil, urgency, className, showIcon = true 
 
   return (
     <Badge 
-      className={cn(getUrgencyColor(), "gap-1", className)}
+      variant="outline"
+      className={cn(getUrgencyColor(), "gap-1 text-xs px-2 py-0.5", className)}
     >
       {showIcon && icon}
       {getDaysText()}
