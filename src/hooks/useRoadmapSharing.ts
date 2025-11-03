@@ -173,29 +173,71 @@ export function useRoadmapRole(roadmapId: string) {
   });
 }
 
+export function usePublicShareToken(roadmapId: string) {
+  return useQuery({
+    queryKey: ["public-share-token", roadmapId],
+    queryFn: async () => {
+      const { data: roadmap, error } = await supabase
+        .from("roadmaps")
+        .select("public_share_token")
+        .eq("id", roadmapId)
+        .single();
+
+      if (error) throw error;
+
+      // If no token exists, generate a new one
+      if (!roadmap.public_share_token) {
+        const newToken = `${Date.now()}-${Math.random().toString(36).substring(2, 15)}`;
+        const { error: updateError } = await supabase
+          .from("roadmaps")
+          .update({ public_share_token: newToken })
+          .eq("id", roadmapId);
+
+        if (updateError) throw updateError;
+        return newToken;
+      }
+
+      return roadmap.public_share_token;
+    },
+    enabled: !!roadmapId,
+  });
+}
+
 export function useProcessInviteToken() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (token: string) => {
+    mutationFn: async ({ token, roadmapId }: { token: string; roadmapId: string }) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Você precisa estar autenticado para aceitar o convite");
 
-      // Get the share by token
-      const { data: share, error } = await supabase
-        .from("roadmap_shares")
-        .select("*")
-        .eq("invite_token", token)
-        .single();
+      // Verify if the token is valid for this roadmap
+      const { data: roadmap, error: roadmapError } = await supabase
+        .from("roadmaps")
+        .select("id")
+        .eq("id", roadmapId)
+        .eq("public_share_token", token)
+        .maybeSingle();
 
-      if (error) throw new Error("Link de convite inválido");
-
-      // Check if user's email matches
-      if (share.shared_with_email !== user.email) {
-        throw new Error("Este convite não foi enviado para o seu email");
+      if (roadmapError || !roadmap) {
+        throw new Error("Link de convite inválido");
       }
 
-      // Link share to user if not already linked
+      // Check if user is in the share list
+      const { data: share, error: shareError } = await supabase
+        .from("roadmap_shares")
+        .select("*")
+        .eq("roadmap_id", roadmapId)
+        .eq("shared_with_email", user.email)
+        .maybeSingle();
+
+      if (shareError) throw shareError;
+
+      if (!share) {
+        throw new Error("Você não tem permissão para acessar este roadmap");
+      }
+
+      // Link user if not already linked
       if (!share.shared_with_user_id) {
         const { error: updateError } = await supabase
           .from("roadmap_shares")
@@ -205,7 +247,7 @@ export function useProcessInviteToken() {
         if (updateError) throw updateError;
       }
 
-      return share.roadmap_id;
+      return roadmapId;
     },
     onSuccess: (roadmapId) => {
       queryClient.invalidateQueries({ queryKey: ["roadmaps"] });

@@ -24,6 +24,7 @@ import {
   useShareRoadmap,
   useRemoveShare,
   useUpdateSharePermission,
+  usePublicShareToken,
 } from "@/hooks/useRoadmapSharing";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -40,6 +41,7 @@ export function ShareDialog({ roadmapId, roadmapTitle }: ShareDialogProps) {
 
   const { user } = useAuth();
   const { data: shares = [], isLoading } = useRoadmapShares(roadmapId);
+  const { data: publicToken } = usePublicShareToken(roadmapId);
   const shareRoadmap = useShareRoadmap();
   const removeShare = useRemoveShare();
   const updatePermission = useUpdateSharePermission();
@@ -64,10 +66,11 @@ export function ShareDialog({ roadmapId, roadmapTitle }: ShareDialogProps) {
     setPermission('viewer');
   };
 
-  const handleCopyLink = (token: string) => {
-    const inviteUrl = `${window.location.origin}/roadmap/${roadmapId}?invite=${token}`;
+  const handleCopyPublicLink = () => {
+    if (!publicToken) return;
+    const inviteUrl = `${window.location.origin}/roadmap/${roadmapId}?invite=${publicToken}`;
     navigator.clipboard.writeText(inviteUrl);
-    setCopiedToken(token);
+    setCopiedToken(publicToken);
     setTimeout(() => setCopiedToken(null), 2000);
   };
 
@@ -93,6 +96,39 @@ export function ShareDialog({ roadmapId, roadmapTitle }: ShareDialogProps) {
         </DialogHeader>
 
         <div className="flex-1 overflow-y-auto space-y-6">
+          {/* Public Link Section */}
+          <div className="space-y-3 border-b pb-4">
+            <h3 className="text-sm font-medium">Link de acesso compartilhado</h3>
+            <div className="flex gap-2">
+              <Input
+                readOnly
+                value={publicToken ? `${window.location.origin}/roadmap/${roadmapId}?invite=${publicToken}` : 'Gerando link...'}
+                className="flex-1 bg-muted"
+              />
+              <Button
+                variant="outline"
+                onClick={handleCopyPublicLink}
+                disabled={!publicToken}
+              >
+                {copiedToken === publicToken ? (
+                  <>
+                    <Check className="h-4 w-4 mr-2" />
+                    Copiado!
+                  </>
+                ) : (
+                  <>
+                    <Copy className="h-4 w-4 mr-2" />
+                    Copiar
+                  </>
+                )}
+              </Button>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Use este link para compartilhar com qualquer pessoa que esteja na lista abaixo. 
+              O link é o mesmo para todos.
+            </p>
+          </div>
+
           {/* Add people form */}
           <div className="space-y-3">
             <h3 className="text-sm font-medium">Adicionar pessoas</h3>
@@ -128,7 +164,7 @@ export function ShareDialog({ roadmapId, roadmapTitle }: ShareDialogProps) {
               </Button>
             </form>
             <p className="text-xs text-muted-foreground">
-              A pessoa receberá um link de acesso por email ou você pode copiar o link abaixo
+              Adicione o email da pessoa e escolha a permissão. Use o link único acima para compartilhar.
             </p>
           </div>
 
@@ -211,26 +247,6 @@ export function ShareDialog({ roadmapId, roadmapTitle }: ShareDialogProps) {
                           </Button>
                         </div>
                       </div>
-                      <div className="flex items-center gap-2 mt-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-7 text-xs"
-                          onClick={() => handleCopyLink(share.inviteToken)}
-                        >
-                          {copiedToken === share.inviteToken ? (
-                            <>
-                              <Check className="h-3 w-3 mr-1" />
-                              Copiado!
-                            </>
-                          ) : (
-                            <>
-                              <Copy className="h-3 w-3 mr-1" />
-                              Copiar link de convite
-                            </>
-                          )}
-                        </Button>
-                      </div>
                     </div>
                   ))
                 )}
@@ -242,8 +258,8 @@ export function ShareDialog({ roadmapId, roadmapTitle }: ShareDialogProps) {
         {/* Info alert - fixed at bottom */}
         <Alert className="mt-4">
           <AlertDescription className="text-xs">
-            <strong>Como funciona:</strong> Ao compartilhar, a pessoa precisa fazer login com o email informado
-            para ter acesso ao roadmap. Você pode copiar o link de convite e enviar diretamente.
+            <strong>Como funciona:</strong> Use o link único acima para compartilhar. 
+            Apenas pessoas adicionadas à lista poderão acessar usando seus emails cadastrados.
           </AlertDescription>
         </Alert>
       </DialogContent>

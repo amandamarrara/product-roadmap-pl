@@ -245,6 +245,7 @@ export type Database = {
           created_by: string | null
           description: string | null
           id: string
+          public_share_token: string | null
           subtitle: string | null
           title: string
           updated_at: string
@@ -255,6 +256,7 @@ export type Database = {
           created_by?: string | null
           description?: string | null
           id?: string
+          public_share_token?: string | null
           subtitle?: string | null
           title: string
           updated_at?: string
@@ -265,6 +267,7 @@ export type Database = {
           created_by?: string | null
           description?: string | null
           id?: string
+          public_share_token?: string | null
           subtitle?: string | null
           title?: string
           updated_at?: string

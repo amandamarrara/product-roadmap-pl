@@ -21,20 +21,23 @@ const RoadmapView = () => {
   // Process invitation token if present and not already processing
   useEffect(() => {
     if (inviteToken && id && !processInvite.isPending && !processInvite.isSuccess) {
-      processInvite.mutate(inviteToken, {
-        onSuccess: () => {
-          // Remove invite token from URL after successful processing
-          setSearchParams(params => {
-            params.delete('invite');
-            return params;
-          }, { replace: true });
-          // Refetch user role to get updated permissions
-          refetchRole();
-        },
-        onError: (error) => {
-          console.error('Failed to process invite token:', error);
-        },
-      });
+      processInvite.mutate(
+        { token: inviteToken, roadmapId: id },
+        {
+          onSuccess: () => {
+            // Remove invite token from URL after successful processing
+            setSearchParams(params => {
+              params.delete('invite');
+              return params;
+            }, { replace: true });
+            // Refetch user role to get updated permissions
+            refetchRole();
+          },
+          onError: (error) => {
+            console.error('Failed to process invite token:', error);
+          },
+        }
+      );
     }
   }, [inviteToken, id, processInvite, setSearchParams, refetchRole]);
   if (isLoading || roleLoading) {
