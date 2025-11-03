@@ -14,7 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { useUpdateDelivery, useDeleteDelivery } from "@/hooks/useDeliveryActions";
 import { useQueryClient } from "@tanstack/react-query";
-import { useSaveMilestone, useUpdateMilestone, useDeleteMilestone } from "@/hooks/useMilestones";
+import { useSaveMilestone, useUpdateMilestone, useDeleteMilestone, useMilestones } from "@/hooks/useMilestones";
 
 // Mock data for teams and members
 const mockTeams: Team[] = [{
@@ -106,6 +106,9 @@ export function RoadmapBuilder({
   const updateMilestone = useUpdateMilestone();
   const deleteMilestone = useDeleteMilestone();
   
+  // Fetch milestones from DB when roadmapId exists
+  const { data: milestonesFromDB } = useMilestones(roadmapId);
+  
   const [roadmapTitle, setRoadmapTitle] = useState(
     initialData?.title || ''
   );
@@ -115,10 +118,14 @@ export function RoadmapBuilder({
   const [deliveries, setDeliveries] = useState<Delivery[]>(
     initialData?.deliveries || []
   );
-  const [milestones, setMilestones] = useState<Milestone[]>(
+  // Local milestones state - only used when creating a new roadmap (no roadmapId)
+  const [localMilestones, setLocalMilestones] = useState<Milestone[]>(
     initialData?.milestones || []
   );
   const [showForm, setShowForm] = useState(false);
+  
+  // Use milestones from DB when roadmapId exists, otherwise use local state
+  const milestones = roadmapId ? (milestonesFromDB || []) : localMilestones;
   const [editingDelivery, setEditingDelivery] = useState<Delivery | undefined>();
   const [filterTeam, setFilterTeam] = useState<string>('all');
   const [filterPriority, setFilterPriority] = useState<string>('all');
@@ -145,7 +152,7 @@ export function RoadmapBuilder({
       setRoadmapTitle(initialData.title || '');
       setRoadmapSubtitle(initialData.subtitle || '');
       setDeliveries(initialData.deliveries || []);
-      setMilestones(initialData.milestones || []);
+      setLocalMilestones(initialData.milestones || []);
     }
   }, [initialData]);
 
@@ -223,7 +230,7 @@ export function RoadmapBuilder({
         ...milestoneData,
         id: Date.now().toString()
       };
-      setMilestones(prev => [...prev, newMilestone]);
+      setLocalMilestones(prev => [...prev, newMilestone]);
     }
   };
 
@@ -234,7 +241,7 @@ export function RoadmapBuilder({
       await updateMilestone.mutateAsync({ roadmapId, milestone });
     } else {
       // Just update local state
-      setMilestones(prev => prev.map(m => m.id === milestone.id ? milestone : m));
+      setLocalMilestones(prev => prev.map(m => m.id === milestone.id ? milestone : m));
     }
   };
 
@@ -245,7 +252,7 @@ export function RoadmapBuilder({
       await deleteMilestone.mutateAsync({ roadmapId, milestoneId: id });
     } else {
       // Just update local state
-      setMilestones(prev => prev.filter(m => m.id !== id));
+      setLocalMilestones(prev => prev.filter(m => m.id !== id));
     }
   };
 
