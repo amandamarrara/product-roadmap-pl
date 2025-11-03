@@ -75,12 +75,17 @@ export function useSaveMilestone() {
     },
     onSuccess: async (_, { roadmapId }) => {
       console.log('🔄 Invalidating milestone queries...');
-      await queryClient.invalidateQueries({ queryKey: ["milestones", roadmapId] });
-      await queryClient.invalidateQueries({ queryKey: ["roadmap", roadmapId] });
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["milestones", roadmapId] }),
+        queryClient.invalidateQueries({ queryKey: ["roadmap", roadmapId] })
+      ]);
       
       await new Promise(resolve => setTimeout(resolve, 100));
-      await queryClient.refetchQueries({ queryKey: ["milestones", roadmapId] });
-      await queryClient.refetchQueries({ queryKey: ["roadmap", roadmapId] });
+      
+      await Promise.all([
+        queryClient.refetchQueries({ queryKey: ["milestones", roadmapId] }),
+        queryClient.refetchQueries({ queryKey: ["roadmap", roadmapId] })
+      ]);
       
       console.log('✅ Milestone queries refetched');
       toast({
@@ -152,12 +157,17 @@ export function useUpdateMilestone() {
     },
     onSuccess: async (_, { roadmapId }) => {
       console.log('🔄 Invalidating milestone queries after update...');
-      await queryClient.invalidateQueries({ queryKey: ["milestones", roadmapId] });
-      await queryClient.invalidateQueries({ queryKey: ["roadmap", roadmapId] });
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["milestones", roadmapId] }),
+        queryClient.invalidateQueries({ queryKey: ["roadmap", roadmapId] })
+      ]);
       
       await new Promise(resolve => setTimeout(resolve, 100));
-      await queryClient.refetchQueries({ queryKey: ["milestones", roadmapId] });
-      await queryClient.refetchQueries({ queryKey: ["roadmap", roadmapId] });
+      
+      await Promise.all([
+        queryClient.refetchQueries({ queryKey: ["milestones", roadmapId] }),
+        queryClient.refetchQueries({ queryKey: ["roadmap", roadmapId] })
+      ]);
       
       console.log('✅ Milestone update queries refetched');
       toast({
@@ -195,9 +205,21 @@ export function useDeleteMilestone() {
 
       if (error) throw error;
     },
-    onSuccess: (_, { roadmapId }) => {
-      queryClient.invalidateQueries({ queryKey: ["milestones", roadmapId] });
-      queryClient.invalidateQueries({ queryKey: ["roadmap", roadmapId] });
+    onSuccess: async (_, { roadmapId }) => {
+      console.log('🔄 Invalidating milestone queries after delete...');
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["milestones", roadmapId] }),
+        queryClient.invalidateQueries({ queryKey: ["roadmap", roadmapId] })
+      ]);
+      
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      await Promise.all([
+        queryClient.refetchQueries({ queryKey: ["milestones", roadmapId] }),
+        queryClient.refetchQueries({ queryKey: ["roadmap", roadmapId] })
+      ]);
+      
+      console.log('✅ Milestone delete queries refetched');
       toast({
         title: "Marco excluído",
         description: "Marco excluído com sucesso.",

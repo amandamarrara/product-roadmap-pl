@@ -220,9 +220,13 @@ export function RoadmapBuilder({
 
   const handleSaveMilestone = async (milestoneData: Omit<Milestone, 'id'>) => {
     if (roadmapId) {
-      // Save to database if roadmapId exists
-      console.log('💾 RoadmapBuilder: Saving milestone to DB');
-      await saveMilestone.mutateAsync({ roadmapId, milestone: milestoneData });
+      try {
+        console.log('💾 RoadmapBuilder: Saving milestone to DB');
+        await saveMilestone.mutateAsync({ roadmapId, milestone: milestoneData });
+        console.log('✅ RoadmapBuilder: Milestone saved successfully');
+      } catch (error) {
+        console.error('❌ RoadmapBuilder: Error saving milestone:', error);
+      }
     } else {
       // Just update local state if creating new roadmap
       console.log('➕ RoadmapBuilder: Adding milestone to local state');
@@ -236,9 +240,13 @@ export function RoadmapBuilder({
 
   const handleEditMilestone = async (milestone: Milestone) => {
     if (roadmapId) {
-      // Update in database if roadmapId exists
-      console.log('✏️ RoadmapBuilder: Updating milestone in DB:', milestone.id);
-      await updateMilestone.mutateAsync({ roadmapId, milestone });
+      try {
+        console.log('✏️ RoadmapBuilder: Updating milestone in DB:', milestone.id);
+        await updateMilestone.mutateAsync({ roadmapId, milestone });
+        console.log('✅ RoadmapBuilder: Milestone updated successfully');
+      } catch (error) {
+        console.error('❌ RoadmapBuilder: Error updating milestone:', error);
+      }
     } else {
       // Just update local state
       setLocalMilestones(prev => prev.map(m => m.id === milestone.id ? milestone : m));
@@ -247,9 +255,13 @@ export function RoadmapBuilder({
 
   const handleDeleteMilestone = async (id: string) => {
     if (roadmapId) {
-      // Delete from database if roadmapId exists
-      console.log('🗑️ RoadmapBuilder: Deleting milestone from DB:', id);
-      await deleteMilestone.mutateAsync({ roadmapId, milestoneId: id });
+      try {
+        console.log('🗑️ RoadmapBuilder: Deleting milestone from DB:', id);
+        await deleteMilestone.mutateAsync({ roadmapId, milestoneId: id });
+        console.log('✅ RoadmapBuilder: Milestone deleted successfully');
+      } catch (error) {
+        console.error('❌ RoadmapBuilder: Error deleting milestone:', error);
+      }
     } else {
       // Just update local state
       setLocalMilestones(prev => prev.filter(m => m.id !== id));
