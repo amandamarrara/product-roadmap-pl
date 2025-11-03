@@ -76,6 +76,11 @@ export function useAuth() {
         return { error };
       }
 
+      // Ensure state is updated immediately after login
+      const { data: { session } } = await supabase.auth.getSession();
+      setSession(session);
+      setUser(session?.user ?? null);
+
       toast.success("Login realizado! Bem-vindo de volta!");
 
       return { error: null };

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -15,13 +15,15 @@ const Auth = () => {
   const [isLoading, setIsLoading] = useState(false);
   const { signUp, signIn, user } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const returnUrl = searchParams.get('returnUrl');
 
   // Redirect if already authenticated
   useEffect(() => {
     if (user) {
-      navigate('/');
+      navigate(returnUrl || '/');
     }
-  }, [user, navigate]);
+  }, [user, navigate, returnUrl]);
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -39,7 +41,7 @@ const Auth = () => {
     setIsLoading(true);
     const { error } = await signIn(email, password);
     if (!error) {
-      navigate('/');
+      navigate(returnUrl || '/');
     }
     setIsLoading(false);
   };

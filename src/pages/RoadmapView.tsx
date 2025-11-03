@@ -10,25 +10,33 @@ import { ShareDialog } from "@/components/roadmap/ShareDialog";
 import { useRoadmapRole, useProcessInviteToken } from "@/hooks/useRoadmapSharing";
 const RoadmapView = () => {
   const { id } = useParams<{ id: string }>();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
   const inviteToken = searchParams.get('invite');
   
   const { data: roadmap, isLoading, error } = useRoadmap(id!);
-  const { data: userRole, isLoading: roleLoading } = useRoadmapRole(id!);
+  const { data: userRole, isLoading: roleLoading, refetch: refetchRole } = useRoadmapRole(id!);
   const processInvite = useProcessInviteToken();
 
-  // Process invite token if present
+  // Process invitation token if present and not already processing
   useEffect(() => {
-    if (inviteToken && !processInvite.isPending) {
+    if (inviteToken && id && !processInvite.isPending && !processInvite.isSuccess) {
       processInvite.mutate(inviteToken, {
         onSuccess: () => {
-          // Remove token from URL
-          navigate(`/roadmap/${id}`, { replace: true });
+          // Remove invite token from URL after successful processing
+          setSearchParams(params => {
+            params.delete('invite');
+            return params;
+          }, { replace: true });
+          // Refetch user role to get updated permissions
+          refetchRole();
+        },
+        onError: (error) => {
+          console.error('Failed to process invite token:', error);
         },
       });
     }
-  }, [inviteToken, id, navigate, processInvite]);
+  }, [inviteToken, id, processInvite, setSearchParams, refetchRole]);
   if (isLoading || roleLoading) {
     return (
       <div className="container mx-auto py-8 flex items-center justify-center min-h-[400px]">
