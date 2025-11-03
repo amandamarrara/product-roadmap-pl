@@ -462,6 +462,21 @@ export function RoadmapTimeline({
     }
   };
 
+  const getStatusEmoji = (status: string) => {
+    switch (status) {
+      case 'not-started':
+        return '⏳';
+      case 'in-progress':
+        return '▶️';
+      case 'completed':
+        return '✅';
+      case 'blocked':
+        return '❌';
+      default:
+        return '⏳';
+    }
+  };
+
   const renderDeliveryBar = (delivery: Delivery) => {
     const position = getDeliveryPosition(delivery);
     const deliveryColor = getDeliveryColor(delivery);
@@ -497,6 +512,9 @@ export function RoadmapTimeline({
               backgroundColor: deliveryColor
             }}>
                   <div className="flex items-center gap-2 text-white text-xs font-medium truncate">
+                    <span className="text-sm" aria-label={getStatusLabel(delivery.status)}>
+                      {getStatusEmoji(delivery.status)}
+                    </span>
                     <span className="truncate">{delivery.title}</span>
                     {delivery.subDeliveries.length > 0 && <Badge variant="secondary" className="bg-white/20 text-white text-xs px-1">
                         <Users className="h-3 w-3 mr-1" />
@@ -536,7 +554,7 @@ export function RoadmapTimeline({
                     <span className="font-medium">Complexidade:</span> {getComplexityLabel(delivery.complexity)}
                   </div>
                   <div className="text-xs">
-                    <span className="font-medium">Status:</span> {getStatusLabel(delivery.status)}
+                    <span className="font-medium">Status:</span> {getStatusEmoji(delivery.status)} {getStatusLabel(delivery.status)}
                   </div>
                   {delivery.jiraLink && (
                     <a
@@ -623,6 +641,9 @@ export function RoadmapTimeline({
                     <TooltipTrigger asChild>
                       <div className="relative cursor-pointer">
                         <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1">
+                          <span className="text-xs" aria-label={getStatusLabel(sub.status)}>
+                            {getStatusEmoji(sub.status)}
+                          </span>
                           <span className="truncate">{sub.title}</span>
                           <span>{sub.progress}%</span>
                         </div>
@@ -646,7 +667,7 @@ export function RoadmapTimeline({
                         <div className="flex flex-wrap gap-2 text-xs">
                           <span><strong>Time:</strong> {sub.team}</span>
                           <span><strong>Responsável:</strong> {sub.responsible}</span>
-                          <span><strong>Status:</strong> {getStatusLabel(sub.status)}</span>
+                          <span><strong>Status:</strong> {getStatusEmoji(sub.status)} {getStatusLabel(sub.status)}</span>
                           <span><strong>Progresso:</strong> {sub.progress}%</span>
                           <span><strong>Início:</strong> {format(sub.startDate, "dd/MM")}</span>
                           <span><strong>Fim:</strong> {format(sub.endDate, "dd/MM")}</span>
