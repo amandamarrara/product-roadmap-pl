@@ -15,7 +15,9 @@ const RoadmapView = () => {
   const inviteToken = searchParams.get('invite');
   const [isProcessingInvite, setIsProcessingInvite] = useState(!!inviteToken);
   
-  const { data: roadmap, isLoading, error, refetch: refetchRoadmap } = useRoadmap(id!);
+  const { data: roadmap, isLoading, error, refetch: refetchRoadmap } = useRoadmap(id!, {
+    enabled: !isProcessingInvite
+  });
   const { data: userRole, isLoading: roleLoading, refetch: refetchRole } = useRoadmapRole(id!);
   const processInvite = useProcessInviteToken();
 

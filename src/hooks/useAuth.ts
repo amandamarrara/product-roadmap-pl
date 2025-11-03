@@ -62,7 +62,7 @@ export function useAuth() {
 
   const signIn = async (email: string, password: string) => {
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
@@ -73,7 +73,7 @@ export function useAuth() {
         } else {
           toast.error(`Erro no login: ${error.message}`);
         }
-        return { error };
+        return { error, user: null };
       }
 
       // Ensure state is updated immediately after login
@@ -83,11 +83,11 @@ export function useAuth() {
 
       toast.success("Login realizado! Bem-vindo de volta!");
 
-      return { error: null };
+      return { error: null, user: data.user };
     } catch (error) {
       console.error('Sign in error:', error);
       toast.error("Ocorreu um erro inesperado. Tente novamente.");
-      return { error };
+      return { error, user: null };
     }
   };
 

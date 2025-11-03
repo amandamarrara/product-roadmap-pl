@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
 import { Lock, Mail, Eye, EyeOff } from 'lucide-react';
 
 const Auth = () => {
@@ -39,9 +40,29 @@ const Auth = () => {
     if (!email || !password) return;
 
     setIsLoading(true);
-    const { error } = await signIn(email, password);
-    if (!error) {
-      navigate(returnUrl || '/');
+    const result = await signIn(email, password);
+    if (!result.error && result.user) {
+      let finalUrl = returnUrl || '/';
+      
+      // Verificar se returnUrl é um roadmap compartilhado
+      const roadmapMatch = returnUrl?.match(/^\/roadmap\/([a-f0-9-]+)$/);
+      if (roadmapMatch) {
+        const roadmapId = roadmapMatch[1];
+        
+        // Buscar se é roadmap compartilhado
+        const { data: share } = await supabase
+          .from("roadmap_shares")
+          .select("roadmap:roadmaps(public_share_token)")
+          .eq("roadmap_id", roadmapId)
+          .or(`shared_with_user_id.eq.${result.user.id},shared_with_email.eq.${email}`)
+          .maybeSingle();
+        
+        if (share?.roadmap?.public_share_token) {
+          finalUrl = `/roadmap/${roadmapId}?invite=${share.roadmap.public_share_token}`;
+        }
+      }
+      
+      navigate(finalUrl);
     }
     setIsLoading(false);
   };

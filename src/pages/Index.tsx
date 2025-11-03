@@ -97,11 +97,30 @@ const Index = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <Button asChild variant="outline" className="w-full">
-                <Link to="/roadmaps?tab=shared">
-                  Ver Compartilhados
-                </Link>
-              </Button>
+              {sharedRoadmaps.length > 0 ? (
+                <div className="space-y-2">
+                  {sharedRoadmaps.slice(0, 3).map((roadmap: any) => (
+                    <Button key={roadmap.id} asChild variant="ghost" className="w-full justify-start">
+                      <Link to={`/roadmap/${roadmap.id}${roadmap.public_share_token ? `?invite=${roadmap.public_share_token}` : ''}`}>
+                        {roadmap.title}
+                      </Link>
+                    </Button>
+                  ))}
+                  {sharedRoadmaps.length > 3 && (
+                    <Button asChild variant="outline" className="w-full mt-2">
+                      <Link to="/roadmaps?tab=shared">
+                        Ver Todos ({sharedRoadmaps.length})
+                      </Link>
+                    </Button>
+                  )}
+                </div>
+              ) : (
+                <Button asChild variant="outline" className="w-full">
+                  <Link to="/roadmaps?tab=shared">
+                    Ver Compartilhados
+                  </Link>
+                </Button>
+              )}
             </CardContent>
           </Card>
         </div>

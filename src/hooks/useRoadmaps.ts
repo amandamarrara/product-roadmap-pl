@@ -53,7 +53,7 @@ export function useRoadmaps() {
   });
 }
 
-export function useRoadmap(id: string) {
+export function useRoadmap(id: string, options?: { enabled?: boolean }) {
   return useQuery({
     queryKey: ["roadmap", id],
     queryFn: async () => {
@@ -101,7 +101,7 @@ export function useRoadmap(id: string) {
       if (error) throw error;
       return formatRoadmapData(data);
     },
-    enabled: !!id
+    enabled: options?.enabled !== undefined ? (!!id && options.enabled) : !!id
   });
 }
 
@@ -492,6 +492,7 @@ export function useSharedRoadmaps() {
           milestones: roadmap.milestones || [],
           userRole: share.permission,
           isShared: true,
+          public_share_token: roadmap.public_share_token,
         };
       }).filter(Boolean);
     },

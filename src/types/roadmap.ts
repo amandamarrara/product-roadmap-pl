@@ -77,6 +77,7 @@ export interface Roadmap {
   milestones: Milestone[];
   createdAt: Date;
   updatedAt: Date;
+  public_share_token?: string;
 }
 
 export type RoadmapPermission = 'viewer' | 'editor' | 'owner';

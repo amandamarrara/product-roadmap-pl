@@ -241,7 +241,10 @@ const RoadmapsList = () => {
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
                     <DropdownMenuItem asChild>
-                      <Link to={`/roadmap/${roadmap.id}`} className="flex items-center">
+                      <Link 
+                        to={`/roadmap/${roadmap.id}${roadmap.isShared && roadmap.public_share_token ? `?invite=${roadmap.public_share_token}` : ''}`} 
+                        className="flex items-center"
+                      >
                         <Eye className="mr-2 h-4 w-4" />
                         Visualizar
                       </Link>
@@ -306,7 +309,7 @@ const RoadmapsList = () => {
                 </div>
 
                 <Button asChild className="w-full mt-4">
-                  <Link to={`/roadmap/${roadmap.id}`}>
+                  <Link to={`/roadmap/${roadmap.id}${roadmap.isShared && roadmap.public_share_token ? `?invite=${roadmap.public_share_token}` : ''}`}>
                     Abrir Roadmap
                   </Link>
                 </Button>
