@@ -14,6 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { useUpdateDelivery, useDeleteDelivery } from "@/hooks/useDeliveryActions";
 import { useQueryClient } from "@tanstack/react-query";
+import { useSaveMilestone, useUpdateMilestone, useDeleteMilestone } from "@/hooks/useMilestones";
 
 // Mock data for teams and members
 const mockTeams: Team[] = [{
@@ -101,6 +102,9 @@ export function RoadmapBuilder({
   const queryClient = useQueryClient();
   const updateDelivery = useUpdateDelivery();
   const deleteDelivery = useDeleteDelivery();
+  const saveMilestone = useSaveMilestone();
+  const updateMilestone = useUpdateMilestone();
+  const deleteMilestone = useDeleteMilestone();
   
   const [roadmapTitle, setRoadmapTitle] = useState(
     initialData?.title || ''
@@ -207,20 +211,42 @@ export function RoadmapBuilder({
     setEditingDelivery(undefined);
   };
 
-  const handleSaveMilestone = (milestoneData: Omit<Milestone, 'id'>) => {
-    const newMilestone: Milestone = {
-      ...milestoneData,
-      id: Date.now().toString()
-    };
-    setMilestones(prev => [...prev, newMilestone]);
+  const handleSaveMilestone = async (milestoneData: Omit<Milestone, 'id'>) => {
+    if (roadmapId) {
+      // Save to database if roadmapId exists
+      console.log('💾 RoadmapBuilder: Saving milestone to DB');
+      await saveMilestone.mutateAsync({ roadmapId, milestone: milestoneData });
+    } else {
+      // Just update local state if creating new roadmap
+      console.log('➕ RoadmapBuilder: Adding milestone to local state');
+      const newMilestone: Milestone = {
+        ...milestoneData,
+        id: Date.now().toString()
+      };
+      setMilestones(prev => [...prev, newMilestone]);
+    }
   };
 
-  const handleEditMilestone = (milestone: Milestone) => {
-    setMilestones(prev => prev.map(m => m.id === milestone.id ? milestone : m));
+  const handleEditMilestone = async (milestone: Milestone) => {
+    if (roadmapId) {
+      // Update in database if roadmapId exists
+      console.log('✏️ RoadmapBuilder: Updating milestone in DB:', milestone.id);
+      await updateMilestone.mutateAsync({ roadmapId, milestone });
+    } else {
+      // Just update local state
+      setMilestones(prev => prev.map(m => m.id === milestone.id ? milestone : m));
+    }
   };
 
-  const handleDeleteMilestone = (id: string) => {
-    setMilestones(prev => prev.filter(m => m.id !== id));
+  const handleDeleteMilestone = async (id: string) => {
+    if (roadmapId) {
+      // Delete from database if roadmapId exists
+      console.log('🗑️ RoadmapBuilder: Deleting milestone from DB:', id);
+      await deleteMilestone.mutateAsync({ roadmapId, milestoneId: id });
+    } else {
+      // Just update local state
+      setMilestones(prev => prev.filter(m => m.id !== id));
+    }
   };
 
   const filteredDeliveries = deliveries.filter(delivery => {
