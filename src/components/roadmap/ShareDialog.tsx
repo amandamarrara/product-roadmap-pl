@@ -87,12 +87,12 @@ export function ShareDialog({ roadmapId, roadmapTitle }: ShareDialogProps) {
           Compartilhar
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col overflow-hidden">
         <DialogHeader>
           <DialogTitle>Compartilhar "{roadmapTitle}"</DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-6">
+        <div className="flex-1 overflow-y-auto space-y-6">
           {/* Add people form */}
           <div className="space-y-3">
             <h3 className="text-sm font-medium">Adicionar pessoas</h3>
@@ -135,7 +135,7 @@ export function ShareDialog({ roadmapId, roadmapTitle }: ShareDialogProps) {
           {/* People with access */}
           <div className="space-y-3">
             <h3 className="text-sm font-medium">Pessoas com acesso</h3>
-            <ScrollArea className="max-h-[400px]">
+            <ScrollArea className="h-[400px]">
               <div className="border rounded-lg divide-y">
                 {/* Owner */}
                 <div className="p-3 bg-muted/30">
@@ -237,15 +237,15 @@ export function ShareDialog({ roadmapId, roadmapTitle }: ShareDialogProps) {
               </div>
             </ScrollArea>
           </div>
-
-          {/* Info alert */}
-          <Alert>
-            <AlertDescription className="text-xs">
-              <strong>Como funciona:</strong> Ao compartilhar, a pessoa precisa fazer login com o email informado
-              para ter acesso ao roadmap. Você pode copiar o link de convite e enviar diretamente.
-            </AlertDescription>
-          </Alert>
         </div>
+
+        {/* Info alert - fixed at bottom */}
+        <Alert className="mt-4">
+          <AlertDescription className="text-xs">
+            <strong>Como funciona:</strong> Ao compartilhar, a pessoa precisa fazer login com o email informado
+            para ter acesso ao roadmap. Você pode copiar o link de convite e enviar diretamente.
+          </AlertDescription>
+        </Alert>
       </DialogContent>
     </Dialog>
   );
