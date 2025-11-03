@@ -45,7 +45,10 @@ export function RoadmapTimeline({
   const [expandedPhases, setExpandedPhases] = useState<Set<string>>(new Set());
   const [activeDelivery, setActiveDelivery] = useState<Delivery | null>(null);
   const [activePhase, setActivePhase] = useState<string | null>(null);
-  const [isCompressed, setIsCompressed] = useState(false);
+  const [isCompressed, setIsCompressed] = useState(() => {
+    const saved = localStorage.getItem('timeline-compressed');
+    return saved !== null ? JSON.parse(saved) : true;
+  });
   const [containerWidth, setContainerWidth] = useState(1200);
   const containerRef = useRef<HTMLDivElement>(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
@@ -64,6 +67,11 @@ export function RoadmapTimeline({
   
   // Use deliveries directly from props (sorted)
   const localDeliveries = useMemo(() => sortDeliveriesByStartDate(deliveries), [deliveries]);
+
+  // Persist compression state to localStorage
+  useEffect(() => {
+    localStorage.setItem('timeline-compressed', JSON.stringify(isCompressed));
+  }, [isCompressed]);
 
   // Measure container width for dynamic compression
   useEffect(() => {
