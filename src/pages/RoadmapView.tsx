@@ -1,6 +1,6 @@
 import { useParams, Link, useSearchParams, useNavigate } from "react-router-dom";
-import { useEffect } from "react";
-import { ArrowLeft, Eye, Edit } from "lucide-react";
+import { useEffect, useState } from "react";
+import { ArrowLeft, Eye, Edit, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useRoadmap } from "@/hooks/useRoadmaps";
@@ -13,33 +13,48 @@ const RoadmapView = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
   const inviteToken = searchParams.get('invite');
+  const [isProcessingInvite, setIsProcessingInvite] = useState(!!inviteToken);
   
-  const { data: roadmap, isLoading, error } = useRoadmap(id!);
+  const { data: roadmap, isLoading, error, refetch: refetchRoadmap } = useRoadmap(id!);
   const { data: userRole, isLoading: roleLoading, refetch: refetchRole } = useRoadmapRole(id!);
   const processInvite = useProcessInviteToken();
 
   // Process invitation token if present and not already processing
   useEffect(() => {
-    if (inviteToken && id && !processInvite.isPending && !processInvite.isSuccess) {
+    if (inviteToken && id && !processInvite.isPending) {
+      setIsProcessingInvite(true);
       processInvite.mutate(
         { token: inviteToken, roadmapId: id },
         {
           onSuccess: () => {
-            // Remove invite token from URL after successful processing
             setSearchParams(params => {
               params.delete('invite');
               return params;
             }, { replace: true });
-            // Refetch user role to get updated permissions
             refetchRole();
+            refetchRoadmap();
+            setIsProcessingInvite(false);
           },
           onError: (error) => {
             console.error('Failed to process invite token:', error);
+            setIsProcessingInvite(false);
           },
         }
       );
     }
-  }, [inviteToken, id, processInvite, setSearchParams, refetchRole]);
+  }, [inviteToken, id]);
+
+  if (isProcessingInvite) {
+    return (
+      <div className="container mx-auto py-8 flex items-center justify-center min-h-[400px]">
+        <div className="flex items-center gap-2">
+          <Loader2 className="h-6 w-6 animate-spin" />
+          <span>Processando convite...</span>
+        </div>
+      </div>
+    );
+  }
+
   if (isLoading || roleLoading) {
     return (
       <div className="container mx-auto py-8 flex items-center justify-center min-h-[400px]">

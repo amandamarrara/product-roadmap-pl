@@ -1,13 +1,14 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Link } from "react-router-dom";
-import { MapPin, Plus, Eye, LogOut, User } from "lucide-react";
+import { MapPin, Plus, Eye, LogOut, User, Share2 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
-import { useRoadmaps } from "@/hooks/useRoadmaps";
+import { useRoadmaps, useSharedRoadmaps } from "@/hooks/useRoadmaps";
 
 const Index = () => {
   const { user, signOut } = useAuth();
   const { data: roadmaps = [], isLoading } = useRoadmaps();
+  const { data: sharedRoadmaps = [], isLoading: sharedLoading } = useSharedRoadmaps();
 
   const handleSignOut = async () => {
     await signOut();
@@ -46,7 +47,7 @@ const Index = () => {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
           <Card className="shadow-elegant border-0 hover:shadow-lg transition-all duration-300">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -80,6 +81,25 @@ const Index = () => {
               <Button asChild variant="outline" className="w-full">
                 <Link to="/roadmaps">
                   Ver Roadmaps
+                </Link>
+              </Button>
+            </CardContent>
+          </Card>
+
+          <Card className="shadow-elegant border-0 hover:shadow-lg transition-all duration-300">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Share2 className="h-5 w-5" />
+                Compartilhados Comigo
+              </CardTitle>
+              <CardDescription>
+                {sharedLoading ? "Carregando..." : `${sharedRoadmaps.length} roadmap(s) compartilhado(s)`}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button asChild variant="outline" className="w-full">
+                <Link to="/roadmaps?tab=shared">
+                  Ver Compartilhados
                 </Link>
               </Button>
             </CardContent>

@@ -57,6 +57,10 @@ export function useRoadmap(id: string) {
   return useQuery({
     queryKey: ["roadmap", id],
     queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Usuário não autenticado");
+
+      // Try to fetch roadmap directly (own or shared via RLS)
       const { data, error } = await supabase
         .from("roadmaps")
         .select(`
@@ -68,39 +72,67 @@ export function useRoadmap(id: string) {
           milestones:milestones(*)
         `)
         .eq("id", id)
-        .single();
+        .maybeSingle();
+
+      // If not found, try to fetch via roadmap_shares (shared but not linked yet)
+      if (!data) {
+        const { data: shareData, error: shareError } = await supabase
+          .from("roadmap_shares")
+          .select(`
+            *,
+            roadmap:roadmaps(
+              *,
+              deliveries:deliveries(*,sub_deliveries:sub_deliveries(*)),
+              milestones:milestones(*)
+            )
+          `)
+          .eq("roadmap_id", id)
+          .or(`shared_with_user_id.eq.${user.id},shared_with_email.eq.${user.email}`)
+          .maybeSingle();
+
+        if (shareError || !shareData || !shareData.roadmap) {
+          throw new Error("Roadmap não encontrado ou você não tem permissão para visualizá-lo");
+        }
+
+        const roadmap = shareData.roadmap;
+        return formatRoadmapData(roadmap);
+      }
 
       if (error) throw error;
-
-      return {
-        ...data,
-        createdAt: new Date(data.created_at),
-        updatedAt: new Date(data.updated_at),
-        deliveries: data.deliveries.map((delivery: any) => ({
-            ...delivery,
-            startDate: delivery.start_date ? parseISO(delivery.start_date) : new Date(),
-            endDate: delivery.end_date ? parseISO(delivery.end_date) : new Date(),
-          deliveryColor: delivery.delivery_color || undefined,
-          deliveryPhase: delivery.delivery_phase || undefined,
-          responsible: delivery.responsible || undefined,
-          jiraLink: delivery.jira_link || undefined,
-          subDeliveries: delivery.sub_deliveries.map((sub: any) => ({
-            ...sub,
-            startDate: sub.start_date ? new Date(sub.start_date) : new Date(),
-            endDate: sub.end_date ? new Date(sub.end_date) : new Date(),
-            jiraLink: sub.jira_link || undefined,
-          }))
-        })),
-        milestones: Array.isArray(data.milestones) 
-          ? data.milestones.map((milestone: any) => ({
-            ...milestone,
-            date: parseISO(milestone.date),
-            }))
-          : []
-      } as Roadmap;
+      return formatRoadmapData(data);
     },
     enabled: !!id
   });
+}
+
+// Helper function to format roadmap data
+function formatRoadmapData(data: any): Roadmap {
+  return {
+    ...data,
+    createdAt: new Date(data.created_at),
+    updatedAt: new Date(data.updated_at),
+    deliveries: data.deliveries.map((delivery: any) => ({
+      ...delivery,
+      startDate: delivery.start_date ? parseISO(delivery.start_date) : new Date(),
+      endDate: delivery.end_date ? parseISO(delivery.end_date) : new Date(),
+      deliveryColor: delivery.delivery_color || undefined,
+      deliveryPhase: delivery.delivery_phase || undefined,
+      responsible: delivery.responsible || undefined,
+      jiraLink: delivery.jira_link || undefined,
+      subDeliveries: delivery.sub_deliveries.map((sub: any) => ({
+        ...sub,
+        startDate: sub.start_date ? new Date(sub.start_date) : new Date(),
+        endDate: sub.end_date ? new Date(sub.end_date) : new Date(),
+        jiraLink: sub.jira_link || undefined,
+      }))
+    })),
+    milestones: Array.isArray(data.milestones) 
+      ? data.milestones.map((milestone: any) => ({
+        ...milestone,
+        date: parseISO(milestone.date),
+        }))
+      : []
+  } as Roadmap;
 }
 
 export function useSaveRoadmap() {
