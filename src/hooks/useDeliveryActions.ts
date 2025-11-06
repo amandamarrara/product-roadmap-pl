@@ -3,6 +3,81 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import type { Delivery, SubDelivery } from '@/types/roadmap';
 
+export function useCreateDelivery() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ roadmapId, delivery }: { roadmapId: string; delivery: Omit<Delivery, 'id'> }) => {
+      const { data: user } = await supabase.auth.getUser();
+      if (!user.user) throw new Error('User not authenticated');
+
+      console.log('➕ Creating new delivery:', delivery.title);
+
+      // Insert delivery
+      const { data: deliveryData, error: deliveryError } = await supabase
+        .from('deliveries')
+        .insert({
+          roadmap_id: roadmapId,
+          user_id: user.user.id,
+          title: delivery.title,
+          description: delivery.description,
+          start_date: delivery.startDate.toISOString().split('T')[0],
+          end_date: delivery.endDate.toISOString().split('T')[0],
+          complexity: delivery.complexity,
+          priority: delivery.priority,
+          delivery_color: delivery.deliveryColor,
+          delivery_phase: delivery.deliveryPhase,
+          responsible: delivery.responsible,
+          jira_link: delivery.jiraLink,
+          status: delivery.status,
+          progress: delivery.progress
+        })
+        .select()
+        .single();
+
+      if (deliveryError) throw deliveryError;
+      
+      console.log('✅ Delivery created:', deliveryData.id);
+
+      // Insert sub-deliveries if any
+      if (delivery.subDeliveries && delivery.subDeliveries.length > 0) {
+        const { error: subDeliveriesError } = await supabase
+          .from('sub_deliveries')
+          .insert(
+            delivery.subDeliveries.map(sub => ({
+              delivery_id: deliveryData.id,
+              title: sub.title,
+              description: sub.description,
+              start_date: sub.startDate ? sub.startDate.toISOString().split('T')[0] : null,
+              end_date: sub.endDate ? sub.endDate.toISOString().split('T')[0] : null,
+              team: sub.team,
+              responsible: sub.responsible,
+              completed: sub.completed,
+              progress: sub.progress,
+              status: sub.status,
+              jira_link: sub.jiraLink,
+              user_id: user.user.id
+            }))
+          );
+
+        if (subDeliveriesError) throw subDeliveriesError;
+      }
+
+      return deliveryData;
+    },
+    onSuccess: async (_data, variables) => {
+      console.log('✅ New delivery saved successfully');
+      await queryClient.invalidateQueries({ queryKey: ['roadmaps'] });
+      await queryClient.invalidateQueries({ queryKey: ['roadmap', variables.roadmapId] });
+      toast.success('Entrega criada com sucesso!');
+    },
+    onError: (error) => {
+      console.error('Error creating delivery:', error);
+      toast.error('Erro ao criar entrega. Tente novamente.');
+    }
+  });
+}
+
 export function useUpdateDelivery() {
   const queryClient = useQueryClient();
 

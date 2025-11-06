@@ -13,7 +13,7 @@ import { MilestoneManager } from "./MilestoneManager";
 import type { Delivery, Team, TeamMember, Milestone } from "@/types/roadmap";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { useUpdateDelivery, useDeleteDelivery } from "@/hooks/useDeliveryActions";
+import { useUpdateDelivery, useDeleteDelivery, useCreateDelivery } from "@/hooks/useDeliveryActions";
 import { useQueryClient } from "@tanstack/react-query";
 import { useSaveMilestone, useUpdateMilestone, useDeleteMilestone, useMilestones } from "@/hooks/useMilestones";
 
@@ -103,6 +103,7 @@ export function RoadmapBuilder({
   userRole = 'none'
 }: RoadmapBuilderProps) {
   const queryClient = useQueryClient();
+  const createDelivery = useCreateDelivery();
   const updateDelivery = useUpdateDelivery();
   const deleteDelivery = useDeleteDelivery();
   const saveMilestone = useSaveMilestone();
@@ -171,14 +172,9 @@ export function RoadmapBuilder({
       } as Delivery;
       await updateDelivery.mutateAsync({ roadmapId, delivery: fullDelivery });
     } else if (roadmapId) {
-      // For new deliveries when roadmapId exists, we still update local state
-      // The actual creation will happen when saving the roadmap
-      console.log('➕ RoadmapBuilder: Adding new delivery to local state');
-      const newDelivery: Delivery = {
-        ...deliveryData,
-        id: Date.now().toString()
-      };
-      setDeliveries(prev => [...prev, newDelivery]);
+      // CREATE NEW DELIVERY IN DATABASE
+      console.log('➕ RoadmapBuilder: Creating new delivery in DB');
+      await createDelivery.mutateAsync({ roadmapId, delivery: deliveryData });
     } else {
       // No roadmapId - just update local state (creating new roadmap)
       console.log('➕ RoadmapBuilder: Adding new delivery (no roadmapId)');
