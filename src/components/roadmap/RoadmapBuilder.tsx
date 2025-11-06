@@ -153,6 +153,10 @@ export function RoadmapBuilder({
   // Update local state when initialData changes
   useEffect(() => {
     if (initialData) {
+      console.log('🔄 RoadmapBuilder: Updating local state from initialData:', {
+        deliveriesCount: initialData.deliveries?.length,
+        milestonesCount: initialData.milestones?.length
+      });
       setRoadmapTitle(initialData.title || '');
       setRoadmapSubtitle(initialData.subtitle || '');
       setDeliveries(initialData.deliveries || []);
@@ -171,10 +175,20 @@ export function RoadmapBuilder({
         id: editingDelivery.id
       } as Delivery;
       await updateDelivery.mutateAsync({ roadmapId, delivery: fullDelivery });
+      
+      // ✅ Refetch roadmap data after update to sync UI
+      console.log('🔄 Refetching roadmap data after update...');
+      await queryClient.refetchQueries({ queryKey: ['roadmap', roadmapId] });
+      
     } else if (roadmapId) {
       // CREATE NEW DELIVERY IN DATABASE
       console.log('➕ RoadmapBuilder: Creating new delivery in DB');
       await createDelivery.mutateAsync({ roadmapId, delivery: deliveryData });
+      
+      // ✅ Refetch roadmap data after creation to sync UI
+      console.log('🔄 Refetching roadmap data after creation...');
+      await queryClient.refetchQueries({ queryKey: ['roadmap', roadmapId] });
+      
     } else {
       // No roadmapId - just update local state (creating new roadmap)
       console.log('➕ RoadmapBuilder: Adding new delivery (no roadmapId)');

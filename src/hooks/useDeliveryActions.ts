@@ -67,8 +67,17 @@ export function useCreateDelivery() {
     },
     onSuccess: async (_data, variables) => {
       console.log('✅ New delivery saved successfully');
+      
+      // Invalidate queries
       await queryClient.invalidateQueries({ queryKey: ['roadmaps'] });
       await queryClient.invalidateQueries({ queryKey: ['roadmap', variables.roadmapId] });
+      
+      // ✅ Wait for DB to process
+      await new Promise(resolve => setTimeout(resolve, 200));
+      
+      // ✅ Force refetch to ensure UI is updated
+      await queryClient.refetchQueries({ queryKey: ['roadmap', variables.roadmapId] });
+      
       toast.success('Entrega criada com sucesso!');
     },
     onError: (error) => {
