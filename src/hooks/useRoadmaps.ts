@@ -373,8 +373,7 @@ export function useUpdateDeliveryOrder() {
           .update({ 
             delivery_phase: delivery.deliveryPhase || null
           })
-          .eq("id", delivery.id)
-          .eq("user_id", user.id);
+          .eq("id", delivery.id);
           
         if (error) throw error;
       }

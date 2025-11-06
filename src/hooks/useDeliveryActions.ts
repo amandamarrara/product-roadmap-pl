@@ -33,8 +33,7 @@ export function useUpdateDelivery() {
           responsible: delivery.responsible,
           jira_link: delivery.jiraLink,
           status: delivery.status,
-          progress: delivery.progress,
-          user_id: user.user.id
+          progress: delivery.progress
         })
         .eq('id', delivery.id)
         .eq('roadmap_id', roadmapId)
@@ -57,6 +56,13 @@ export function useUpdateDelivery() {
 
       // Insert updated sub-deliveries
       if (delivery.subDeliveries.length > 0) {
+        // Get original delivery user_id to maintain ownership
+        const { data: originalDelivery } = await supabase
+          .from('deliveries')
+          .select('user_id')
+          .eq('id', delivery.id)
+          .single();
+
         const { error: subDeliveriesError } = await supabase
           .from('sub_deliveries')
           .insert(
@@ -73,7 +79,7 @@ export function useUpdateDelivery() {
               progress: sub.progress,
               status: sub.status,
               jira_link: sub.jiraLink,
-              user_id: user.user.id
+              user_id: originalDelivery?.user_id || user.user.id
             }))
           );
 
@@ -134,8 +140,7 @@ export function useUpdateSubDelivery() {
           completed: subDelivery.completed,
           progress: subDelivery.progress,
           status: subDelivery.status,
-          jira_link: subDelivery.jiraLink,
-          user_id: user.user.id
+          jira_link: subDelivery.jiraLink
         })
         .eq('id', subDelivery.id)
         .eq('delivery_id', deliveryId)

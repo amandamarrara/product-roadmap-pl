@@ -133,7 +133,6 @@ export function useUpdateMilestone() {
         .from("milestones")
         .update(updateData)
         .eq("id", milestone.id)
-        .eq("user_id", user.id)
         .select()
         .single();
 
@@ -200,8 +199,7 @@ export function useDeleteMilestone() {
       const { error } = await supabase
         .from("milestones")
         .delete()
-        .eq("id", milestoneId)
-        .eq("user_id", user.id);
+        .eq("id", milestoneId);
 
       if (error) throw error;
     },
