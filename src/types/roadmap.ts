@@ -31,6 +31,7 @@ export interface SubDelivery {
   description: string;
   startDate: Date;
   endDate: Date;
+  actualEndDate?: Date;
   team: string;
   responsible: string;
   completed: boolean;
@@ -46,6 +47,7 @@ export interface Delivery {
   description: string;
   startDate: Date;
   endDate: Date;
+  actualEndDate?: Date;
   complexity: Complexity;
   priority: Priority;
   deliveryColor?: string;

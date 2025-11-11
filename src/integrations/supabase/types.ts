@@ -16,6 +16,7 @@ export type Database = {
     Tables: {
       deliveries: {
         Row: {
+          actual_end_date: string | null
           complexity: string | null
           created_at: string
           delivery_color: string | null
@@ -34,6 +35,7 @@ export type Database = {
           user_id: string | null
         }
         Insert: {
+          actual_end_date?: string | null
           complexity?: string | null
           created_at?: string
           delivery_color?: string | null
@@ -52,6 +54,7 @@ export type Database = {
           user_id?: string | null
         }
         Update: {
+          actual_end_date?: string | null
           complexity?: string | null
           created_at?: string
           delivery_color?: string | null
@@ -277,6 +280,7 @@ export type Database = {
       }
       sub_deliveries: {
         Row: {
+          actual_end_date: string | null
           completed: boolean | null
           delivery_id: string
           description: string | null
@@ -292,6 +296,7 @@ export type Database = {
           user_id: string | null
         }
         Insert: {
+          actual_end_date?: string | null
           completed?: boolean | null
           delivery_id: string
           description?: string | null
@@ -307,6 +312,7 @@ export type Database = {
           user_id?: string | null
         }
         Update: {
+          actual_end_date?: string | null
           completed?: boolean | null
           delivery_id?: string
           description?: string | null

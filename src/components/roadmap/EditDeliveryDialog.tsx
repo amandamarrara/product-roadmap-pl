@@ -40,6 +40,7 @@ export function EditDeliveryDialog({
   const [description, setDescription] = useState('');
   const [startDate, setStartDate] = useState<Date | undefined>(undefined);
   const [endDate, setEndDate] = useState<Date | undefined>(undefined);
+  const [actualEndDate, setActualEndDate] = useState<Date | undefined>(undefined);
   const [responsible, setResponsible] = useState('');
   const [deliveryPhase, setDeliveryPhase] = useState('');
   const [jiraLink, setJiraLink] = useState('');
@@ -74,6 +75,7 @@ export function EditDeliveryDialog({
       setDescription(delivery.description || '');
       setStartDate(delivery.startDate);
       setEndDate(delivery.endDate);
+      setActualEndDate(delivery.actualEndDate);
       setResponsible(delivery.responsible || '');
       setDeliveryPhase(delivery.deliveryPhase || '');
       setJiraLink(delivery.jiraLink || '');
@@ -98,6 +100,7 @@ export function EditDeliveryDialog({
       description: description.trim(),
       startDate,
       endDate,
+      actualEndDate,
       responsible: responsible.trim(),
       deliveryPhase: deliveryPhase.trim(),
       jiraLink: jiraLink.trim(),
@@ -190,7 +193,7 @@ export function EditDeliveryDialog({
           </div>
 
           {/* Dates */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-3 gap-4">
             <div>
               <Label>Data de Início</Label>
               <Popover>
@@ -213,13 +216,14 @@ export function EditDeliveryDialog({
                     onSelect={setStartDate}
                     initialFocus
                     locale={ptBR}
+                    className="pointer-events-auto"
                   />
                 </PopoverContent>
               </Popover>
             </div>
 
             <div>
-              <Label>Data de Fim</Label>
+              <Label>Data de Fim (Planejada)</Label>
               <Popover>
                 <PopoverTrigger asChild>
                   <Button
@@ -240,9 +244,41 @@ export function EditDeliveryDialog({
                     onSelect={setEndDate}
                     initialFocus
                     locale={ptBR}
+                    className="pointer-events-auto"
                   />
                 </PopoverContent>
               </Popover>
+            </div>
+
+            <div>
+              <Label>Data de Entrega Real</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "w-full justify-start text-left font-normal",
+                      !actualEndDate && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {actualEndDate ? format(actualEndDate, "dd/MM/yyyy", { locale: ptBR }) : "Data real"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={actualEndDate}
+                    onSelect={setActualEndDate}
+                    initialFocus
+                    locale={ptBR}
+                    className="pointer-events-auto"
+                  />
+                </PopoverContent>
+              </Popover>
+              <p className="text-xs text-muted-foreground mt-1">
+                ⏱️ Data real de conclusão
+              </p>
             </div>
           </div>
 

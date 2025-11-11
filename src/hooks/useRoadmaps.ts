@@ -35,6 +35,7 @@ export function useRoadmaps() {
             ...delivery,
             startDate: delivery.start_date ? parseISO(delivery.start_date) : new Date(),
             endDate: delivery.end_date ? parseISO(delivery.end_date) : new Date(),
+            actualEndDate: delivery.actual_end_date ? parseISO(delivery.actual_end_date) : undefined,
           deliveryColor: delivery.delivery_color || undefined,
           deliveryPhase: delivery.delivery_phase || undefined,
           responsible: delivery.responsible || undefined,
@@ -43,6 +44,7 @@ export function useRoadmaps() {
             ...sub,
             startDate: sub.start_date ? new Date(sub.start_date) : new Date(),
             endDate: sub.end_date ? new Date(sub.end_date) : new Date(),
+            actualEndDate: sub.actual_end_date ? new Date(sub.actual_end_date) : undefined,
             jiraLink: sub.jira_link || undefined,
           }))
         })),
@@ -119,6 +121,7 @@ function formatRoadmapData(data: any): Roadmap {
       ...delivery,
       startDate: delivery.start_date ? parseISO(delivery.start_date) : new Date(),
       endDate: delivery.end_date ? parseISO(delivery.end_date) : new Date(),
+      actualEndDate: delivery.actual_end_date ? parseISO(delivery.actual_end_date) : undefined,
       deliveryColor: delivery.delivery_color || undefined,
       deliveryPhase: delivery.delivery_phase || undefined,
       responsible: delivery.responsible || undefined,
@@ -127,6 +130,7 @@ function formatRoadmapData(data: any): Roadmap {
         ...sub,
         startDate: sub.start_date ? new Date(sub.start_date) : new Date(),
         endDate: sub.end_date ? new Date(sub.end_date) : new Date(),
+        actualEndDate: sub.actual_end_date ? new Date(sub.actual_end_date) : undefined,
         jiraLink: sub.jira_link || undefined,
       }))
     })),

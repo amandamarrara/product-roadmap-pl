@@ -26,6 +26,7 @@ export function DeliveryForm({ delivery, onSave, onCancel }: DeliveryFormProps) 
   const [description, setDescription] = useState(delivery?.description || '');
   const [startDate, setStartDate] = useState<Date | undefined>(delivery?.startDate);
   const [endDate, setEndDate] = useState<Date | undefined>(delivery?.endDate);
+  const [actualEndDate, setActualEndDate] = useState<Date | undefined>(delivery?.actualEndDate);
   const [complexity, setComplexity] = useState<Complexity>(delivery?.complexity || 'medium');
   const [priority, setPriority] = useState<Priority>(delivery?.priority || 'medium');
   const [deliveryColor, setDeliveryColor] = useState(delivery?.deliveryColor || generateColorFromPhase(delivery?.deliveryPhase || ''));
@@ -56,6 +57,7 @@ export function DeliveryForm({ delivery, onSave, onCancel }: DeliveryFormProps) 
       description: '',
       startDate: startDate || new Date(),
       endDate: endDate || new Date(),
+      actualEndDate: undefined,
       team: '',
       responsible: '',
       completed: false,
@@ -124,6 +126,7 @@ export function DeliveryForm({ delivery, onSave, onCancel }: DeliveryFormProps) 
       description,
       startDate,
       endDate,
+      actualEndDate,
       complexity,
       priority,
       deliveryColor,
@@ -192,7 +195,7 @@ export function DeliveryForm({ delivery, onSave, onCancel }: DeliveryFormProps) 
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-3 gap-4">
               <div>
                 <Label>Data de Início</Label>
                 <DatePickerWithSearch
@@ -203,12 +206,24 @@ export function DeliveryForm({ delivery, onSave, onCancel }: DeliveryFormProps) 
               </div>
 
               <div>
-                <Label>Data de Fim</Label>
+                <Label>Data de Fim (Planejada)</Label>
                 <DatePickerWithSearch
                   selected={endDate}
                   onSelect={setEndDate}
                   placeholder="Selecionar data de fim"
                 />
+              </div>
+
+              <div>
+                <Label>Data de Entrega Real</Label>
+                <DatePickerWithSearch
+                  selected={actualEndDate}
+                  onSelect={setActualEndDate}
+                  placeholder="Data real de conclusão"
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  ⏱️ Preencha quando a entrega for finalizada
+                </p>
               </div>
             </div>
 
