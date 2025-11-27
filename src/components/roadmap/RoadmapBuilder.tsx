@@ -424,8 +424,8 @@ export function RoadmapBuilder({
             </TabsList>
 
             {/* Filters - Now available in both readOnly and edit modes */}
-            <div className="flex items-center gap-4 flex-wrap">
-              <Filter className="h-4 w-4 text-muted-foreground" />
+            <div className="flex items-end gap-4 flex-wrap">
+              <Filter className="h-4 w-4 text-muted-foreground mb-2" />
               
               {/* Filtro de Fase */}
               <div className="flex flex-col gap-1">
@@ -474,15 +474,18 @@ export function RoadmapBuilder({
                 </div>
               )}
 
-              <Button
-                variant={groupByPhase ? "default" : "outline"}
-                size="sm"
-                onClick={() => setGroupByPhase(!groupByPhase)}
-                className="flex items-center gap-2"
-              >
-                <Layers className="h-4 w-4" />
-                Agrupar por Fase
-              </Button>
+              <div className="flex flex-col gap-1">
+                <Label className="text-xs text-muted-foreground">Visualização</Label>
+                <Button
+                  variant={groupByPhase ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setGroupByPhase(!groupByPhase)}
+                  className="flex items-center gap-2"
+                >
+                  <Layers className="h-4 w-4" />
+                  Agrupar por Fase
+                </Button>
+              </div>
             </div>
           </div>
 
