@@ -818,26 +818,25 @@ export function RoadmapTimeline({
                      })}
                   </div>
                   
-                   {/* Current date indicator in header */}
+                   {/* Current date indicator in header - HOJE badge */}
                    {isCurrentDateInRange() && (
-                     <Tooltip>
-                       <TooltipTrigger asChild>
-                         <div
-                           className="absolute top-2 h-2 w-2 rounded-full cursor-pointer z-10 border border-muted-foreground/60"
-                           style={{
-                             left: getCurrentDatePosition(),
-                             backgroundColor: 'hsl(var(--muted-foreground) / 0.6)',
-                             transform: 'translateX(-4px)'
-                           }}
-                         />
-                       </TooltipTrigger>
-                       <TooltipContent>
-                         <div className="space-y-1">
-                           <div className="font-medium">Hoje</div>
-                           <div className="text-xs">{format(new Date(), "dd/MM/yyyy", { locale: ptBR })}</div>
-                         </div>
-                       </TooltipContent>
-                     </Tooltip>
+                     <div
+                       className="absolute top-0 z-30 flex flex-col items-center"
+                       style={{
+                         left: getCurrentDatePosition(),
+                         transform: 'translateX(-50%)'
+                       }}
+                     >
+                       {/* Badge "HOJE" */}
+                       <div className="bg-black text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-lg">
+                         HOJE
+                       </div>
+                       {/* Triângulo apontando para baixo */}
+                       <div 
+                         className="w-0 h-0 border-l-[6px] border-r-[6px] border-t-[8px] border-transparent -mt-0.5"
+                         style={{ borderTopColor: '#000000' }}
+                       />
+                     </div>
                    )}
                    
                     {/* Milestone indicators in header */}
@@ -910,11 +909,12 @@ export function RoadmapTimeline({
                  {/* Current date vertical line */}
                  {isCurrentDateInRange() && (
                    <div
-                     className="absolute top-0 bottom-0 border-l border-solid pointer-events-none z-15 opacity-60"
+                     className="absolute top-0 bottom-0 w-0.5 pointer-events-none z-20"
                      style={{
                        left: getCurrentDatePosition(),
-                       borderColor: 'hsl(var(--muted-foreground) / 0.6)',
-                       transform: 'translateX(-0.5px)'
+                       backgroundColor: '#000000',
+                       boxShadow: '0 0 6px 1px rgba(0, 0, 0, 0.3)',
+                       transform: 'translateX(-1px)'
                      }}
                    />
                  )}
