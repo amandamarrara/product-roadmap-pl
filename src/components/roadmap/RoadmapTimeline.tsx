@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { CalendarDays, Users, MapPin, ExternalLink, ChevronDown, ChevronRight, ZoomOut, ZoomIn, Edit, MessageCircle } from "lucide-react";
+import { CalendarDays, Users, MapPin, ExternalLink, ChevronDown, ChevronRight, ZoomOut, ZoomIn, Edit, MessageCircle, History } from "lucide-react";
 import { format, startOfWeek, endOfWeek, eachWeekOfInterval, eachDayOfInterval, isSameWeek, differenceInDays, differenceInWeeks, startOfDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -24,6 +24,8 @@ import { useUpdateDelivery, useDeleteDelivery, useUpdateSubDelivery, useDeleteSu
 import { ResponsibleFilter } from './ResponsibleFilter';
 import { AlertsSummary } from './AlertsSummary';
 import { useDateAlerts } from '@/hooks/useDateAlerts';
+import { HistoryPanel } from './HistoryPanel';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 
 interface RoadmapTimelineProps {
@@ -63,6 +65,10 @@ export function RoadmapTimeline({
   const [selectedResponsibles, setSelectedResponsibles] = useState<string[]>([]);
   const [openDeliveryPopover, setOpenDeliveryPopover] = useState<string | null>(null);
   const [openSubDeliveryPopover, setOpenSubDeliveryPopover] = useState<string | null>(null);
+  const [historyDialogOpen, setHistoryDialogOpen] = useState(false);
+  const [historyDeliveryId, setHistoryDeliveryId] = useState<string | null>(null);
+  const [historySubDeliveryId, setHistorySubDeliveryId] = useState<string | null>(null);
+  const [historyTitle, setHistoryTitle] = useState("");
   
   // Mutations for editing
   const updateDelivery = useUpdateDelivery();
@@ -286,6 +292,21 @@ export function RoadmapTimeline({
       title: subDelivery ? subDelivery.title : delivery.title
     });
     setCommentsDialogOpen(true);
+  };
+
+  const handleOpenHistory = (delivery: Delivery, subDelivery?: any) => {
+    if (subDelivery) {
+      setHistorySubDeliveryId(subDelivery.id);
+      setHistoryDeliveryId(null);
+      setHistoryTitle(`Histórico: ${subDelivery.title}`);
+    } else {
+      setHistoryDeliveryId(delivery.id);
+      setHistorySubDeliveryId(null);
+      setHistoryTitle(`Histórico: ${delivery.title}`);
+    }
+    setHistoryDialogOpen(true);
+    setOpenDeliveryPopover(null);
+    setOpenSubDeliveryPopover(null);
   };
 
   // Toggle phase expansion
@@ -607,6 +628,18 @@ export function RoadmapTimeline({
                     variant="outline"
                     onClick={(e) => {
                       e.stopPropagation();
+                      handleOpenHistory(delivery);
+                    }}
+                    className="h-7 text-xs"
+                  >
+                    <History className="h-3 w-3 mr-1" />
+                    Histórico
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={(e) => {
+                      e.stopPropagation();
                       handleComments(delivery);
                     }}
                     className="h-7 text-xs"
@@ -709,8 +742,20 @@ export function RoadmapTimeline({
                           )}
                         </div>
                         
-                        {/* Sub-delivery Comments Button */}
-                        <div className="flex justify-end pt-2 border-t">
+                        {/* Sub-delivery Action Buttons */}
+                        <div className="flex justify-end gap-2 pt-2 border-t">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleOpenHistory(delivery, sub);
+                            }}
+                            className="h-6 text-xs"
+                          >
+                            <History className="h-3 w-3 mr-1" />
+                            Histórico
+                          </Button>
                           <Button
                             size="sm"
                             variant="outline"
@@ -1038,5 +1083,21 @@ export function RoadmapTimeline({
         subDeliveryId={commentsTarget?.subDelivery?.id}
         title={commentsTarget?.title || ""}
       />
+      
+      {/* History Dialog */}
+      <Dialog open={historyDialogOpen} onOpenChange={setHistoryDialogOpen}>
+        <DialogContent className="max-w-lg max-h-[80vh]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <History className="h-5 w-5" />
+              {historyTitle}
+            </DialogTitle>
+          </DialogHeader>
+          <HistoryPanel 
+            deliveryId={historyDeliveryId || undefined} 
+            subDeliveryId={historySubDeliveryId || undefined} 
+          />
+        </DialogContent>
+      </Dialog>
     </TooltipProvider>;
 }
