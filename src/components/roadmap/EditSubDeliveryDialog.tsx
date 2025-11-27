@@ -12,9 +12,7 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { Slider } from '@/components/ui/slider';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { HistoryPanel } from './HistoryPanel';
 import type { SubDelivery } from '@/types/roadmap';
 
 interface EditSubDeliveryDialogProps {
@@ -111,13 +109,7 @@ export function EditSubDeliveryDialog({
           <DialogTitle>Editar Sub-entrega</DialogTitle>
         </DialogHeader>
 
-        <Tabs defaultValue="details" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="details">Detalhes</TabsTrigger>
-            <TabsTrigger value="history">Histórico</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="details" className="space-y-6 mt-6">
+        <div className="space-y-6 mt-6">
             {/* Basic Information */}
           <div className="space-y-4">
             <div>
@@ -355,12 +347,7 @@ export function EditSubDeliveryDialog({
               </Button>
             </div>
           </div>
-          </TabsContent>
-
-          <TabsContent value="history" className="mt-6">
-            <HistoryPanel subDeliveryId={subDelivery?.id} />
-          </TabsContent>
-        </Tabs>
+        </div>
       </DialogContent>
     </Dialog>
   );
