@@ -311,10 +311,10 @@ export function RoadmapBuilder({
   });
 
   const getStats = () => {
-    const completed = deliveries.filter(d => d.status === 'completed').length;
-    const inProgress = deliveries.filter(d => d.status === 'in-progress').length;
-    const notStarted = deliveries.filter(d => d.status === 'not-started').length;
-    const blocked = deliveries.filter(d => d.status === 'blocked').length;
+    const completed = filteredDeliveries.filter(d => d.status === 'completed').length;
+    const inProgress = filteredDeliveries.filter(d => d.status === 'in-progress').length;
+    const notStarted = filteredDeliveries.filter(d => d.status === 'not-started').length;
+    const blocked = filteredDeliveries.filter(d => d.status === 'blocked').length;
     return {
       completed,
       inProgress,
