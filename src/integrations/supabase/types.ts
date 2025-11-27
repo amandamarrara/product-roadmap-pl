@@ -127,6 +127,50 @@ export type Database = {
           },
         ]
       }
+      delivery_history: {
+        Row: {
+          action: string
+          created_at: string | null
+          delivery_id: string
+          field_name: string | null
+          id: string
+          new_value: string | null
+          old_value: string | null
+          user_email: string | null
+          user_id: string
+        }
+        Insert: {
+          action: string
+          created_at?: string | null
+          delivery_id: string
+          field_name?: string | null
+          id?: string
+          new_value?: string | null
+          old_value?: string | null
+          user_email?: string | null
+          user_id: string
+        }
+        Update: {
+          action?: string
+          created_at?: string | null
+          delivery_id?: string
+          field_name?: string | null
+          id?: string
+          new_value?: string | null
+          old_value?: string | null
+          user_email?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "delivery_history_delivery_id_fkey"
+            columns: ["delivery_id"]
+            isOneToOne: false
+            referencedRelation: "deliveries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       milestones: {
         Row: {
           color: string | null
@@ -333,6 +377,53 @@ export type Database = {
             columns: ["delivery_id"]
             isOneToOne: false
             referencedRelation: "deliveries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sub_delivery_history: {
+        Row: {
+          action: string
+          created_at: string | null
+          delivery_id: string
+          field_name: string | null
+          id: string
+          new_value: string | null
+          old_value: string | null
+          sub_delivery_id: string
+          user_email: string | null
+          user_id: string
+        }
+        Insert: {
+          action: string
+          created_at?: string | null
+          delivery_id: string
+          field_name?: string | null
+          id?: string
+          new_value?: string | null
+          old_value?: string | null
+          sub_delivery_id: string
+          user_email?: string | null
+          user_id: string
+        }
+        Update: {
+          action?: string
+          created_at?: string | null
+          delivery_id?: string
+          field_name?: string | null
+          id?: string
+          new_value?: string | null
+          old_value?: string | null
+          sub_delivery_id?: string
+          user_email?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sub_delivery_history_sub_delivery_id_fkey"
+            columns: ["sub_delivery_id"]
+            isOneToOne: false
+            referencedRelation: "sub_deliveries"
             referencedColumns: ["id"]
           },
         ]
