@@ -887,15 +887,21 @@ export function RoadmapTimeline({
                <div className="relative space-y-4 px-4" style={trackWidthStyle}>
                  {/* Current date vertical line */}
                  {isCurrentDateInRange() && (
-                   <div
-                     className="absolute top-0 bottom-0 w-0.5 pointer-events-none z-20"
-                     style={{
-                       left: getCurrentDatePosition(),
-                       backgroundColor: '#000000',
-                       boxShadow: '0 0 6px 1px rgba(0, 0, 0, 0.3)',
-                       transform: 'translateX(-1px)'
-                     }}
-                   />
+                   <Tooltip>
+                     <TooltipTrigger asChild>
+                       <div
+                         className="absolute top-0 bottom-0 w-1 cursor-pointer z-20"
+                         style={{
+                           left: getCurrentDatePosition(),
+                           backgroundColor: '#000000',
+                           transform: 'translateX(-1px)'
+                         }}
+                       />
+                     </TooltipTrigger>
+                     <TooltipContent>
+                       <p>Hoje: {format(new Date(), 'dd/MM/yyyy', { locale: ptBR })}</p>
+                     </TooltipContent>
+                   </Tooltip>
                  )}
                  
                   {/* Milestone vertical lines and period bands */}
