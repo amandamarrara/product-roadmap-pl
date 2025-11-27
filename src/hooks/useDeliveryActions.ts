@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import type { Delivery, SubDelivery } from '@/types/roadmap';
+import { compareDeliveryChanges, compareSubDeliveryChanges } from '@/lib/historyUtils';
 
 export function useCreateDelivery() {
   const queryClient = useQueryClient();
@@ -104,6 +105,38 @@ export function useUpdateDelivery() {
         title: delivery.title
       });
 
+      // Buscar estado atual da entrega antes de atualizar (para histórico)
+      const { data: currentDelivery, error: fetchError } = await supabase
+        .from('deliveries')
+        .select('*')
+        .eq('id', delivery.id)
+        .single();
+
+      if (fetchError) throw fetchError;
+
+      // Converter dados do banco para o formato Delivery
+      const oldDelivery: Delivery = {
+        id: currentDelivery.id,
+        title: currentDelivery.title,
+        description: currentDelivery.description || '',
+        startDate: new Date(currentDelivery.start_date!),
+        endDate: new Date(currentDelivery.end_date!),
+        actualEndDate: currentDelivery.actual_end_date ? new Date(currentDelivery.actual_end_date) : undefined,
+        complexity: currentDelivery.complexity as any,
+        priority: currentDelivery.priority as any,
+        deliveryColor: currentDelivery.delivery_color || undefined,
+        deliveryPhase: currentDelivery.delivery_phase || undefined,
+        responsible: currentDelivery.responsible || undefined,
+        jiraLink: currentDelivery.jira_link || undefined,
+        subDeliveries: [],
+        progress: currentDelivery.progress || 0,
+        status: currentDelivery.status as any,
+        comments: []
+      };
+
+      // Comparar mudanças
+      const changes = compareDeliveryChanges(oldDelivery, delivery);
+
       // Update delivery with .select() to confirm
       const { data: updatedDelivery, error: deliveryError } = await supabase
         .from('deliveries')
@@ -134,6 +167,34 @@ export function useUpdateDelivery() {
       }
       
       console.log('✅ Delivery updated successfully:', updatedDelivery);
+
+      // Registrar histórico de mudanças
+      if (changes.length > 0) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('email')
+          .eq('id', user.user.id)
+          .single();
+
+        const historyRecords = changes.map(change => ({
+          delivery_id: delivery.id,
+          user_id: user.user.id,
+          user_email: profile?.email || null,
+          action: 'update',
+          field_name: change.fieldName,
+          old_value: change.oldValue,
+          new_value: change.newValue
+        }));
+
+        const { error: historyError } = await supabase
+          .from('delivery_history')
+          .insert(historyRecords);
+
+        if (historyError) {
+          console.error('Erro ao registrar histórico:', historyError);
+          // Não falhar a operação se o histórico falhar
+        }
+      }
 
       // Delete existing sub-deliveries
       await supabase
@@ -216,6 +277,35 @@ export function useUpdateSubDelivery() {
         title: subDelivery.title
       });
 
+      // Buscar estado atual da sub-entrega antes de atualizar (para histórico)
+      const { data: currentSubDelivery, error: fetchError } = await supabase
+        .from('sub_deliveries')
+        .select('*')
+        .eq('id', subDelivery.id)
+        .single();
+
+      if (fetchError) throw fetchError;
+
+      // Converter dados do banco para o formato SubDelivery
+      const oldSubDelivery: SubDelivery = {
+        id: currentSubDelivery.id,
+        title: currentSubDelivery.title,
+        description: currentSubDelivery.description || '',
+        startDate: currentSubDelivery.start_date ? new Date(currentSubDelivery.start_date) : undefined as any,
+        endDate: currentSubDelivery.end_date ? new Date(currentSubDelivery.end_date) : undefined as any,
+        actualEndDate: currentSubDelivery.actual_end_date ? new Date(currentSubDelivery.actual_end_date) : undefined,
+        team: currentSubDelivery.team || '',
+        responsible: currentSubDelivery.responsible || '',
+        completed: currentSubDelivery.completed || false,
+        progress: currentSubDelivery.progress || 0,
+        status: currentSubDelivery.status as any,
+        jiraLink: currentSubDelivery.jira_link || undefined,
+        comments: []
+      };
+
+      // Comparar mudanças
+      const changes = compareSubDeliveryChanges(oldSubDelivery, subDelivery);
+
       const { data: updated, error } = await supabase
         .from('sub_deliveries')
         .update({
@@ -243,6 +333,35 @@ export function useUpdateSubDelivery() {
       }
       
       console.log('✅ Sub-delivery updated successfully:', updated);
+
+      // Registrar histórico de mudanças
+      if (changes.length > 0) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('email')
+          .eq('id', user.user.id)
+          .single();
+
+        const historyRecords = changes.map(change => ({
+          sub_delivery_id: subDelivery.id,
+          delivery_id: deliveryId,
+          user_id: user.user.id,
+          user_email: profile?.email || null,
+          action: 'update',
+          field_name: change.fieldName,
+          old_value: change.oldValue,
+          new_value: change.newValue
+        }));
+
+        const { error: historyError } = await supabase
+          .from('sub_delivery_history')
+          .insert(historyRecords);
+
+        if (historyError) {
+          console.error('Erro ao registrar histórico:', historyError);
+          // Não falhar a operação se o histórico falhar
+        }
+      }
 
       return subDelivery;
     },

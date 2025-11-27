@@ -16,7 +16,9 @@ import { Slider } from '@/components/ui/slider';
 import { Badge } from '@/components/ui/badge';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ChevronDown } from 'lucide-react';
+import { HistoryPanel } from './HistoryPanel';
 import type { Delivery, Priority, Complexity } from '@/types/roadmap';
 
 interface EditDeliveryDialogProps {
@@ -159,8 +161,14 @@ export function EditDeliveryDialog({
           <DialogTitle>Editar Entrega</DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-6">
-          {/* Basic Information */}
+        <Tabs defaultValue="details" className="w-full">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="details">Detalhes</TabsTrigger>
+            <TabsTrigger value="history">Histórico</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="details" className="space-y-6 mt-6">
+            {/* Basic Information */}
           <div className="space-y-4">
             <div>
               <Label htmlFor="title">Título</Label>
@@ -503,7 +511,12 @@ export function EditDeliveryDialog({
               </Button>
             </div>
           </div>
-        </div>
+          </TabsContent>
+
+          <TabsContent value="history" className="mt-6">
+            <HistoryPanel deliveryId={delivery?.id} />
+          </TabsContent>
+        </Tabs>
       </DialogContent>
     </Dialog>
   );
