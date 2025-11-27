@@ -818,27 +818,6 @@ export function RoadmapTimeline({
                      })}
                   </div>
                   
-                   {/* Current date indicator in header - HOJE badge */}
-                   {isCurrentDateInRange() && (
-                     <div
-                       className="absolute top-0 z-30 flex flex-col items-center"
-                       style={{
-                         left: getCurrentDatePosition(),
-                         transform: 'translateX(-50%)'
-                       }}
-                     >
-                       {/* Badge "HOJE" */}
-                       <div className="bg-black text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-lg">
-                         HOJE
-                       </div>
-                       {/* Triângulo apontando para baixo */}
-                       <div 
-                         className="w-0 h-0 border-l-[6px] border-r-[6px] border-t-[8px] border-transparent -mt-0.5"
-                         style={{ borderTopColor: '#000000' }}
-                       />
-                     </div>
-                   )}
-                   
                     {/* Milestone indicators in header */}
                     {milestones.map(milestone => {
                       const isPeriod = milestone.isPeriod && milestone.endDate;
