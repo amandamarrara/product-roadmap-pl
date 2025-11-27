@@ -562,7 +562,7 @@ export function RoadmapTimeline({
               </div>
             </PopoverTrigger>
             <PopoverContent 
-              className="max-w-sm"
+              className="w-[400px]"
               onMouseEnter={() => setOpenDeliveryPopover(delivery.id)}
               onMouseLeave={() => setOpenDeliveryPopover(null)}
             >
@@ -622,7 +622,7 @@ export function RoadmapTimeline({
                 </div>
                 
                 {/* Action Buttons */}
-                <div className="flex justify-end gap-2 pt-2 border-t">
+                <div className="flex flex-wrap justify-end gap-2 pt-2 border-t">
                   <Button
                     size="sm"
                     variant="outline"
@@ -630,7 +630,7 @@ export function RoadmapTimeline({
                       e.stopPropagation();
                       handleOpenHistory(delivery);
                     }}
-                    className="h-7 text-xs"
+                    className="h-7 text-xs flex-shrink-0"
                   >
                     <History className="h-3 w-3 mr-1" />
                     Histórico
@@ -642,7 +642,7 @@ export function RoadmapTimeline({
                       e.stopPropagation();
                       handleComments(delivery);
                     }}
-                    className="h-7 text-xs"
+                    className="h-7 text-xs flex-shrink-0"
                   >
                     <MessageCircle className="h-3 w-3 mr-1" />
                     Comentários
@@ -655,7 +655,7 @@ export function RoadmapTimeline({
                         e.stopPropagation();
                         handleQuickEdit(delivery);
                       }}
-                      className="h-7 text-xs"
+                      className="h-7 text-xs flex-shrink-0"
                     >
                       <Edit className="h-3 w-3 mr-1" />
                       Editar
@@ -716,6 +716,7 @@ export function RoadmapTimeline({
                       </div>
                     </PopoverTrigger>
                     <PopoverContent
+                      className="w-[380px]"
                       onMouseEnter={() => setOpenSubDeliveryPopover(sub.id)}
                       onMouseLeave={() => setOpenSubDeliveryPopover(null)}
                     >
@@ -743,7 +744,7 @@ export function RoadmapTimeline({
                         </div>
                         
                         {/* Sub-delivery Action Buttons */}
-                        <div className="flex justify-end gap-2 pt-2 border-t">
+                        <div className="flex flex-wrap justify-end gap-2 pt-2 border-t">
                           <Button
                             size="sm"
                             variant="outline"
@@ -751,7 +752,7 @@ export function RoadmapTimeline({
                               e.stopPropagation();
                               handleOpenHistory(delivery, sub);
                             }}
-                            className="h-6 text-xs"
+                            className="h-6 text-xs flex-shrink-0"
                           >
                             <History className="h-3 w-3 mr-1" />
                             Histórico
@@ -763,7 +764,7 @@ export function RoadmapTimeline({
                               e.stopPropagation();
                               handleComments(delivery, sub);
                             }}
-                            className="h-6 text-xs"
+                            className="h-6 text-xs flex-shrink-0"
                           >
                             <MessageCircle className="h-3 w-3 mr-1" />
                             Comentários
