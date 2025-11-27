@@ -424,41 +424,54 @@ export function RoadmapBuilder({
             </TabsList>
 
             {/* Filters - Now available in both readOnly and edit modes */}
-            <div className="flex items-center gap-2 flex-wrap">
+            <div className="flex items-center gap-4 flex-wrap">
               <Filter className="h-4 w-4 text-muted-foreground" />
-              <Select value={filterTeam} onValueChange={setFilterTeam}>
-                <SelectTrigger className="w-32">
-                  <SelectValue placeholder="Fase" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todas as fases</SelectItem>
-                  {Array.from(new Set(deliveries.map(d => d.deliveryPhase).filter(Boolean))).map(phase => (
-                    <SelectItem key={phase} value={phase!}>
-                      {phase}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              
+              {/* Filtro de Fase */}
+              <div className="flex flex-col gap-1">
+                <Label className="text-xs text-muted-foreground">Fase</Label>
+                <Select value={filterTeam} onValueChange={setFilterTeam}>
+                  <SelectTrigger className="w-36">
+                    <SelectValue placeholder="Todas as fases" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todas as fases</SelectItem>
+                    {Array.from(new Set(deliveries.map(d => d.deliveryPhase).filter(Boolean))).map(phase => (
+                      <SelectItem key={phase} value={phase!}>
+                        {phase}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
-              <Select value={filterPriority} onValueChange={setFilterPriority}>
-                <SelectTrigger className="w-32">
-                  <SelectValue placeholder="Prioridade" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todas</SelectItem>
-                  <SelectItem value="low">Baixa</SelectItem>
-                  <SelectItem value="medium">Média</SelectItem>
-                  <SelectItem value="high">Alta</SelectItem>
-                  <SelectItem value="critical">Crítica</SelectItem>
-                </SelectContent>
-              </Select>
+              {/* Filtro de Prioridade */}
+              <div className="flex flex-col gap-1">
+                <Label className="text-xs text-muted-foreground">Prioridade</Label>
+                <Select value={filterPriority} onValueChange={setFilterPriority}>
+                  <SelectTrigger className="w-32">
+                    <SelectValue placeholder="Todas" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todas</SelectItem>
+                    <SelectItem value="low">Baixa</SelectItem>
+                    <SelectItem value="medium">Média</SelectItem>
+                    <SelectItem value="high">Alta</SelectItem>
+                    <SelectItem value="critical">Crítica</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
 
+              {/* Filtro de Responsável */}
               {uniqueResponsibles.length > 0 && (
-                <ResponsibleFilter
-                  responsibles={uniqueResponsibles}
-                  selectedResponsibles={selectedResponsibles}
-                  onSelectionChange={setSelectedResponsibles}
-                />
+                <div className="flex flex-col gap-1">
+                  <Label className="text-xs text-muted-foreground">Responsável</Label>
+                  <ResponsibleFilter
+                    responsibles={uniqueResponsibles}
+                    selectedResponsibles={selectedResponsibles}
+                    onSelectionChange={setSelectedResponsibles}
+                  />
+                </div>
               )}
 
               <Button
