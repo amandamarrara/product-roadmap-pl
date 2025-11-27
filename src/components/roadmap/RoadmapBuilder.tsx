@@ -9,6 +9,7 @@ import { Plus, MapPin, List, Calendar, Filter, Layers, Eye } from "lucide-react"
 import { DeliveryForm } from "./DeliveryForm";
 import { DeliveryCard } from "./DeliveryCard";
 import { RoadmapTimeline } from "./RoadmapTimeline";
+import { ResponsibleFilter } from "./ResponsibleFilter";
 import { MilestoneManager } from "./MilestoneManager";
 import type { Delivery, Team, TeamMember, Milestone } from "@/types/roadmap";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -134,6 +135,7 @@ export function RoadmapBuilder({
   const [filterTeam, setFilterTeam] = useState<string>('all');
   const [filterPriority, setFilterPriority] = useState<string>('all');
   const [groupByPhase, setGroupByPhase] = useState<boolean>(false);
+  const [selectedResponsibles, setSelectedResponsibles] = useState<string[]>([]);
   
   // Ref for form auto-scroll
   const formRef = useRef<HTMLDivElement>(null);
@@ -281,10 +283,31 @@ export function RoadmapBuilder({
     }
   };
 
+  // Get unique responsibles from deliveries
+  const uniqueResponsibles = Array.from(
+    new Set(
+      deliveries
+        .map(d => d.responsible)
+        .filter(Boolean)
+        .filter(r => r.trim() !== '')
+    )
+  ).sort();
+
   const filteredDeliveries = deliveries.filter(delivery => {
     const teamMatch = filterTeam === 'all' || delivery.deliveryPhase === filterTeam;
     const priorityMatch = filterPriority === 'all' || delivery.priority === filterPriority;
-    return teamMatch && priorityMatch;
+    
+    // Responsible filter
+    let responsibleMatch = true;
+    if (selectedResponsibles.length > 0 && selectedResponsibles.length < uniqueResponsibles.length + 1) {
+      if (selectedResponsibles.includes('Sem responsável')) {
+        responsibleMatch = !delivery.responsible || delivery.responsible.trim() === '' || selectedResponsibles.includes(delivery.responsible);
+      } else {
+        responsibleMatch = delivery.responsible && selectedResponsibles.includes(delivery.responsible);
+      }
+    }
+    
+    return teamMatch && priorityMatch && responsibleMatch;
   });
 
   const getStats = () => {
@@ -401,7 +424,7 @@ export function RoadmapBuilder({
             </TabsList>
 
             {/* Filters - Now available in both readOnly and edit modes */}
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               <Filter className="h-4 w-4 text-muted-foreground" />
               <Select value={filterTeam} onValueChange={setFilterTeam}>
                 <SelectTrigger className="w-32">
@@ -429,6 +452,14 @@ export function RoadmapBuilder({
                   <SelectItem value="critical">Crítica</SelectItem>
                 </SelectContent>
               </Select>
+
+              {uniqueResponsibles.length > 0 && (
+                <ResponsibleFilter
+                  responsibles={uniqueResponsibles}
+                  selectedResponsibles={selectedResponsibles}
+                  onSelectionChange={setSelectedResponsibles}
+                />
+              )}
 
               <Button
                 variant={groupByPhase ? "default" : "outline"}

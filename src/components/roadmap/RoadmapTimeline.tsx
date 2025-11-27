@@ -21,7 +21,6 @@ import { EditDeliveryDialog } from './EditDeliveryDialog';
 import { EditSubDeliveryDialog } from './EditSubDeliveryDialog';
 import { CommentsDialog } from './CommentsDialog';
 import { useUpdateDelivery, useDeleteDelivery, useUpdateSubDelivery, useDeleteSubDelivery } from '@/hooks/useDeliveryActions';
-import { ResponsibleFilter } from './ResponsibleFilter';
 import { AlertsSummary } from './AlertsSummary';
 import { useDateAlerts } from '@/hooks/useDateAlerts';
 import { HistoryPanel } from './HistoryPanel';
@@ -62,7 +61,6 @@ export function RoadmapTimeline({
   const [editingSubDelivery, setEditingSubDelivery] = useState<any | null>(null);
   const [commentsDialogOpen, setCommentsDialogOpen] = useState(false);
   const [commentsTarget, setCommentsTarget] = useState<{delivery?: Delivery, subDelivery?: any, title: string} | null>(null);
-  const [selectedResponsibles, setSelectedResponsibles] = useState<string[]>([]);
   const [openDeliveryPopover, setOpenDeliveryPopover] = useState<string | null>(null);
   const [openSubDeliveryPopover, setOpenSubDeliveryPopover] = useState<string | null>(null);
   const [historyDialogOpen, setHistoryDialogOpen] = useState(false);
@@ -125,56 +123,14 @@ export function RoadmapTimeline({
     }
   }, []);
 
-  // Get unique responsibles from deliveries and sub-deliveries
-  const uniqueResponsibles = useMemo(() => {
-    const responsibles = new Set<string>();
-    
-    localDeliveries.forEach(delivery => {
-      if (delivery.responsible?.trim()) {
-        responsibles.add(delivery.responsible.trim());
-      }
-      
-      delivery.subDeliveries.forEach(sub => {
-        if (sub.responsible?.trim()) {
-          responsibles.add(sub.responsible.trim());
-        }
-      });
-    });
-    
-    return Array.from(responsibles).sort();
-  }, [localDeliveries]);
-
-  // Filter deliveries by selected responsibles
-  const filteredDeliveries = useMemo(() => {
-    if (selectedResponsibles.length === 0 || selectedResponsibles.length === uniqueResponsibles.length) {
-      return localDeliveries;
-    }
-    
-    const includesNoResponsible = selectedResponsibles.includes('Sem responsável');
-    
-    return localDeliveries.filter(delivery => {
-      // Check delivery responsible
-      const deliveryMatches = selectedResponsibles.includes(delivery.responsible || '') ||
-        (includesNoResponsible && !delivery.responsible?.trim());
-      
-      // Check sub-deliveries responsibles
-      const subDeliveryMatches = delivery.subDeliveries.some(sub => 
-        selectedResponsibles.includes(sub.responsible || '') ||
-        (includesNoResponsible && !sub.responsible?.trim())
-      );
-      
-      return deliveryMatches || subDeliveryMatches;
-    });
-  }, [localDeliveries, selectedResponsibles, uniqueResponsibles.length]);
-
   // Group deliveries by phase and sort them
   const groupedDeliveries = useMemo(() => {
     if (!groupByPhase) {
-      return { ungrouped: sortDeliveriesByStartDate(filteredDeliveries) };
+      return { ungrouped: sortDeliveriesByStartDate(localDeliveries) };
     }
     
-    return groupDeliveriesByPhase(filteredDeliveries);
-  }, [filteredDeliveries, groupByPhase]);
+    return groupDeliveriesByPhase(localDeliveries);
+  }, [localDeliveries, groupByPhase]);
 
   // Handle drag end
   const handleDragEnd = useCallback((event: DragEndEvent) => {
@@ -807,13 +763,6 @@ export function RoadmapTimeline({
                   lowCount={dateAlerts.lowCount}
                   totalCount={dateAlerts.totalCount}
                 />
-                {uniqueResponsibles.length > 0 && (
-                  <ResponsibleFilter
-                    responsibles={uniqueResponsibles}
-                    selectedResponsibles={selectedResponsibles}
-                    onSelectionChange={setSelectedResponsibles}
-                  />
-                )}
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Button
@@ -1032,7 +981,7 @@ export function RoadmapTimeline({
                   </SortableContext>
                  ) : (
                    // Not grouped - show all deliveries with drag and drop
-                   filteredDeliveries.map(renderDeliveryBar)
+                   localDeliveries.map(renderDeliveryBar)
                  )}
               </div>
             </div>
