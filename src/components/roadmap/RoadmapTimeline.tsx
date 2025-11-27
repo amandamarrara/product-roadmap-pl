@@ -5,6 +5,7 @@ import { CalendarDays, Users, MapPin, ExternalLink, ChevronDown, ChevronRight, Z
 import { format, startOfWeek, endOfWeek, eachWeekOfInterval, eachDayOfInterval, isSameWeek, differenceInDays, differenceInWeeks, startOfDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import type { Delivery, Milestone } from "@/types/roadmap";
 import { cn } from "@/lib/utils";
 import { useRef, useCallback, useState, useMemo, useEffect } from "react";
@@ -60,6 +61,8 @@ export function RoadmapTimeline({
   const [commentsDialogOpen, setCommentsDialogOpen] = useState(false);
   const [commentsTarget, setCommentsTarget] = useState<{delivery?: Delivery, subDelivery?: any, title: string} | null>(null);
   const [selectedResponsibles, setSelectedResponsibles] = useState<string[]>([]);
+  const [openDeliveryPopover, setOpenDeliveryPopover] = useState<string | null>(null);
+  const [openSubDeliveryPopover, setOpenSubDeliveryPopover] = useState<string | null>(null);
   
   // Mutations for editing
   const updateDelivery = useUpdateDelivery();
@@ -504,9 +507,16 @@ export function RoadmapTimeline({
           </div>
 
           {/* Timeline Bar */}
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <div className="relative h-8 bg-muted/20 rounded-lg overflow-hidden cursor-pointer z-20">
+          <Popover 
+            open={openDeliveryPopover === delivery.id}
+            onOpenChange={(open) => setOpenDeliveryPopover(open ? delivery.id : null)}
+          >
+            <PopoverTrigger asChild>
+              <div 
+                className="relative h-8 bg-muted/20 rounded-lg overflow-hidden cursor-pointer z-20"
+                onMouseEnter={() => setOpenDeliveryPopover(delivery.id)}
+                onMouseLeave={() => setOpenDeliveryPopover(null)}
+              >
                 <div className="absolute top-0 h-full rounded-lg flex items-center px-2 transition-all duration-300 z-20" style={{
               ...position,
               backgroundColor: deliveryColor
@@ -529,8 +539,12 @@ export function RoadmapTimeline({
               width: `${parseFloat(position.width.replace('%', '')) * delivery.progress / 100}%`
             }} />
               </div>
-            </TooltipTrigger>
-            <TooltipContent className="max-w-sm">
+            </PopoverTrigger>
+            <PopoverContent 
+              className="max-w-sm"
+              onMouseEnter={() => setOpenDeliveryPopover(delivery.id)}
+              onMouseLeave={() => setOpenDeliveryPopover(null)}
+            >
               <div className="space-y-2">
                 <div className="font-semibold">{delivery.title}</div>
                 <p className="text-sm text-muted-foreground">{delivery.description}</p>
@@ -616,8 +630,8 @@ export function RoadmapTimeline({
                   )}
                 </div>
               </div>
-            </TooltipContent>
-          </Tooltip>
+            </PopoverContent>
+          </Popover>
 
           {/* Sub-deliveries */}
           {delivery.subDeliveries.length > 0 && <div className="mt-2 ml-4 space-y-1">
@@ -637,9 +651,17 @@ export function RoadmapTimeline({
                 })
                 .slice(0, 3).map(sub => {
           const subPosition = getSubDeliveryPosition(sub.startDate, sub.endDate);
-          return <Tooltip key={sub.id}>
-                    <TooltipTrigger asChild>
-                      <div className="relative cursor-pointer">
+          return <Popover 
+                    key={sub.id}
+                    open={openSubDeliveryPopover === sub.id}
+                    onOpenChange={(open) => setOpenSubDeliveryPopover(open ? sub.id : null)}
+                  >
+                    <PopoverTrigger asChild>
+                      <div 
+                        className="relative cursor-pointer"
+                        onMouseEnter={() => setOpenSubDeliveryPopover(sub.id)}
+                        onMouseLeave={() => setOpenSubDeliveryPopover(null)}
+                      >
                         <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1">
                           <span className="text-xs" aria-label={getStatusLabel(sub.status)}>
                             {getStatusEmoji(sub.status)}
@@ -659,8 +681,11 @@ export function RoadmapTimeline({
                   }} />
                         </div>
                       </div>
-                    </TooltipTrigger>
-                    <TooltipContent>
+                    </PopoverTrigger>
+                    <PopoverContent
+                      onMouseEnter={() => setOpenSubDeliveryPopover(sub.id)}
+                      onMouseLeave={() => setOpenSubDeliveryPopover(null)}
+                    >
                       <div className="space-y-1">
                         <div className="font-medium">{sub.title}</div>
                         <p className="text-xs text-muted-foreground">{sub.description}</p>
@@ -700,8 +725,8 @@ export function RoadmapTimeline({
                           </Button>
                         </div>
                       </div>
-                    </TooltipContent>
-                  </Tooltip>;
+                    </PopoverContent>
+                  </Popover>;
               })}
               
               {delivery.subDeliveries.length > 3 && <div className="text-xs text-muted-foreground">
