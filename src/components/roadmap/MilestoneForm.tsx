@@ -8,10 +8,11 @@ import { Switch } from "@/components/ui/switch";
 import { CalendarDays, Save, X } from "lucide-react";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
-import type { Milestone } from "@/types/roadmap";
+import type { Milestone, MilestoneCategory } from "@/types/roadmap";
 
 interface MilestoneFormProps {
   milestone?: Milestone;
@@ -27,6 +28,7 @@ export function MilestoneForm({ milestone, open, onSave, onCancel }: MilestoneFo
   const [date, setDate] = useState<Date | undefined>(milestone?.date || undefined);
   const [endDate, setEndDate] = useState<Date | undefined>(milestone?.endDate || undefined);
   const [color, setColor] = useState(milestone?.color || '#ef4444');
+  const [category, setCategory] = useState<MilestoneCategory>(milestone?.category || 'other');
 
   const handleSave = () => {
     if (!title.trim() || !date) return;
@@ -39,7 +41,8 @@ export function MilestoneForm({ milestone, open, onSave, onCancel }: MilestoneFo
       date,
       endDate: isPeriod ? endDate : undefined,
       isPeriod,
-      color
+      color,
+      category
     };
 
     console.log('📝 MilestoneForm: Saving milestone:', milestoneToSave);
@@ -53,6 +56,7 @@ export function MilestoneForm({ milestone, open, onSave, onCancel }: MilestoneFo
     setDate(undefined);
     setEndDate(undefined);
     setColor('#ef4444');
+    setCategory('other');
   };
 
   const predefinedColors = [
@@ -187,6 +191,21 @@ export function MilestoneForm({ milestone, open, onSave, onCancel }: MilestoneFo
                 />
               ))}
             </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Categoria</Label>
+            <Select value={category} onValueChange={(val) => setCategory(val as MilestoneCategory)}>
+              <SelectTrigger>
+                <SelectValue placeholder="Selecionar categoria" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="delivery">📦 Entrega</SelectItem>
+                <SelectItem value="freezing">❄️ Freezing</SelectItem>
+                <SelectItem value="vacation">🏖️ Férias</SelectItem>
+                <SelectItem value="other">📌 Outros</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </div>
 

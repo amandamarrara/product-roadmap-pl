@@ -23,6 +23,7 @@ export function useMilestones(roadmapId?: string) {
         date: parseISO(milestone.date),
         endDate: milestone.end_date ? parseISO(milestone.end_date) : undefined,
         isPeriod: milestone.is_period || false,
+        category: (milestone.category as any) || 'other',
       })) as Milestone[];
     },
     enabled: !!roadmapId
@@ -49,6 +50,7 @@ export function useSaveMilestone() {
         end_date: milestone.endDate ? milestone.endDate.toISOString().split('T')[0] : null,
         is_period: milestone.isPeriod || false,
         color: milestone.color || '#ef4444',
+        category: milestone.category || 'other',
       };
 
       console.log('🔄 Creating milestone:', milestoneData);
@@ -122,6 +124,7 @@ export function useUpdateMilestone() {
         end_date: milestone.endDate ? milestone.endDate.toISOString().split('T')[0] : null,
         is_period: milestone.isPeriod || false,
         color: milestone.color || '#ef4444',
+        category: milestone.category || 'other',
       };
 
       console.log('🔄 Updating milestone:', {

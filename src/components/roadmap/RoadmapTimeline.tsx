@@ -6,10 +6,11 @@ import { format, startOfWeek, endOfWeek, eachWeekOfInterval, eachDayOfInterval, 
 import { ptBR } from "date-fns/locale";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import type { Delivery, Milestone } from "@/types/roadmap";
+import type { Delivery, Milestone, MilestoneCategory } from "@/types/roadmap";
 import { cn } from "@/lib/utils";
 import { useRef, useCallback, useState, useMemo, useEffect } from "react";
 import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
 import { DndContext, DragOverlay, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { sortableKeyboardCoordinates, SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { DraggableDelivery } from './DraggableDelivery';
@@ -67,6 +68,9 @@ export function RoadmapTimeline({
   const [historyDeliveryId, setHistoryDeliveryId] = useState<string | null>(null);
   const [historySubDeliveryId, setHistorySubDeliveryId] = useState<string | null>(null);
   const [historyTitle, setHistoryTitle] = useState("");
+  const [categoryFilters, setCategoryFilters] = useState<Set<MilestoneCategory>>(
+    new Set(['delivery', 'freezing', 'vacation', 'other'])
+  );
   
   // Mutations for editing
   const updateDelivery = useUpdateDelivery();
@@ -77,8 +81,25 @@ export function RoadmapTimeline({
   // Use deliveries directly from props (sorted)
   const localDeliveries = useMemo(() => sortDeliveriesByStartDate(deliveries), [deliveries]);
 
+  // Filter milestones by category
+  const filteredMilestones = useMemo(() => 
+    milestones.filter(m => categoryFilters.has(m.category || 'other')),
+    [milestones, categoryFilters]
+  );
+
+  // Toggle category filter
+  const toggleCategoryFilter = (category: MilestoneCategory) => {
+    const newFilters = new Set(categoryFilters);
+    if (newFilters.has(category)) {
+      newFilters.delete(category);
+    } else {
+      newFilters.add(category);
+    }
+    setCategoryFilters(newFilters);
+  };
+
   // Calculate date alerts
-  const dateAlerts = useDateAlerts(localDeliveries, milestones);
+  const dateAlerts = useDateAlerts(localDeliveries, filteredMilestones);
 
   // Persist compression state to localStorage
   useEffect(() => {
@@ -303,7 +324,7 @@ export function RoadmapTimeline({
       d.endDate,
       ...d.subDeliveries.flatMap(sub => [sub.startDate, sub.endDate])
     ]),
-    ...milestones.map(m => m.date)
+    ...filteredMilestones.map(m => m.date)
   ].filter(date => date && !isNaN(date.getTime())); // Filter out invalid dates
   const minDate = new Date(Math.min(...allDates.map(d => d.getTime())));
   const maxDate = new Date(Math.max(...allDates.map(d => d.getTime())));
@@ -793,6 +814,27 @@ export function RoadmapTimeline({
                 </Tooltip>
               </div>
             </CardTitle>
+            
+            {/* Milestone Category Filters */}
+            <div className="flex items-center gap-2 flex-wrap mt-2">
+              <Label className="text-xs text-muted-foreground">Marcos:</Label>
+              {[
+                { key: 'delivery' as MilestoneCategory, label: '📦 Entregas' },
+                { key: 'freezing' as MilestoneCategory, label: '❄️ Freezing' },
+                { key: 'vacation' as MilestoneCategory, label: '🏖️ Férias' },
+                { key: 'other' as MilestoneCategory, label: '📌 Outros' },
+              ].map(cat => (
+                <Button
+                  key={cat.key}
+                  variant={categoryFilters.has(cat.key) ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => toggleCategoryFilter(cat.key)}
+                  className="h-7 text-xs"
+                >
+                  {cat.label}
+                </Button>
+              ))}
+            </div>
           </CardHeader>
           <CardContent className="space-y-6">
             {/* Timeline Header */}
@@ -839,7 +881,7 @@ export function RoadmapTimeline({
                   </div>
                   
                     {/* Milestone indicators in header */}
-                    {milestones.map(milestone => {
+                    {filteredMilestones.map(milestone => {
                       const isPeriod = milestone.isPeriod && milestone.endDate;
                       const startPosition = getMilestonePosition(milestone);
                       
@@ -925,7 +967,7 @@ export function RoadmapTimeline({
                  )}
                  
                   {/* Milestone vertical lines and period bands */}
-                  {milestones.map(milestone => {
+                  {filteredMilestones.map(milestone => {
                     if (milestone.isPeriod && milestone.endDate) {
                       // Render period as semi-transparent band
                       const startOffset = differenceInDays(startOfDay(milestone.date), timelineStart);

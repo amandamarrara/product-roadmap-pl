@@ -6,7 +6,7 @@ import { CalendarDays, Plus, Edit, Trash2 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { MilestoneForm } from "./MilestoneForm";
-import type { Milestone } from "@/types/roadmap";
+import type { Milestone, MilestoneCategory } from "@/types/roadmap";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -59,6 +59,15 @@ export function MilestoneManager({
     setEditingMilestone(undefined);
   };
 
+  const getCategoryInfo = (category?: MilestoneCategory) => {
+    switch (category) {
+      case 'delivery': return { emoji: '📦', label: 'Entrega' };
+      case 'freezing': return { emoji: '❄️', label: 'Freezing' };
+      case 'vacation': return { emoji: '🏖️', label: 'Férias' };
+      default: return { emoji: '📌', label: 'Outros' };
+    }
+  };
+
   const sortedMilestones = [...milestones].sort((a, b) => a.date.getTime() - b.date.getTime());
 
   if (compact) {
@@ -87,6 +96,9 @@ export function MilestoneManager({
                   className="w-2 h-2 rounded-full flex-shrink-0"
                   style={{ backgroundColor: milestone.color || '#ef4444' }}
                 />
+                <span className="text-xs text-muted-foreground">
+                  {getCategoryInfo(milestone.category).emoji}
+                </span>
                 <span className="text-xs font-medium text-foreground">{milestone.title}</span>
                 <span className="text-xs text-muted-foreground">
                   {milestone.isPeriod && milestone.endDate
@@ -203,6 +215,9 @@ export function MilestoneManager({
                           Período
                         </Badge>
                       )}
+                      <Badge variant="outline" className="text-xs">
+                        {getCategoryInfo(milestone.category).emoji} {getCategoryInfo(milestone.category).label}
+                      </Badge>
                     </div>
                     {milestone.description && (
                       <p className="text-sm text-muted-foreground truncate">

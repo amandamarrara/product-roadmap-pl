@@ -173,6 +173,7 @@ export type Database = {
       }
       milestones: {
         Row: {
+          category: string | null
           color: string | null
           created_at: string
           date: string
@@ -186,6 +187,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          category?: string | null
           color?: string | null
           created_at?: string
           date: string
@@ -199,6 +201,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          category?: string | null
           color?: string | null
           created_at?: string
           date?: string
