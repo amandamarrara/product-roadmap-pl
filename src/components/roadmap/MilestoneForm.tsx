@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -30,6 +30,27 @@ export function MilestoneForm({ milestone, open, onSave, onCancel }: MilestoneFo
   const [color, setColor] = useState(milestone?.color || '#ef4444');
   const [category, setCategory] = useState<MilestoneCategory>(milestone?.category || 'other');
 
+  // Sincronizar estados com a prop milestone quando ela mudar
+  useEffect(() => {
+    if (milestone) {
+      setTitle(milestone.title || '');
+      setDescription(milestone.description || '');
+      setIsPeriod(milestone.isPeriod || false);
+      setDate(milestone.date || undefined);
+      setEndDate(milestone.endDate || undefined);
+      setColor(milestone.color || '#ef4444');
+      setCategory(milestone.category || 'other');
+    } else {
+      setTitle('');
+      setDescription('');
+      setIsPeriod(false);
+      setDate(undefined);
+      setEndDate(undefined);
+      setColor('#ef4444');
+      setCategory('other');
+    }
+  }, [milestone]);
+
   const handleSave = () => {
     if (!title.trim() || !date) return;
     if (isPeriod && !endDate) return;
@@ -48,15 +69,6 @@ export function MilestoneForm({ milestone, open, onSave, onCancel }: MilestoneFo
     console.log('📝 MilestoneForm: Saving milestone:', milestoneToSave);
 
     onSave(milestoneToSave);
-
-    // Reset form
-    setTitle('');
-    setDescription('');
-    setIsPeriod(false);
-    setDate(undefined);
-    setEndDate(undefined);
-    setColor('#ef4444');
-    setCategory('other');
   };
 
   const predefinedColors = [
