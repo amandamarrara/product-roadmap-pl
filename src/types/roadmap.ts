@@ -1,5 +1,6 @@
 export type Priority = 'low' | 'medium' | 'high' | 'critical';
 export type Complexity = 'simple' | 'medium' | 'complex' | 'very-complex';
+export type MilestoneCategory = 'delivery' | 'freezing' | 'vacation' | 'other';
 
 export interface Comment {
   id: string;
@@ -68,6 +69,7 @@ export interface Milestone {
   endDate?: Date;
   isPeriod?: boolean;
   color?: string;
+  category?: MilestoneCategory;
 }
 
 export interface Roadmap {
