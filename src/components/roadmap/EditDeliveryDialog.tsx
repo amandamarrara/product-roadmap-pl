@@ -17,7 +17,7 @@ import { Badge } from '@/components/ui/badge';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { ChevronDown } from 'lucide-react';
-import type { Delivery, Priority, Complexity } from '@/types/roadmap';
+import type { Delivery, Priority, Complexity, SubDelivery } from '@/types/roadmap';
 
 interface EditDeliveryDialogProps {
   delivery: Delivery | null;
@@ -50,6 +50,7 @@ export function EditDeliveryDialog({
   const [status, setStatus] = useState<Delivery['status']>('not-started');
   const [progress, setProgress] = useState(0);
   const [subDeliveriesOpen, setSubDeliveriesOpen] = useState(false);
+  const [subDeliveries, setSubDeliveries] = useState<SubDelivery[]>([]);
 
   const phases = [
     'Onda 1',
@@ -68,9 +69,6 @@ export function EditDeliveryDialog({
 
   useEffect(() => {
     if (delivery) {
-      console.log('EditDeliveryDialog - Loading delivery:', delivery);
-      console.log('EditDeliveryDialog - Description value:', delivery.description);
-      
       setTitle(delivery.title);
       setDescription(delivery.description || '');
       setStartDate(delivery.startDate);
@@ -84,15 +82,53 @@ export function EditDeliveryDialog({
       setComplexity(delivery.complexity);
       setStatus(delivery.status);
       setProgress(delivery.progress);
-      
-      console.log('EditDeliveryDialog - Description state set to:', delivery.description || '');
+      setSubDeliveries(delivery.subDeliveries || []);
     }
   }, [delivery]);
+
+  const addNewSubDelivery = () => {
+    const newSubDelivery: SubDelivery = {
+      id: `new-${Date.now()}`,
+      title: '',
+      description: '',
+      startDate: startDate || new Date(),
+      endDate: endDate || new Date(),
+      actualEndDate: undefined,
+      team: '',
+      responsible: '',
+      completed: false,
+      progress: 0,
+      status: 'not-started',
+      jiraLink: ''
+    };
+    setSubDeliveries(prev => [...prev, newSubDelivery]);
+    setSubDeliveriesOpen(true);
+  };
+
+  const updateSubDeliveryField = (id: string, field: keyof SubDelivery, value: any) => {
+    setSubDeliveries(prev => prev.map(sub =>
+      sub.id === id ? { ...sub, [field]: value } : sub
+    ));
+  };
+
+  const removeSubDelivery = (id: string) => {
+    setSubDeliveries(prev => prev.filter(sub => sub.id !== id));
+  };
 
   const handleSave = () => {
     if (!delivery || !title.trim() || !startDate || !endDate) {
       return;
     }
+
+    // Filtrar sub-entregas válidas e gerar IDs para novas
+    const validSubDeliveries = subDeliveries
+      .filter(sub => sub.title.trim() && sub.team.trim() && sub.responsible.trim())
+      .map(sub => ({
+        ...sub,
+        id: sub.id.startsWith('new-')
+          ? `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+          : sub.id
+      }));
 
     const updatedDelivery: Delivery = {
       ...delivery,
@@ -108,7 +144,8 @@ export function EditDeliveryDialog({
       priority,
       complexity,
       status,
-      progress
+      progress,
+      subDeliveries: validSubDeliveries
     };
 
     onSave(updatedDelivery);
@@ -409,62 +446,203 @@ export function EditDeliveryDialog({
           </div>
 
           {/* Sub-deliveries Section */}
-          {delivery && delivery.subDeliveries.length > 0 && (
-            <Collapsible open={subDeliveriesOpen} onOpenChange={setSubDeliveriesOpen}>
-              <div className="space-y-4">
-                <CollapsibleTrigger asChild>
-                  <Button variant="outline" className="w-full justify-between">
-                    <div className="flex items-center gap-2">
-                      <span>Sub-entregas</span>
-                      <Badge variant="secondary">{delivery.subDeliveries.length}</Badge>
-                    </div>
-                    <ChevronDown className={cn(
-                      "h-4 w-4 transition-transform",
-                      subDeliveriesOpen && "rotate-180"
-                    )} />
-                  </Button>
-                </CollapsibleTrigger>
+          <Collapsible open={subDeliveriesOpen} onOpenChange={setSubDeliveriesOpen}>
+            <div className="space-y-4">
+              <CollapsibleTrigger asChild>
+                <Button variant="outline" className="w-full justify-between">
+                  <div className="flex items-center gap-2">
+                    <span>Sub-entregas</span>
+                    <Badge variant="secondary">{subDeliveries.length}</Badge>
+                  </div>
+                  <ChevronDown className={cn(
+                    "h-4 w-4 transition-transform",
+                    subDeliveriesOpen && "rotate-180"
+                  )} />
+                </Button>
+              </CollapsibleTrigger>
 
-                <CollapsibleContent className="space-y-3">
-                  {delivery.subDeliveries.map((sub, index) => (
-                    <div key={sub.id} className="p-4 border rounded-lg bg-muted/20">
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center gap-2">
-                          <span className="font-medium text-sm">{sub.title}</span>
-                          <Badge variant="outline" className="text-xs">
-                            {sub.progress}%
-                          </Badge>
+              <CollapsibleContent className="space-y-3">
+                {/* Botão para adicionar nova sub-entrega */}
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={addNewSubDelivery}
+                  className="w-full"
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Adicionar Sub-entrega
+                </Button>
+
+                {subDeliveries.map((sub) => (
+                  <div key={sub.id} className="p-4 border rounded-lg bg-muted/20 space-y-3">
+                    {sub.id.startsWith('new-') ? (
+                      /* Formulário inline para nova sub-entrega */
+                      <div className="space-y-3">
+                        <div className="flex justify-between items-center">
+                          <Label className="text-sm font-medium">Nova Sub-entrega</Label>
+                          <Button variant="ghost" size="sm" onClick={() => removeSubDelivery(sub.id)}>
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                          </Button>
                         </div>
-                        <div className="flex items-center gap-2">
-                          {onEditSubDelivery && (
+
+                        <div className="grid grid-cols-2 gap-3">
+                          <div>
+                            <Label className="text-xs">Título *</Label>
+                            <Input
+                              value={sub.title}
+                              onChange={(e) => updateSubDeliveryField(sub.id, 'title', e.target.value)}
+                              placeholder="Título da sub-entrega"
+                              className="h-8"
+                            />
+                          </div>
+                          <div>
+                            <Label className="text-xs">Time *</Label>
+                            <Input
+                              value={sub.team}
+                              onChange={(e) => updateSubDeliveryField(sub.id, 'team', e.target.value)}
+                              placeholder="Ex: Frontend, Backend..."
+                              className="h-8"
+                            />
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-3">
+                          <div>
+                            <Label className="text-xs">Responsável *</Label>
+                            <Input
+                              value={sub.responsible}
+                              onChange={(e) => updateSubDeliveryField(sub.id, 'responsible', e.target.value)}
+                              placeholder="Ex: João Silva"
+                              className="h-8"
+                            />
+                          </div>
+                          <div>
+                            <Label className="text-xs">Link do Jira</Label>
+                            <Input
+                              value={sub.jiraLink || ''}
+                              onChange={(e) => updateSubDeliveryField(sub.id, 'jiraLink', e.target.value)}
+                              placeholder="https://..."
+                              className="h-8"
+                            />
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-3">
+                          <div>
+                            <Label className="text-xs">Data Início</Label>
+                            <Popover>
+                              <PopoverTrigger asChild>
+                                <Button
+                                  variant="outline"
+                                  className={cn(
+                                    "w-full h-8 justify-start text-left font-normal text-xs",
+                                    !sub.startDate && "text-muted-foreground"
+                                  )}
+                                >
+                                  <CalendarIcon className="mr-2 h-3 w-3" />
+                                  {sub.startDate ? format(sub.startDate, "dd/MM/yyyy", { locale: ptBR }) : "Selecionar"}
+                                </Button>
+                              </PopoverTrigger>
+                              <PopoverContent className="w-auto p-0" align="start">
+                                <Calendar
+                                  mode="single"
+                                  selected={sub.startDate}
+                                  onSelect={(date) => updateSubDeliveryField(sub.id, 'startDate', date)}
+                                  initialFocus
+                                  locale={ptBR}
+                                  className="pointer-events-auto"
+                                />
+                              </PopoverContent>
+                            </Popover>
+                          </div>
+                          <div>
+                            <Label className="text-xs">Data Fim</Label>
+                            <Popover>
+                              <PopoverTrigger asChild>
+                                <Button
+                                  variant="outline"
+                                  className={cn(
+                                    "w-full h-8 justify-start text-left font-normal text-xs",
+                                    !sub.endDate && "text-muted-foreground"
+                                  )}
+                                >
+                                  <CalendarIcon className="mr-2 h-3 w-3" />
+                                  {sub.endDate ? format(sub.endDate, "dd/MM/yyyy", { locale: ptBR }) : "Selecionar"}
+                                </Button>
+                              </PopoverTrigger>
+                              <PopoverContent className="w-auto p-0" align="start">
+                                <Calendar
+                                  mode="single"
+                                  selected={sub.endDate}
+                                  onSelect={(date) => updateSubDeliveryField(sub.id, 'endDate', date)}
+                                  initialFocus
+                                  locale={ptBR}
+                                  className="pointer-events-auto"
+                                />
+                              </PopoverContent>
+                            </Popover>
+                          </div>
+                        </div>
+
+                        <div>
+                          <Label className="text-xs">Descrição</Label>
+                          <Textarea
+                            value={sub.description}
+                            onChange={(e) => updateSubDeliveryField(sub.id, 'description', e.target.value)}
+                            placeholder="Descrição da sub-entrega"
+                            className="h-16 text-xs"
+                          />
+                        </div>
+                      </div>
+                    ) : (
+                      /* Card para sub-entregas existentes */
+                      <>
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium text-sm">{sub.title}</span>
+                            <Badge variant="outline" className="text-xs">
+                              {sub.progress}%
+                            </Badge>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            {onEditSubDelivery && (
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => onEditSubDelivery(sub)}
+                              >
+                                <Edit className="h-3 w-3" />
+                              </Button>
+                            )}
                             <Button
                               size="sm"
                               variant="ghost"
-                              onClick={() => onEditSubDelivery(sub)}
+                              onClick={() => removeSubDelivery(sub.id)}
                             >
-                              <Edit className="h-3 w-3" />
+                              <Trash2 className="h-3 w-3 text-destructive" />
                             </Button>
-                          )}
+                          </div>
                         </div>
-                      </div>
-                      
-                      <div className="text-xs text-muted-foreground space-y-1">
-                        <p>{sub.description || 'Sem descrição'}</p>
-                        <div className="flex flex-wrap gap-4">
-                          <span><strong>Time:</strong> {sub.team || 'Não definido'}</span>
-                          <span><strong>Responsável:</strong> {sub.responsible || 'Não definido'}</span>
-                          <span><strong>Status:</strong> {getStatusLabel(sub.status)}</span>
-                          {sub.startDate && sub.endDate && (
-                            <span><strong>Período:</strong> {format(sub.startDate, "dd/MM", { locale: ptBR })} - {format(sub.endDate, "dd/MM", { locale: ptBR })}</span>
-                          )}
+
+                        <div className="text-xs text-muted-foreground space-y-1">
+                          <p>{sub.description || 'Sem descrição'}</p>
+                          <div className="flex flex-wrap gap-4">
+                            <span><strong>Time:</strong> {sub.team || 'Não definido'}</span>
+                            <span><strong>Responsável:</strong> {sub.responsible || 'Não definido'}</span>
+                            <span><strong>Status:</strong> {getStatusLabel(sub.status)}</span>
+                            {sub.startDate && sub.endDate && (
+                              <span><strong>Período:</strong> {format(sub.startDate, "dd/MM", { locale: ptBR })} - {format(sub.endDate, "dd/MM", { locale: ptBR })}</span>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                    </div>
-                  ))}
-                </CollapsibleContent>
-              </div>
-            </Collapsible>
-          )}
+                      </>
+                    )}
+                  </div>
+                ))}
+              </CollapsibleContent>
+            </div>
+          </Collapsible>
 
           {/* Action Buttons */}
           <div className="flex justify-between pt-4">
