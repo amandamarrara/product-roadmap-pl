@@ -126,7 +126,7 @@ export function EditDeliveryDialog({
       .map(sub => ({
         ...sub,
         id: sub.id.startsWith('new-')
-          ? `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+          ? crypto.randomUUID()
           : sub.id
       }));
 
