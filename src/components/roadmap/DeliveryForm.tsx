@@ -116,7 +116,7 @@ export function DeliveryForm({ delivery, onSave, onCancel }: DeliveryFormProps) 
       .filter(sub => sub.title.trim() && sub.team.trim() && sub.responsible.trim())
       .map(sub => ({
         ...sub,
-        id: Date.now().toString() + Math.random().toString(36).substr(2, 9)
+        id: crypto.randomUUID()
       }));
 
     console.log('📦 DeliveryForm: Prepared sub-deliveries:', validSubDeliveries.length);
